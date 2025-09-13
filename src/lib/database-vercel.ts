@@ -34,13 +34,12 @@ if (!MONGODB_URI) {
   console.log('💡 Set MONGODB_URI environment variable for persistent storage')
 }
 
-let client: MongoClient
-let clientPromise: Promise<MongoClient>
+let client: MongoClient | null = null
+let clientPromise: Promise<MongoClient> | null = null
 
 if (!MONGODB_URI) {
   // Fallback to simple database
-  client = null as any
-  clientPromise = null as any
+  console.log('⚠️ No MONGODB_URI found, using simple in-memory database')
 } else {
   if (process.env.NODE_ENV === 'development') {
     // In development, use a global variable so the value
