@@ -70,7 +70,7 @@ const ReportSchema = new Schema<IReport>({
   data: {
     type: [Schema.Types.Mixed],
     default: [],
-  },
+  } as any,
   template: {
     id: {
       type: String,
@@ -145,7 +145,7 @@ const ReportSchema = new Schema<IReport>({
       enum: ['bar', 'line', 'pie', 'scatter', 'area'],
     },
     title: String,
-    data: [Schema.Types.Mixed],
+    data: [Schema.Types.Mixed] as any,
     config: {
       xAxis: String,
       yAxis: String,
