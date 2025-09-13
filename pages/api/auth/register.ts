@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import bcrypt from 'bcryptjs'
-import connectDB from '../../src/lib/database'
-import User from '../../src/lib/models/User'
+import connectDB from '../../../src/lib/database'
+import User from '../../../src/lib/models/User'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
