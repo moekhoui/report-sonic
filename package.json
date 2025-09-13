@@ -11,7 +11,8 @@
     "export": "next build && next export",
     "deploy": "vercel --prod",
     "deploy:preview": "vercel",
-    "setup-db": "node setup-database.js"
+    "setup-db": "node setup-database.js",
+    "setup-vercel-db": "node setup-vercel-db.js"
   },
   "dependencies": {
     "next": "13.5.6",
