@@ -26,8 +26,9 @@ class SimpleDatabase {
 
   async findOne(collectionName: string, query: any) {
     const collection = this.getCollection(collectionName);
-    for (const [id, doc] of collection) {
-      if (this.matchesQuery(doc, query)) {
+    for (const id of collection.keys()) {
+      const doc = collection.get(id);
+      if (doc && this.matchesQuery(doc, query)) {
         return doc;
       }
     }
@@ -37,8 +38,9 @@ class SimpleDatabase {
   async find(collectionName: string, query: any = {}) {
     const collection = this.getCollection(collectionName);
     const results = [];
-    for (const [id, doc] of collection) {
-      if (this.matchesQuery(doc, query)) {
+    for (const id of collection.keys()) {
+      const doc = collection.get(id);
+      if (doc && this.matchesQuery(doc, query)) {
         results.push(doc);
       }
     }
@@ -47,8 +49,9 @@ class SimpleDatabase {
 
   async updateOne(collectionName: string, query: any, update: any) {
     const collection = this.getCollection(collectionName);
-    for (const [id, doc] of collection) {
-      if (this.matchesQuery(doc, query)) {
+    for (const id of collection.keys()) {
+      const doc = collection.get(id);
+      if (doc && this.matchesQuery(doc, query)) {
         const updatedDoc = { ...doc, ...update };
         collection.set(id, updatedDoc);
         return { modifiedCount: 1 };
@@ -59,8 +62,9 @@ class SimpleDatabase {
 
   async deleteOne(collectionName: string, query: any) {
     const collection = this.getCollection(collectionName);
-    for (const [id, doc] of collection) {
-      if (this.matchesQuery(doc, query)) {
+    for (const id of collection.keys()) {
+      const doc = collection.get(id);
+      if (doc && this.matchesQuery(doc, query)) {
         collection.delete(id);
         return { deletedCount: 1 };
       }
