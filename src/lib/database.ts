@@ -1,9 +1,12 @@
 import mongoose, { Connection } from 'mongoose'
+import { databaseConfig } from './database-config'
 
 const MONGODB_URI = process.env.MONGODB_URI
 
+// If no MongoDB URI is provided, we'll use the simple database
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local')
+  console.log('⚠️ No MONGODB_URI found, using simple in-memory database')
+  console.log('💡 To use MongoDB Atlas, set MONGODB_URI environment variable')
 }
 
 /**
@@ -17,7 +20,12 @@ if (!cached) {
   cached = global.mongoose = { conn: null, promise: null }
 }
 
-async function connectDB(): Promise<Connection> {
+async function connectDB(): Promise<Connection | null> {
+  // If no MongoDB URI, return null (will use simple database)
+  if (!MONGODB_URI) {
+    return null
+  }
+
   if (cached.conn) {
     return cached.conn
   }

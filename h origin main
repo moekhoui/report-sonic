@@ -1,0 +1,3 @@
+[33m363066a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Fix database connection TypeScript types - add proper Connection type
+[33m689fc88[m[33m ([m[1;31morigin/main[m[33m)[m Fix NextAuth pages config - remove invalid signUp property
+[33mb20faac[m Fix NextAuth TypeScript types - add id property to session.user

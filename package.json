@@ -10,7 +10,8 @@
     "lint": "next lint",
     "export": "next build && next export",
     "deploy": "vercel --prod",
-    "deploy:preview": "vercel"
+    "deploy:preview": "vercel",
+    "setup-db": "node setup-database.js"
   },
   "dependencies": {
     "next": "13.5.6",
