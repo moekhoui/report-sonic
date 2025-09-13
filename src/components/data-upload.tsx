@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Button } from '@/components/ui/button'
+import { Button } from './ui/button'
 import { Upload, FileText, X, CheckCircle } from 'lucide-react'
 import Papa from 'papaparse'
 
@@ -55,7 +55,7 @@ export function DataUpload({ onDataUploaded, onClose }: DataUploadProps) {
           onDataUploaded(results.data)
           setIsProcessing(false)
         },
-        error: (error) => {
+        error: (error: any) => {
           setError('Error parsing file: ' + error.message)
           setIsProcessing(false)
         }
