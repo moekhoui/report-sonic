@@ -1,5 +1,4 @@
 import mongoose, { Connection } from 'mongoose'
-import { databaseConfig } from './database-config'
 
 const MONGODB_URI = process.env.MONGODB_URI
 
@@ -9,36 +8,25 @@ if (!MONGODB_URI) {
   console.log('💡 To use MongoDB Atlas, set MONGODB_URI environment variable')
 }
 
-/**
- * Global is used here to maintain a cached connection across hot reloads
- * in development. This prevents connections growing exponentially
- * during API Route usage.
- */
-let cached = global.mongoose
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null }
-}
-
+// Simple approach - create new connection each time
+// This is more reliable and avoids global variable issues
 async function connectDB(): Promise<Connection | null> {
   // If no MongoDB URI, return null (will use simple database)
   if (!MONGODB_URI) {
     return null
   }
 
-  if (cached.conn) {
-    return cached.conn
-  }
-
-  if (!cached.promise) {
+  try {
     const opts = {
       bufferCommands: false,
     }
-
-    cached.promise = mongoose.connect(MONGODB_URI!, opts)
+    
+    const connection = await mongoose.connect(MONGODB_URI, opts)
+    return connection.connection
+  } catch (error) {
+    console.error('MongoDB connection error:', error)
+    return null
   }
-  cached.conn = await cached.promise
-  return cached.conn
 }
 
 export default connectDB
