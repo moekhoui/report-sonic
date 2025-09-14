@@ -1,0 +1,5 @@
+[33m16194b9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Force redeploy - fix CSS reset styles
+[33m74ffe25[m Fix CSS error - remove invalid border-border class
+[33me3fb18b[m Create cutting-edge modern design with improved auth pages and homepage
+[33maff1b2a[m Fix CSS import path - create styles/globals.css and update _app.tsx
+[33m0fd1fce[m Fix Report model TypeScript errors - add type assertions for Mixed arrays
