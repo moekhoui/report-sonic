@@ -28,27 +28,48 @@ export default function SignIn() {
     setIsLoading(true);
     setError('');
 
+    console.log('🔐 Sign in attempt:', { email, hasPassword: !!password });
+
     try {
       const result = await signIn('credentials', {
-        email,
+        email: email.toLowerCase().trim(),
         password,
         redirect: false,
       });
 
+      console.log('🔐 Sign in result:', result);
+
       if (result?.error) {
-        const errorMessage = result.error === 'CredentialsSignin' 
-          ? 'Invalid email or password' 
-          : result.error;
+        let errorMessage = 'Invalid email or password';
+        
+        if (result.error === 'CredentialsSignin') {
+          errorMessage = 'Invalid email or password';
+        } else if (result.error === 'Configuration') {
+          errorMessage = 'Server configuration error. Please try again.';
+        } else if (result.error === 'AccessDenied') {
+          errorMessage = 'Access denied. Please check your credentials.';
+        } else {
+          errorMessage = result.error;
+        }
+        
         setError(errorMessage);
         addNotification('error', errorMessage);
+        console.log('❌ Sign in failed:', errorMessage);
       } else if (result?.ok) {
         addNotification('success', 'Successfully signed in! Welcome back!');
+        console.log('✅ Sign in successful');
         router.push('/dashboard');
+      } else {
+        const errorMessage = 'Sign in failed. Please try again.';
+        setError(errorMessage);
+        addNotification('error', errorMessage);
+        console.log('❌ Sign in failed: Unknown error');
       }
     } catch (error) {
       const errorMessage = 'An error occurred. Please try again.';
       setError(errorMessage);
       addNotification('error', errorMessage);
+      console.error('❌ Sign in error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -57,22 +78,47 @@ export default function SignIn() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setError('');
+    
+    console.log('🔐 Google sign in attempt');
+    
     try {
       const result = await signIn('google', { 
         callbackUrl: '/dashboard',
         redirect: false 
       });
       
+      console.log('🔐 Google sign in result:', result);
+      
       if (result?.error) {
-        const errorMessage = 'Google sign-in failed. Please check your Google account settings.';
+        let errorMessage = 'Google sign-in failed. Please try again.';
+        
+        if (result.error === 'OAuthSignin') {
+          errorMessage = 'Google sign-in failed. Please check your Google account settings.';
+        } else if (result.error === 'OAuthCallback') {
+          errorMessage = 'Google sign-in callback failed. Please try again.';
+        } else if (result.error === 'OAuthCreateAccount') {
+          errorMessage = 'Failed to create account with Google. Please try again.';
+        } else if (result.error === 'Configuration') {
+          errorMessage = 'Google OAuth configuration error. Please contact support.';
+        } else {
+          errorMessage = `Google sign-in failed: ${result.error}`;
+        }
+        
         setError(errorMessage);
         addNotification('error', errorMessage);
+        console.log('❌ Google sign in failed:', errorMessage);
       } else if (result?.url) {
         addNotification('success', 'Successfully signed in with Google!');
+        console.log('✅ Google sign in successful');
         router.push(result.url);
+      } else {
+        const errorMessage = 'Google sign-in failed. Please try again.';
+        setError(errorMessage);
+        addNotification('error', errorMessage);
+        console.log('❌ Google sign in failed: Unknown error');
       }
     } catch (error) {
-      console.error('Google sign-in error:', error);
+      console.error('❌ Google sign-in error:', error);
       const errorMessage = 'Google sign-in failed. Please try again.';
       setError(errorMessage);
       addNotification('error', errorMessage);
