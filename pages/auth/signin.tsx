@@ -69,8 +69,8 @@ export default function SignIn() {
         </div>
 
         {/* Sign In Form */}
-        <div className="card p-8 animate-fade-in-up">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="card p-10 animate-fade-in-up">
+          <form onSubmit={handleSubmit} className="space-y-8">
             <div className="form-group">
               <label htmlFor="email" className="form-label">
                 Email Address
@@ -131,7 +131,7 @@ export default function SignIn() {
               </div>
             )}
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pt-4">
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -162,7 +162,7 @@ export default function SignIn() {
             </button>
           </form>
 
-          <div className="mt-6">
+          <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
@@ -177,7 +177,7 @@ export default function SignIn() {
             <button
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="btn btn-outline w-full mt-4"
+              className="btn btn-outline w-full mt-6"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -189,7 +189,7 @@ export default function SignIn() {
             </button>
           </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center">
             <p className="text-slate-600 dark:text-slate-300">
               Don't have an account?{' '}
               <Link href="/auth/signup" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors">

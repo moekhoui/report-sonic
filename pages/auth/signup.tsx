@@ -112,8 +112,8 @@ export default function SignUp() {
         </div>
 
         {/* Sign Up Form */}
-        <div className="card p-8 animate-fade-in-up">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="card p-10 animate-fade-in-up">
+          <form onSubmit={handleSubmit} className="space-y-8">
             <div className="form-group">
               <label htmlFor="name" className="form-label">
                 Full Name
@@ -229,7 +229,7 @@ export default function SignUp() {
               </div>
             )}
 
-            <div className="flex items-start">
+            <div className="flex items-start pt-4">
               <input
                 type="checkbox"
                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mt-1"
@@ -263,7 +263,7 @@ export default function SignUp() {
             </button>
           </form>
 
-          <div className="mt-6">
+          <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
@@ -278,7 +278,7 @@ export default function SignUp() {
             <button
               onClick={handleGoogleSignUp}
               disabled={isLoading}
-              className="btn btn-outline w-full mt-4"
+              className="btn btn-outline w-full mt-6"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -290,7 +290,7 @@ export default function SignUp() {
             </button>
           </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center">
             <p className="text-slate-600 dark:text-slate-300">
               Already have an account?{' '}
               <Link href="/auth/signin" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors">

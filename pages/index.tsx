@@ -75,8 +75,8 @@ export default function Home() {
       {/* Features Section */}
       <section id="features" className="py-24 bg-white dark:bg-slate-900 transition-colors duration-500">
         <div className="container-modern">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
+          <div className="text-center mb-24">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-8">
               Everything You Need for
               <span className="block text-transparent bg-clip-text gradient-primary">Professional Reports</span>
             </h2>
@@ -125,12 +125,12 @@ export default function Home() {
                 color: "from-indigo-500 to-purple-500"
               }
             ].map((feature, index) => (
-              <div key={index} className="card p-8 hover-lift group">
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform duration-300`}>
+              <div key={index} className="card p-10 hover-lift group">
+                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-300`}>
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{feature.title}</h3>
-                <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{feature.description}</p>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">{feature.title}</h3>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-lg">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -138,7 +138,7 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-slate-900 transition-colors duration-500">
+      <section className="py-24 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-slate-900 transition-colors duration-500">
         <div className="container-modern">
           <div className="grid-modern grid-4 text-center">
             {[
@@ -148,10 +148,10 @@ export default function Home() {
               { number: "5min", label: "Average Generation Time" }
             ].map((stat, index) => (
               <div key={index} className="animate-fade-in-up" style={{animationDelay: `${index * 0.1}s`}}>
-                <div className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-2">
+                <div className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-white mb-4">
                   {stat.number}
                 </div>
-                <div className="text-slate-600 dark:text-slate-300 font-medium">
+                <div className="text-slate-600 dark:text-slate-300 font-medium text-lg">
                   {stat.label}
                 </div>
               </div>
@@ -161,18 +161,18 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 gradient-primary relative overflow-hidden">
+      <section className="py-32 gradient-primary relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="container-modern relative z-10">
           <div className="text-center text-white max-w-4xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <h2 className="text-5xl md:text-6xl font-bold mb-8">
               Ready to Transform Your Data?
             </h2>
-            <p className="text-xl mb-12 opacity-90 leading-relaxed">
+            <p className="text-xl md:text-2xl mb-16 opacity-90 leading-relaxed">
               Join thousands of professionals who trust ReportSonic for their reporting needs. 
               Start creating stunning reports today.
             </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <div className="flex flex-col sm:flex-row gap-8 justify-center">
               <Link href="/auth/signup" className="btn btn-secondary btn-xl">
                 Get Started Free
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
