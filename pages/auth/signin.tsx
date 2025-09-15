@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -11,6 +11,13 @@ export default function SignIn() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    // Check for error in URL parameters
+    if (router.query.error) {
+      setError(router.query.error as string);
+    }
+  }, [router.query.error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,10 +45,22 @@ export default function SignIn() {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
+    setError('');
     try {
-      await signIn('google', { callbackUrl: '/dashboard' });
+      const result = await signIn('google', { 
+        callbackUrl: '/dashboard',
+        redirect: false 
+      });
+      
+      if (result?.error) {
+        setError('Google sign-in failed. Please check your Google account settings.');
+      } else if (result?.url) {
+        router.push(result.url);
+      }
     } catch (error) {
+      console.error('Google sign-in error:', error);
       setError('Google sign-in failed. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };

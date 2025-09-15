@@ -6,6 +6,7 @@ import User from './models/User'
 import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
+  debug: process.env.NODE_ENV === 'development',
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -52,6 +53,31 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === 'google') {
+        try {
+          await connectDB()
+          const existingUser = await User.findOne({ email: user.email })
+          
+          if (!existingUser) {
+            // Create new user for Google OAuth
+            const newUser = new User({
+              name: user.name,
+              email: user.email,
+              image: user.image,
+              provider: 'google'
+            })
+            await newUser.save()
+            console.log('Created new Google user:', newUser.email)
+          }
+          return true
+        } catch (error) {
+          console.error('Google sign-in error:', error)
+          return false
+        }
+      }
+      return true
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id

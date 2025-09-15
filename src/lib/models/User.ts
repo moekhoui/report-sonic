@@ -5,6 +5,7 @@ export interface IUser extends Document {
   name: string
   password?: string
   image?: string
+  provider?: string
   subscription?: {
     plan: 'free' | 'pro' | 'enterprise'
     status: 'active' | 'canceled' | 'past_due'
@@ -31,6 +32,9 @@ const UserSchema = new Schema<IUser>({
     type: String,
   },
   image: {
+    type: String,
+  },
+  provider: {
     type: String,
   },
   subscription: {
