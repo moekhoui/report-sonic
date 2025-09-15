@@ -1,199 +1,156 @@
-import { GetServerSideProps } from 'next'
-import { getSession } from 'next-auth/react'
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { Button } from '../src/components/ui/button'
-import { 
-  FileText, 
-  Plus, 
-  BarChart3, 
-  Clock, 
-  TrendingUp,
-  Download,
-  Share2
-} from 'lucide-react'
+import { GetServerSideProps } from 'next';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../src/lib/auth';
+import { signOut } from 'next-auth/react';
+import Link from 'next/link';
+import ThemeToggle from '../src/components/ThemeToggle';
 
-// Mock data for demonstration
-const mockReports = [
-  {
-    id: '1',
-    title: 'Q3 Sales Performance Report',
-    description: 'Comprehensive analysis of Q3 sales data',
-    status: 'completed',
-    createdAt: '2024-01-15',
-    template: 'Executive Summary',
-    dataRows: 1250,
-  },
-  {
-    id: '2',
-    title: 'Marketing Campaign Analysis',
-    description: 'ROI analysis for recent marketing campaigns',
-    status: 'generating',
-    createdAt: '2024-01-14',
-    template: 'Marketing Report',
-    dataRows: 890,
-  },
-]
-
-export default function DashboardPage() {
-  const [reports, setReports] = useState(mockReports)
-
+export default function Dashboard({ user }: { user: any }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200">
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center px-6 py-4 border-b border-gray-200">
-            <FileText className="h-8 w-8 text-primary-600" />
-            <span className="ml-2 text-xl font-bold text-gray-900">ReportSonic</span>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            <Link href="/dashboard" className="flex items-center px-3 py-2 text-sm font-medium rounded-lg bg-primary-100 text-primary-700">
-              <BarChart3 className="h-5 w-5 mr-3" />
-              Dashboard
-            </Link>
-            <Link href="/reports" className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-100">
-              <FileText className="h-5 w-5 mr-3" />
-              Reports
-            </Link>
-          </nav>
-
-          {/* Create Report Button */}
-          <div className="p-4 border-t border-gray-200">
-            <Link href="/reports/new" className="flex items-center justify-center w-full px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Report
-            </Link>
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-all duration-500">
+      {/* Navigation */}
+      <nav className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
+        <div className="container">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 gradient-primary rounded-lg"></div>
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">ReportSonic</span>
+            </div>
+            <div className="flex items-center gap-6">
+              <ThemeToggle />
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  Welcome, {user?.name || user?.email}
+                </div>
+                <button
+                  onClick={() => signOut()}
+                  className="btn btn-outline btn-sm"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </nav>
 
       {/* Main Content */}
-      <div className="pl-64">
-        <div className="p-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-            <p className="text-gray-600">Welcome back! Here's what's happening with your reports.</p>
+      <div className="container py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Dashboard
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">
+            Welcome to your ReportSonic dashboard. Create and manage your AI-powered reports.
+          </p>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-3 mb-8">
+          <div className="card text-center">
+            <div className="text-4xl mb-4">📊</div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Create Report</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">Generate a new AI-powered report from your data</p>
+            <button className="btn btn-primary">Start Creating</button>
           </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="card">
-              <div className="flex items-center">
-                <div className="p-2 bg-primary-100 rounded-lg">
-                  <FileText className="h-6 w-6 text-primary-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Reports</p>
-                  <p className="text-2xl font-bold text-gray-900">{reports.length}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Completed</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {reports.filter(r => r.status === 'completed').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <div className="flex items-center">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <Clock className="h-6 w-6 text-yellow-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">In Progress</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {reports.filter(r => r.status === 'generating').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <BarChart3 className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">This Month</p>
-                  <p className="text-2xl font-bold text-gray-900">12</p>
-                </div>
-              </div>
-            </div>
+          
+          <div className="card text-center">
+            <div className="text-4xl mb-4">📁</div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Upload Data</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">Upload CSV files or connect to data sources</p>
+            <button className="btn btn-outline">Upload Files</button>
           </div>
+          
+          <div className="card text-center">
+            <div className="text-4xl mb-4">⚙️</div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Settings</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">Manage your account and preferences</p>
+            <button className="btn btn-outline">Open Settings</button>
+          </div>
+        </div>
 
-          {/* Recent Reports */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Recent Reports</h2>
-              <Link href="/reports">
-                <Button variant="ghost">View All</Button>
-              </Link>
-            </div>
-
-            <div className="space-y-4">
-              {reports.map((report) => (
-                <div key={report.id} className="card hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3">
-                        <FileText className="h-5 w-5 text-gray-400" />
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-900">{report.title}</h3>
-                          <p className="text-sm text-gray-600">{report.description}</p>
-                        </div>
-                      </div>
-                      <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
-                        <span>Created {report.createdAt}</span>
-                        <span>•</span>
-                        <span>{report.dataRows.toLocaleString()} rows</span>
-                        <span>•</span>
-                        <span>{report.template}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {report.status === 'completed' && (
-                        <>
-                          <Button size="sm" variant="outline">
-                            <Download className="h-4 w-4 mr-1" />
-                            Download
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Share2 className="h-4 w-4 mr-1" />
-                            Share
-                          </Button>
-                        </>
-                      )}
-                      <Button size="sm" variant="ghost">
-                        View
-                      </Button>
-                    </div>
-                  </div>
+        {/* Recent Reports */}
+        <div className="card">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Recent Reports</h2>
+          <div className="space-y-4">
+            {[
+              {
+                title: "Q4 Sales Analysis",
+                date: "2024-01-15",
+                status: "Completed",
+                type: "Sales Report"
+              },
+              {
+                title: "Marketing Performance",
+                date: "2024-01-14",
+                status: "In Progress",
+                type: "Marketing Report"
+              },
+              {
+                title: "Financial Summary",
+                date: "2024-01-13",
+                status: "Completed",
+                type: "Financial Report"
+              }
+            ].map((report, index) => (
+              <div key={index} className="flex items-center justify-between p-4 border border-gray-200 dark:border-slate-700 rounded-lg">
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{report.title}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{report.type} • {report.date}</p>
                 </div>
-              ))}
+                <div className="flex items-center gap-3">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    report.status === 'Completed' 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                  }`}>
+                    {report.status}
+                  </span>
+                  <button className="btn btn-ghost btn-sm">View</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Features Overview */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">What You Can Do</h2>
+          <div className="grid grid-2">
+            <div className="card">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">AI-Powered Analysis</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                Upload your data and let our AI analyze it to identify key insights, trends, and patterns automatically.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                <li>• Automatic data analysis</li>
+                <li>• Trend identification</li>
+                <li>• Insight generation</li>
+                <li>• Pattern recognition</li>
+              </ul>
+            </div>
+            
+            <div className="card">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Professional Reports</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                Generate beautiful, professional reports with charts, graphs, and visualizations.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                <li>• Multiple chart types</li>
+                <li>• Custom templates</li>
+                <li>• Brand customization</li>
+                <li>• Export options</li>
+              </ul>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const session = await getSession(context)
+  const session = await getServerSession(context.req, context.res, authOptions);
   
   if (!session) {
     return {
@@ -201,10 +158,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         destination: '/auth/signin',
         permanent: false,
       },
-    }
+    };
   }
 
   return {
-    props: { session },
-  }
-}
+    props: {
+      user: session.user,
+    },
+  };
+};

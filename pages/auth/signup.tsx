@@ -90,30 +90,24 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 transition-all duration-500 flex items-center justify-center p-4">
-      {/* Background Elements */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400/20 dark:bg-blue-500/10 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-400/20 dark:bg-purple-500/10 rounded-full blur-3xl animate-float" style={{animationDelay: '1s'}}></div>
-      </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 gradient-primary rounded-2xl shadow-intense animate-glow"></div>
+            <div className="w-16 h-16 gradient-primary rounded-2xl"></div>
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Create Account
           </h1>
-          <p className="text-slate-600 dark:text-slate-300">
+          <p className="text-gray-600 dark:text-gray-300">
             Join ReportSonic and start creating amazing reports
           </p>
         </div>
 
         {/* Sign Up Form */}
-        <div className="card p-12 animate-fade-in-up">
-          <form onSubmit={handleSubmit} className="space-y-10">
+        <div className="card">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="form-group">
               <label htmlFor="name" className="form-label">
                 Full Name
@@ -124,7 +118,7 @@ export default function SignUp() {
                 type="text"
                 value={formData.name}
                 onChange={handleChange}
-                className="input-field"
+                className="input"
                 placeholder="Enter your full name"
                 required
                 disabled={isLoading}
@@ -141,7 +135,7 @@ export default function SignUp() {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="input-field"
+                className="input"
                 placeholder="Enter your email"
                 required
                 disabled={isLoading}
@@ -159,7 +153,7 @@ export default function SignUp() {
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={handleChange}
-                  className="input-field pr-12"
+                  className="input pr-12"
                   placeholder="Create a password"
                   required
                   disabled={isLoading}
@@ -167,19 +161,10 @@ export default function SignUp() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   disabled={isLoading}
                 >
-                  {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
                 </button>
               </div>
             </div>
@@ -195,7 +180,7 @@ export default function SignUp() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="input-field pr-12"
+                  className="input pr-12"
                   placeholder="Confirm your password"
                   required
                   disabled={isLoading}
@@ -203,45 +188,33 @@ export default function SignUp() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   disabled={isLoading}
                 >
-                  {showConfirmPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
+                  {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
                 </button>
               </div>
             </div>
 
             {error && (
-              <div className="form-error">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div className="text-destructive text-sm">
                 {error}
               </div>
             )}
 
-            <div className="flex items-start pt-4">
+            <div className="flex items-start">
               <input
                 type="checkbox"
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mt-1"
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 mt-1"
                 required
               />
-              <label className="ml-2 text-sm text-slate-600 dark:text-slate-300">
+              <label className="ml-2 text-sm text-gray-600 dark:text-gray-300">
                 I agree to the{' '}
-                <Link href="/terms" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+                <Link href="/terms" className="text-primary hover:underline">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link href="/privacy" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+                <Link href="/privacy" className="text-primary hover:underline">
                   Privacy Policy
                 </Link>
               </label>
@@ -252,24 +225,17 @@ export default function SignUp() {
               disabled={isLoading}
               className="btn btn-primary w-full"
             >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Creating account...
-                </div>
-              ) : (
-                'Create Account'
-              )}
+              {isLoading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
 
-          <div className="mt-8">
+          <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
+                <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400">
+                <span className="px-2 bg-white dark:bg-slate-900 text-gray-500">
                   Or continue with
                 </span>
               </div>
@@ -278,7 +244,7 @@ export default function SignUp() {
             <button
               onClick={handleGoogleSignUp}
               disabled={isLoading}
-              className="btn btn-outline w-full mt-6"
+              className="btn btn-outline w-full mt-4"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -290,10 +256,10 @@ export default function SignUp() {
             </button>
           </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-slate-600 dark:text-slate-300">
+          <div className="mt-6 text-center">
+            <p className="text-gray-600 dark:text-gray-300">
               Already have an account?{' '}
-              <Link href="/auth/signin" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors">
+              <Link href="/auth/signin" className="text-primary hover:underline font-medium">
                 Sign in
               </Link>
             </p>
@@ -302,7 +268,7 @@ export default function SignUp() {
 
         {/* Theme Toggle */}
         <div className="flex justify-center mt-6">
-          <div className="flex items-center space-x-3 text-slate-600 dark:text-slate-300">
+          <div className="flex items-center gap-3 text-gray-600 dark:text-gray-300">
             <span className="text-sm">Light</span>
             <ThemeToggle />
             <span className="text-sm">Dark</span>
