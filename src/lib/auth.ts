@@ -27,43 +27,26 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
-        console.log('🔐 Credentials authorize called:', { email: credentials?.email })
-        
         if (!credentials?.email || !credentials?.password) {
-          console.log('❌ Missing credentials')
           return null
         }
 
         try {
-          console.log('🔌 Connecting to database...')
           await connectDB()
           
           const email = credentials.email.toLowerCase().trim()
-          console.log('🔍 Looking for user with email:', email)
-          
           const user = await User.findOne({ email })
-          console.log('👤 User found:', user ? 'Yes' : 'No')
           
-          if (!user) {
-            console.log('❌ No user found with this email')
+          if (!user || !user.password) {
             return null
           }
 
-          if (!user.password) {
-            console.log('❌ User has no password (Google user)')
-            return null
-          }
-
-          console.log('🔐 Checking password...')
           const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-          console.log('🔐 Password valid:', isPasswordValid)
           
           if (!isPasswordValid) {
-            console.log('❌ Invalid password')
             return null
           }
 
-          console.log('✅ Credentials authentication successful')
           return {
             id: user._id.toString(),
             email: user.email,
@@ -71,7 +54,7 @@ export const authOptions: NextAuthOptions = {
             image: user.image,
           }
         } catch (error) {
-          console.error('❌ Credentials auth error:', error)
+          console.error('Credentials auth error:', error)
           return null
         }
       }
@@ -83,14 +66,10 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      try {
-        if (account?.provider === 'google') {
+      if (account?.provider === 'google' && user?.email) {
+        try {
           await connectDB()
           
-          if (!user?.email) {
-            return false
-          }
-
           const email = user.email.toLowerCase().trim()
           let existingUser = await User.findOne({ email })
           
@@ -107,13 +86,13 @@ export const authOptions: NextAuthOptions = {
           } else {
             user.id = existingUser._id.toString()
           }
+        } catch (error) {
+          console.error('Google signIn error:', error)
+          return false
         }
-        
-        return true
-      } catch (error) {
-        console.error('SignIn callback error:', error)
-        return false
       }
+      
+      return true
     },
     async jwt({ token, user }) {
       if (user) {
@@ -139,11 +118,11 @@ export const authOptions: NextAuthOptions = {
     error: '/auth/signin',
   },
   events: {
-    async signIn({ user, account, profile, isNewUser }) {
-      console.log('Sign-in event:', { user: user?.email, provider: account?.provider })
+    async signIn({ user, account }) {
+      console.log('Sign-in:', user?.email, account?.provider)
     },
-    async signOut({ token, session }) {
-      console.log('Sign-out event:', { user: session?.user?.email })
+    async signOut({ session }) {
+      console.log('Sign-out:', session?.user?.email)
     },
   },
 }
