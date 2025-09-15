@@ -34,7 +34,7 @@ async function connectDB(): Promise<Connection | null> {
     console.log('✅ Connected to MongoDB')
     return connection.connection
   } catch (error) {
-    console.error('❌ MongoDB connection error:', error.message)
+    console.error('❌ MongoDB connection error:', error instanceof Error ? error.message : String(error))
     return null
   }
 }
