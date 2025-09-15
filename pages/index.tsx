@@ -73,14 +73,14 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-24 bg-white dark:bg-slate-900 transition-colors duration-500">
+      <section id="features" className="py-32 bg-white dark:bg-slate-900 transition-colors duration-500">
         <div className="container-modern">
-          <div className="text-center mb-24">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-8">
+          <div className="text-center mb-32">
+            <h2 className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-white mb-12">
               Everything You Need for
-              <span className="block text-transparent bg-clip-text gradient-primary">Professional Reports</span>
+              <span className="block text-transparent bg-clip-text gradient-primary mt-4">Professional Reports</span>
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 max-w-4xl mx-auto leading-relaxed">
               Our AI-powered platform combines cutting-edge technology with intuitive design 
               to make report creation effortless and professional.
             </p>
@@ -125,12 +125,12 @@ export default function Home() {
                 color: "from-indigo-500 to-purple-500"
               }
             ].map((feature, index) => (
-              <div key={index} className="card p-10 hover-lift group">
-                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-300`}>
+              <div key={index} className="card p-12 hover-lift group">
+                <div className={`w-24 h-24 rounded-3xl bg-gradient-to-r ${feature.color} flex items-center justify-center text-4xl mb-10 group-hover:scale-110 transition-transform duration-300`}>
                   {feature.icon}
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">{feature.title}</h3>
-                <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-lg">{feature.description}</p>
+                <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-8">{feature.title}</h3>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-lg md:text-xl">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -138,7 +138,7 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-24 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-slate-900 transition-colors duration-500">
+      <section className="py-32 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-slate-900 transition-colors duration-500">
         <div className="container-modern">
           <div className="grid-modern grid-4 text-center">
             {[
@@ -148,10 +148,10 @@ export default function Home() {
               { number: "5min", label: "Average Generation Time" }
             ].map((stat, index) => (
               <div key={index} className="animate-fade-in-up" style={{animationDelay: `${index * 0.1}s`}}>
-                <div className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-white mb-4">
+                <div className="text-6xl md:text-7xl font-bold text-slate-900 dark:text-white mb-6">
                   {stat.number}
                 </div>
-                <div className="text-slate-600 dark:text-slate-300 font-medium text-lg">
+                <div className="text-slate-600 dark:text-slate-300 font-medium text-xl">
                   {stat.label}
                 </div>
               </div>
@@ -161,21 +161,21 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 gradient-primary relative overflow-hidden">
+      <section className="py-40 gradient-primary relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="container-modern relative z-10">
-          <div className="text-center text-white max-w-4xl mx-auto">
-            <h2 className="text-5xl md:text-6xl font-bold mb-8">
+          <div className="text-center text-white max-w-5xl mx-auto">
+            <h2 className="text-6xl md:text-7xl font-bold mb-12">
               Ready to Transform Your Data?
             </h2>
-            <p className="text-xl md:text-2xl mb-16 opacity-90 leading-relaxed">
+            <p className="text-2xl md:text-3xl mb-20 opacity-90 leading-relaxed">
               Join thousands of professionals who trust ReportSonic for their reporting needs. 
               Start creating stunning reports today.
             </p>
-            <div className="flex flex-col sm:flex-row gap-8 justify-center">
+            <div className="flex flex-col sm:flex-row gap-10 justify-center">
               <Link href="/auth/signup" className="btn btn-secondary btn-xl">
                 Get Started Free
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Link>

@@ -112,8 +112,8 @@ export default function SignUp() {
         </div>
 
         {/* Sign Up Form */}
-        <div className="card p-10 animate-fade-in-up">
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="card p-12 animate-fade-in-up">
+          <form onSubmit={handleSubmit} className="space-y-10">
             <div className="form-group">
               <label htmlFor="name" className="form-label">
                 Full Name

@@ -1,18 +1,15 @@
 import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { MongoDBAdapter } from '@next-auth/mongodb-adapter'
-import clientPromise from './mongodb'
 import connectDB from './database'
 import User from './models/User'
 import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
-  adapter: MongoDBAdapter(clientPromise),
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
     CredentialsProvider({
       name: 'credentials',
@@ -22,21 +19,33 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log('Missing credentials')
           return null
         }
 
         try {
+          console.log('Attempting to connect to database...')
           await connectDB()
+          console.log('Database connected successfully')
           
           const user = await User.findOne({ email: credentials.email })
+          console.log('User found:', user ? 'Yes' : 'No')
+          
           if (!user) {
+            console.log('User not found')
             return null
           }
 
-          // For now, we'll implement basic password checking
-          // In production, you should hash passwords properly
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.password || '')
+          if (!user.password) {
+            console.log('User has no password')
+            return null
+          }
+
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+          console.log('Password valid:', isPasswordValid)
+          
           if (!isPasswordValid) {
+            console.log('Invalid password')
             return null
           }
 
@@ -73,4 +82,5 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/auth/signin',
   },
+  debug: process.env.NODE_ENV === 'development',
 }
