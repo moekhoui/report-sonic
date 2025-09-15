@@ -14,18 +14,11 @@ if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
 }
 
 export const authOptions: NextAuthOptions = {
-  debug: true, // Enable debug mode for troubleshooting
+  debug: process.env.NODE_ENV === 'development',
   providers: [
     GoogleProvider({
       clientId: GOOGLE_CLIENT_ID || '',
       clientSecret: GOOGLE_CLIENT_SECRET || '',
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code"
-        }
-      }
     }),
     CredentialsProvider({
       name: 'credentials',
@@ -89,32 +82,19 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async signIn({ user, account, profile, email, credentials }) {
-      console.log('🔐 SignIn callback called:', { 
-        userEmail: user?.email, 
-        provider: account?.provider,
-        hasProfile: !!profile,
-        hasCredentials: !!credentials
-      })
-
+    async signIn({ user, account, profile }) {
       try {
-        await connectDB()
-        
         if (account?.provider === 'google') {
-          console.log('🔍 Processing Google OAuth...')
+          await connectDB()
           
           if (!user?.email) {
-            console.log('❌ No email from Google')
             return false
           }
 
           const email = user.email.toLowerCase().trim()
-          console.log('🔍 Looking for existing Google user:', email)
-          
           let existingUser = await User.findOne({ email })
           
           if (!existingUser) {
-            console.log('👤 Creating new Google user...')
             const newUser = new User({
               name: user.name || 'Google User',
               email: email,
@@ -123,53 +103,34 @@ export const authOptions: NextAuthOptions = {
             })
             
             await newUser.save()
-            console.log('✅ Created new Google user:', newUser.email)
-            existingUser = newUser
+            user.id = newUser._id.toString()
           } else {
-            console.log('✅ Existing Google user found:', existingUser.email)
+            user.id = existingUser._id.toString()
           }
-          
-          // Update user ID in the token
-          user.id = existingUser._id.toString()
         }
         
-        console.log('✅ SignIn callback successful')
         return true
       } catch (error) {
-        console.error('❌ SignIn callback error:', error)
+        console.error('SignIn callback error:', error)
         return false
       }
     },
-    async jwt({ token, user, account }) {
-      console.log('🔑 JWT callback called:', { 
-        hasToken: !!token, 
-        hasUser: !!user, 
-        provider: account?.provider 
-      })
-      
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id
         token.email = user.email
         token.name = user.name
         token.image = user.image
       }
-      
       return token
     },
     async session({ session, token }) {
-      console.log('📋 Session callback called:', { 
-        hasSession: !!session, 
-        hasToken: !!token,
-        tokenId: token?.id 
-      })
-      
       if (token && session.user) {
         session.user.id = token.id as string
         session.user.email = token.email as string
         session.user.name = token.name as string
         session.user.image = token.image as string
       }
-      
       return session
     },
   },
@@ -179,16 +140,10 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     async signIn({ user, account, profile, isNewUser }) {
-      console.log('🎉 Sign-in event:', { 
-        user: user?.email, 
-        provider: account?.provider, 
-        isNewUser 
-      })
+      console.log('Sign-in event:', { user: user?.email, provider: account?.provider })
     },
     async signOut({ token, session }) {
-      console.log('🚪 Sign-out event:', { 
-        user: session?.user?.email 
-      })
+      console.log('Sign-out event:', { user: session?.user?.email })
     },
   },
 }
