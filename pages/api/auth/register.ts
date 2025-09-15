@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import bcrypt from 'bcryptjs'
-import connectDB from '../../../src/lib/database'
-import User from '../../../src/lib/models/User'
+import { initDatabase } from '../../../src/lib/mysql'
+import UserMySQL from '../../../src/lib/models/UserMySQL'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log('📝 Registration API called:', req.method)
@@ -33,14 +32,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     console.log('🔌 Connecting to database...')
-    await connectDB()
+    await initDatabase()
     console.log('✅ Database connected successfully')
 
     // Check if user already exists
     const normalizedEmail = email.toLowerCase().trim()
     console.log('🔍 Checking for existing user:', normalizedEmail)
     
-    const existingUser = await User.findOne({ email: normalizedEmail })
+    const existingUser = await UserMySQL.findByEmail(normalizedEmail)
     console.log('👤 Existing user found:', existingUser ? 'Yes' : 'No')
     
     if (existingUser) {
@@ -48,28 +47,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'User already exists with this email' })
     }
 
-    // Hash password
-    console.log('🔐 Hashing password...')
-    const hashedPassword = await bcrypt.hash(password, 12)
-    console.log('✅ Password hashed successfully')
-
     // Create user
     console.log('👤 Creating new user...')
-    const user = new User({
+    const user = await UserMySQL.create({
       name: name.trim(),
       email: normalizedEmail,
-      password: hashedPassword,
+      password: password,
       provider: 'credentials'
     })
-
-    await user.save()
-    console.log('✅ User created successfully:', user._id)
+    console.log('✅ User created successfully:', user.id)
 
     return res.status(201).json({ 
       message: 'Account created successfully! Welcome to ReportSonic!', 
-      userId: user._id,
+      userId: user.id,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
       }
@@ -77,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error: any) {
     console.error('❌ Registration error:', error)
     
-    if (error.code === 11000) {
+    if (error.code === 'ER_DUP_ENTRY') {
       return res.status(400).json({ error: 'User already exists with this email' })
     }
     

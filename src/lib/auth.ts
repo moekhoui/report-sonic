@@ -1,9 +1,8 @@
 import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import connectDB from './database'
-import User from './models/User'
-import bcrypt from 'bcryptjs'
+import { initDatabase } from './mysql'
+import UserMySQL from './models/UserMySQL'
 
 // Validate environment variables
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
@@ -32,23 +31,16 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          await connectDB()
+          await initDatabase()
           
-          const email = credentials.email.toLowerCase().trim()
-          const user = await User.findOne({ email })
+          const user = await UserMySQL.verifyPassword(credentials.email, credentials.password)
           
-          if (!user || !user.password) {
-            return null
-          }
-
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-          
-          if (!isPasswordValid) {
+          if (!user) {
             return null
           }
 
           return {
-            id: user._id.toString(),
+            id: user.id!.toString(),
             email: user.email,
             name: user.name,
             image: user.image,
@@ -68,23 +60,21 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google' && user?.email) {
         try {
-          await connectDB()
+          await initDatabase()
           
           const email = user.email.toLowerCase().trim()
-          let existingUser = await User.findOne({ email })
+          let existingUser = await UserMySQL.findByEmail(email)
           
           if (!existingUser) {
-            const newUser = new User({
+            const newUser = await UserMySQL.create({
               name: user.name || 'Google User',
               email: email,
               image: user.image,
               provider: 'google'
             })
-            
-            await newUser.save()
-            user.id = newUser._id.toString()
+            user.id = newUser.id!.toString()
           } else {
-            user.id = existingUser._id.toString()
+            user.id = existingUser.id!.toString()
           }
         } catch (error) {
           console.error('Google signIn error:', error)
