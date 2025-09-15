@@ -8,9 +8,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "export": "next build && next export",
-    "deploy": "vercel --prod",
-    "deploy:preview": "vercel",
     "setup-mysql": "node setup-aiven-mysql.js",
     "test-mysql": "node test-mysql-auth.js"
   },
@@ -45,5 +42,8 @@
     "postcss": "8.4.49",
     "tailwindcss": "3.4.17",
     "typescript": "5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
