@@ -4,9 +4,9 @@ const mysql = require('mysql2/promise');
 // You need to create a free account at https://planetscale.com/
 const dbConfig = {
   host: 'aws.connect.psdb.cloud', // PlanetScale host
-  user: 'your_username', // Replace with your PlanetScale username
-  password: 'your_password', // Replace with your PlanetScale password
-  database: 'your_database', // Replace with your database name
+  user: 'YOUR_PLANETSCALE_USERNAME', // Replace with your PlanetScale username
+  password: 'YOUR_PLANETSCALE_PASSWORD', // Replace with your PlanetScale password
+  database: 'YOUR_DATABASE_NAME', // Replace with your database name
   port: 3306,
   ssl: {
     rejectUnauthorized: true

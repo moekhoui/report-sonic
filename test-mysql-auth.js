@@ -1,17 +1,17 @@
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 
-// Test MySQL configuration
+// Test MySQL configuration - Aiven
 const dbConfig = {
-  host: process.env.MYSQL_HOST || 'db4free.net',
-  user: process.env.MYSQL_USER || 'reportsonic_user',
-  password: process.env.MYSQL_PASSWORD || 'ReportSonic2024!',
-  database: process.env.MYSQL_DATABASE || 'reportsonic_db',
-  port: parseInt(process.env.MYSQL_PORT || '3306'),
-  ssl: false,
+  host: process.env.MYSQL_HOST || 'reportsonic-mysql-report-sonic.g.aivencloud.com',
+  user: process.env.MYSQL_USER || 'avnadmin',
+  password: process.env.MYSQL_PASSWORD || 'YOUR_AIVEN_PASSWORD',
+  database: process.env.MYSQL_DATABASE || 'defaultdb',
+  port: parseInt(process.env.MYSQL_PORT || '14183'),
+  ssl: {
+    rejectUnauthorized: false
+  },
   connectionLimit: 10,
-  acquireTimeout: 60000,
-  timeout: 60000,
 };
 
 async function testMySQLAuth() {

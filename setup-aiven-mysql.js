@@ -1,40 +1,43 @@
 const mysql = require('mysql2/promise');
 
-// Simple free MySQL database setup
-// Using db4free.net (free MySQL hosting)
+// Aiven MySQL configuration
+// Use environment variables for security
 const dbConfig = {
-  host: 'db4free.net',
-  user: 'YOUR_DB4FREE_USERNAME', // Replace with your db4free username
-  password: 'YOUR_DB4FREE_PASSWORD', // Replace with your db4free password
-  database: 'YOUR_DB4FREE_DATABASE', // Replace with your db4free database name
-  port: 3306,
-  ssl: false,
+  host: process.env.MYSQL_HOST || 'reportsonic-mysql-report-sonic.g.aivencloud.com',
+  user: process.env.MYSQL_USER || 'avnadmin',
+  password: process.env.MYSQL_PASSWORD || 'YOUR_AIVEN_PASSWORD',
+  database: process.env.MYSQL_DATABASE || 'defaultdb',
+  port: parseInt(process.env.MYSQL_PORT || '14183'),
+  ssl: {
+    rejectUnauthorized: false
+  },
   connectionLimit: 10,
   acquireTimeout: 60000,
   timeout: 60000,
 };
 
-async function setupSimpleMySQLDatabase() {
-  console.log('🚀 Setting up Simple MySQL Database...\n');
+async function setupAivenDatabase() {
+  console.log('🚀 Setting up Aiven MySQL Database...\n');
   
   console.log('📋 INSTRUCTIONS:');
-  console.log('1. Go to https://www.db4free.net/');
+  console.log('1. Go to https://console.aiven.io/');
   console.log('2. Sign up for a free account');
-  console.log('3. Create a new database named "reportsonic_db"');
-  console.log('4. Create a user "reportsonic_user" with password "ReportSonic2024!"');
-  console.log('5. Grant all privileges to the user on the database');
+  console.log('3. Create a new MySQL service');
+  console.log('4. Get your connection details from the Overview tab');
+  console.log('5. Update the credentials in this file');
   console.log('6. Run this script again\n');
   
-  console.log('🔧 Configuration:');
+  console.log('🔧 Current Configuration:');
   console.log(`Host: ${dbConfig.host}`);
   console.log(`Database: ${dbConfig.database}`);
   console.log(`Username: ${dbConfig.user}`);
-  console.log(`Password: ${dbConfig.password}\n`);
+  console.log(`Password: ${dbConfig.password ? '***' : 'Not set'}`);
+  console.log(`Port: ${dbConfig.port}\n`);
   
   try {
     // Test connection
     const connection = await mysql.createConnection(dbConfig);
-    console.log('✅ Connected to MySQL database');
+    console.log('✅ Connected to Aiven MySQL database');
 
     // Create users table
     await connection.execute(`
@@ -89,14 +92,14 @@ async function setupSimpleMySQLDatabase() {
     console.log('✅ Test query successful:', rows[0]);
 
     await connection.end();
-    console.log('\n🎉 MySQL Database setup completed successfully!');
+    console.log('\n🎉 Aiven Database setup completed successfully!');
     
     console.log('\n📋 Environment Variables to set in Vercel:');
-    console.log('MYSQL_HOST=db4free.net');
-    console.log('MYSQL_USER=reportsonic_user');
-    console.log('MYSQL_PASSWORD=ReportSonic2024!');
-    console.log('MYSQL_DATABASE=reportsonic_db');
-    console.log('MYSQL_PORT=3306');
+    console.log(`MYSQL_HOST=${dbConfig.host}`);
+    console.log(`MYSQL_USER=${dbConfig.user}`);
+    console.log(`MYSQL_PASSWORD=${dbConfig.password}`);
+    console.log(`MYSQL_DATABASE=${dbConfig.database}`);
+    console.log(`MYSQL_PORT=${dbConfig.port}`);
     
     console.log('\n🔐 Test Credentials:');
     console.log('Email: test@example.com');
@@ -105,11 +108,12 @@ async function setupSimpleMySQLDatabase() {
   } catch (error) {
     console.error('❌ Database setup failed:', error.message);
     console.log('\n💡 Make sure to:');
-    console.log('1. Create a db4free.net account');
-    console.log('2. Create the database and user as specified above');
-    console.log('3. Wait a few minutes for the database to be ready');
-    console.log('4. Run this script again');
+    console.log('1. Create an Aiven account');
+    console.log('2. Create a MySQL service');
+    console.log('3. Get your connection credentials from the Overview tab');
+    console.log('4. Update the configuration in this file');
+    console.log('5. Wait for the service to be fully ready (2-3 minutes)');
   }
 }
 
-setupSimpleMySQLDatabase();
+setupAivenDatabase();
