@@ -1,6 +1,6 @@
 {
   "name": "report-sonic",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "AI-powered reporting SaaS for consultants and agencies",
   "private": true,
   "scripts": {
