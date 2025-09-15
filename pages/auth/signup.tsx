@@ -3,6 +3,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import ThemeToggle from '../../src/components/ThemeToggle';
+import { useNotification } from '../../src/components/Notification';
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -16,6 +17,7 @@ export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
+  const { addNotification, NotificationContainer } = useNotification();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -30,13 +32,17 @@ export default function SignUp() {
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      const errorMessage = 'Passwords do not match';
+      setError(errorMessage);
+      addNotification('error', errorMessage);
       setIsLoading(false);
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      const errorMessage = 'Password must be at least 6 characters long';
+      setError(errorMessage);
+      addNotification('error', errorMessage);
       setIsLoading(false);
       return;
     }
@@ -57,23 +63,31 @@ export default function SignUp() {
       const data = await response.json();
 
       if (response.ok) {
+        addNotification('success', data.message || 'Account created successfully! Welcome to ReportSonic!');
+        
         // Auto sign in after successful registration
         const result = await signIn('credentials', {
-          email: formData.email,
+          email: formData.email.toLowerCase().trim(),
           password: formData.password,
           redirect: false,
         });
 
         if (result?.ok) {
+          addNotification('success', 'Successfully signed in! Welcome to your dashboard!');
           router.push('/dashboard');
         } else {
-          router.push('/auth/signin?message=Registration successful. Please sign in.');
+          addNotification('info', 'Account created! Please sign in to continue.');
+          router.push('/auth/signin');
         }
       } else {
-        setError(data.error || 'Registration failed');
+        const errorMessage = data.error || 'Registration failed';
+        setError(errorMessage);
+        addNotification('error', errorMessage);
       }
     } catch (error) {
-      setError('Something went wrong. Please try again.');
+      const errorMessage = 'Something went wrong. Please try again.';
+      setError(errorMessage);
+      addNotification('error', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -275,6 +289,9 @@ export default function SignUp() {
           </div>
         </div>
       </div>
+      
+      {/* Notifications */}
+      <NotificationContainer />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next'
 import bcrypt from 'bcryptjs'
 import connectDB from '../../../src/lib/database'
 import User from '../../../src/lib/models/User'
+import { sendEmail, generateWelcomeEmail } from '../../../src/lib/email'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -42,15 +43,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Create user
     console.log('Creating user...')
     const user = new User({
-      name,
-      email,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
       password: hashedPassword,
+      provider: 'credentials'
     })
 
     await user.save()
-    console.log('User created successfully:', user._id)
+    console.log('✅ User created successfully:', user._id)
 
-    return res.status(201).json({ message: 'User created successfully', userId: user._id })
+    // Send welcome email
+    try {
+      await sendEmail(generateWelcomeEmail(user.name, user.email))
+      console.log('📧 Welcome email sent to:', user.email)
+    } catch (emailError) {
+      console.error('❌ Email sending failed:', emailError)
+      // Don't fail registration if email fails
+    }
+
+    return res.status(201).json({ 
+      message: 'Account created successfully! Welcome to ReportSonic!', 
+      userId: user._id,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      }
+    })
   } catch (error) {
     console.error('Registration error:', error)
     return res.status(500).json({ error: 'Internal server error: ' + (error as Error).message })

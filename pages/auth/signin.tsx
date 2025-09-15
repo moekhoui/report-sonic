@@ -3,6 +3,7 @@ import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import ThemeToggle from '../../src/components/ThemeToggle';
+import { useNotification } from '../../src/components/Notification';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -11,13 +12,16 @@ export default function SignIn() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const { addNotification, NotificationContainer } = useNotification();
 
   useEffect(() => {
     // Check for error in URL parameters
     if (router.query.error) {
-      setError(router.query.error as string);
+      const errorMessage = router.query.error as string;
+      setError(errorMessage);
+      addNotification('error', errorMessage);
     }
-  }, [router.query.error]);
+  }, [router.query.error, addNotification]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,12 +36,19 @@ export default function SignIn() {
       });
 
       if (result?.error) {
-        setError('Invalid email or password');
-      } else {
+        const errorMessage = result.error === 'CredentialsSignin' 
+          ? 'Invalid email or password' 
+          : result.error;
+        setError(errorMessage);
+        addNotification('error', errorMessage);
+      } else if (result?.ok) {
+        addNotification('success', 'Successfully signed in! Welcome back!');
         router.push('/dashboard');
       }
     } catch (error) {
-      setError('Something went wrong. Please try again.');
+      const errorMessage = 'An error occurred. Please try again.';
+      setError(errorMessage);
+      addNotification('error', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -53,13 +64,18 @@ export default function SignIn() {
       });
       
       if (result?.error) {
-        setError('Google sign-in failed. Please check your Google account settings.');
+        const errorMessage = 'Google sign-in failed. Please check your Google account settings.';
+        setError(errorMessage);
+        addNotification('error', errorMessage);
       } else if (result?.url) {
+        addNotification('success', 'Successfully signed in with Google!');
         router.push(result.url);
       }
     } catch (error) {
       console.error('Google sign-in error:', error);
-      setError('Google sign-in failed. Please try again.');
+      const errorMessage = 'Google sign-in failed. Please try again.';
+      setError(errorMessage);
+      addNotification('error', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -202,6 +218,9 @@ export default function SignIn() {
           </div>
         </div>
       </div>
+      
+      {/* Notifications */}
+      <NotificationContainer />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import connectDB from './database'
 import User from './models/User'
 import bcrypt from 'bcryptjs'
+import { sendEmail, generateWelcomeEmail } from './email'
 
 export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
@@ -20,20 +21,24 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          throw new Error('Email and password are required')
         }
 
         try {
           await connectDB()
-          const user = await User.findOne({ email: credentials.email })
+          const user = await User.findOne({ email: credentials.email.toLowerCase() })
           
-          if (!user || !user.password) {
-            return null
+          if (!user) {
+            throw new Error('No user found with this email')
+          }
+
+          if (!user.password) {
+            throw new Error('Please sign in with Google or reset your password')
           }
 
           const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
           if (!isPasswordValid) {
-            return null
+            throw new Error('Invalid password')
           }
 
           return {
@@ -44,7 +49,7 @@ export const authOptions: NextAuthOptions = {
           }
         } catch (error) {
           console.error('Auth error:', error)
-          return null
+          throw error
         }
       }
     })
@@ -54,29 +59,40 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === 'google') {
-        try {
-          await connectDB()
+      try {
+        await connectDB()
+        
+        if (account?.provider === 'google') {
           const existingUser = await User.findOne({ email: user.email })
           
           if (!existingUser) {
             // Create new user for Google OAuth
             const newUser = new User({
               name: user.name,
-              email: user.email,
+              email: user.email?.toLowerCase(),
               image: user.image,
               provider: 'google'
             })
             await newUser.save()
-            console.log('Created new Google user:', newUser.email)
+            console.log('✅ Created new Google user:', newUser.email)
+            
+            // Send welcome email
+            try {
+              await sendEmail(generateWelcomeEmail(newUser.name, newUser.email))
+              console.log('📧 Welcome email sent to:', newUser.email)
+            } catch (emailError) {
+              console.error('Email sending failed:', emailError)
+            }
+          } else {
+            console.log('✅ Existing Google user signed in:', existingUser.email)
           }
-          return true
-        } catch (error) {
-          console.error('Google sign-in error:', error)
-          return false
         }
+        
+        return true
+      } catch (error) {
+        console.error('Sign-in callback error:', error)
+        return false
       }
-      return true
     },
     async jwt({ token, user }) {
       if (user) {
@@ -93,5 +109,14 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/auth/signin',
+    error: '/auth/signin',
+  },
+  events: {
+    async signIn({ user, account, profile, isNewUser }) {
+      console.log('🔐 Sign-in event:', { user: user.email, provider: account?.provider, isNewUser })
+    },
+    async signOut({ token, session }) {
+      console.log('🚪 Sign-out event:', { user: session?.user?.email })
+    },
   },
 }
