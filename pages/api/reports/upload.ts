@@ -165,10 +165,10 @@ function generateAIAnalysis(data: any[]) {
   }).filter((stat): stat is NonNullable<typeof stat> => stat !== null)
 
   // AI-Powered Pattern Detection
-  const patterns = []
+  const patterns: string[] = []
   
   // Detect trends in numeric data
-  const trends = []
+  const trends: string[] = []
   statistics.forEach(stat => {
     if (stat.count > 10) {
       // Simple trend detection
@@ -196,7 +196,7 @@ function generateAIAnalysis(data: any[]) {
   })
 
   // Detect data quality issues
-  const qualityIssues = []
+  const qualityIssues: string[] = []
   headers.forEach((header, index) => {
     const emptyCount = rows.filter(row => !row[index] || row[index] === '').length
     const emptyPercentage = (emptyCount / totalRows) * 100
@@ -207,7 +207,7 @@ function generateAIAnalysis(data: any[]) {
   })
 
   // Generate AI insights
-  const insights = []
+  const insights: string[] = []
   
   // Dataset size insights
   if (totalRows > 10000) {
@@ -260,7 +260,7 @@ function generateAIAnalysis(data: any[]) {
   }
 
   // Generate AI recommendations
-  const recommendations = []
+  const recommendations: string[] = []
   
   // Analysis recommendations
   if (numericColumns.length >= 2) {
