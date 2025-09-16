@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 export default function Dashboard() {
   const { user, loading, logout } = useAuth()
   const router = useRouter()
-  const [reports, setReports] = useState([])
+  const [reports, setReports] = useState<any[]>([])
   const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
