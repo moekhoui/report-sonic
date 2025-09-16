@@ -1,11 +1,5 @@
-import mongoose from 'mongoose'
-import { MongoClient } from 'mongodb'
-
+// Global type declarations for MySQL-based application
 declare global {
-  var mongoose: {
-    conn: typeof mongoose | null
-    promise: Promise<typeof mongoose> | null
-  }
-  var _mongoClientPromise: Promise<MongoClient> | undefined
+  // Add any global types needed for MySQL application
 }
 
