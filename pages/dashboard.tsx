@@ -1,169 +1,464 @@
-import { GetServerSideProps } from 'next';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../src/lib/auth';
-import { signOut } from 'next-auth/react';
-import Link from 'next/link';
-import ThemeToggle from '../src/components/ThemeToggle';
+import { useAuth } from '../src/contexts/AuthContext'
+import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
 
-export default function Dashboard({ user }: { user: any }) {
+export default function Dashboard() {
+  const { user, loading, logout } = useAuth()
+  const router = useRouter()
+  const [reports, setReports] = useState([])
+  const [uploading, setUploading] = useState(false)
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth/signin')
+    }
+  }, [user, loading, router])
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/reports/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        // Add to reports list
+        setReports(prev => [...prev, {
+          id: result.report.id,
+          name: result.report.name,
+          status: 'Completed',
+          createdAt: result.report.createdAt,
+          analysis: result.report.analysis
+        }])
+        console.log('✅ File processed successfully:', result.report.name)
+      } else {
+        console.error('❌ Upload failed:', result.error)
+        alert('Upload failed: ' + result.error)
+      }
+    } catch (error) {
+      console.error('Upload failed:', error)
+      alert('Upload failed. Please try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleExportReport = async (report: any) => {
+    try {
+      const response = await fetch('/api/reports/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ report }),
+      })
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${report.name.replace(/\.[^/.]+$/, '')}_report.pdf`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+      } else {
+        alert('Export failed. Please try again.')
+      }
+    } catch (error) {
+      console.error('Export failed:', error)
+      alert('Export failed. Please try again.')
+    }
+  }
+
+  const handleLogout = async () => {
+    await logout()
+    router.push('/auth/signin')
+  }
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '18px'
+      }}>
+        Loading...
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-all duration-500">
-      {/* Navigation */}
-      <nav className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
-        <div className="container">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 gradient-primary rounded-lg"></div>
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">ReportSonic</span>
-            </div>
-            <div className="flex items-center gap-6">
-              <ThemeToggle />
-              <div className="flex items-center gap-3">
-                <div className="text-sm text-gray-600 dark:text-gray-300">
-                  Welcome, {user?.name || user?.email}
-                </div>
-                <button
-                  onClick={() => signOut()}
-                  className="btn btn-outline btn-sm"
-                >
-                  Sign Out
-                </button>
-              </div>
-            </div>
+    <div style={{ 
+      minHeight: '100vh', 
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      padding: '20px'
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '10px',
+        padding: '40px',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+      }}>
+        {/* Header */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '40px',
+          paddingBottom: '20px',
+          borderBottom: '2px solid #f0f0f0'
+        }}>
+          <div>
+            <h1 style={{ 
+              color: '#333',
+              fontSize: '32px',
+              fontWeight: 'bold',
+              margin: 0,
+              marginBottom: '5px'
+            }}>
+              Welcome back, {user.name}! 🎉
+            </h1>
+            <p style={{ 
+              color: '#666',
+              fontSize: '16px',
+              margin: 0
+            }}>
+              Transform your data into powerful reports with AI
+            </p>
           </div>
+          
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: '12px 24px',
+              background: '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'background 0.3s'
+            }}
+            onMouseOver={(e) => e.target.style.background = '#c82333'}
+            onMouseOut={(e) => e.target.style.background = '#dc3545'}
+          >
+            Sign Out
+          </button>
         </div>
-      </nav>
 
-      {/* Main Content */}
-      <div className="container py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Welcome to your ReportSonic dashboard. Create and manage your AI-powered reports.
+        {/* Upload Section */}
+        <div style={{ 
+          background: '#f8f9fa',
+          padding: '30px',
+          borderRadius: '12px',
+          marginBottom: '40px',
+          border: '2px dashed #dee2e6',
+          textAlign: 'center'
+        }}>
+          <h2 style={{ 
+            color: '#333',
+            fontSize: '24px',
+            marginBottom: '15px'
+          }}>
+            📊 Upload Excel File
+          </h2>
+          
+          <p style={{ 
+            color: '#666',
+            marginBottom: '20px',
+            fontSize: '16px'
+          }}>
+            Upload your Excel file and let AI generate a comprehensive report
           </p>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-3 mb-8">
-          <div className="card text-center">
-            <div className="text-4xl mb-4">📊</div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Create Report</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">Generate a new AI-powered report from your data</p>
-            <button className="btn btn-primary">Start Creating</button>
-          </div>
-          
-          <div className="card text-center">
-            <div className="text-4xl mb-4">📁</div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Upload Data</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">Upload CSV files or connect to data sources</p>
-            <button className="btn btn-outline">Upload Files</button>
-          </div>
-          
-          <div className="card text-center">
-            <div className="text-4xl mb-4">⚙️</div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Settings</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">Manage your account and preferences</p>
-            <button className="btn btn-outline">Open Settings</button>
-          </div>
-        </div>
-
-        {/* Recent Reports */}
-        <div className="card">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Recent Reports</h2>
-          <div className="space-y-4">
-            {[
-              {
-                title: "Q4 Sales Analysis",
-                date: "2024-01-15",
-                status: "Completed",
-                type: "Sales Report"
-              },
-              {
-                title: "Marketing Performance",
-                date: "2024-01-14",
-                status: "In Progress",
-                type: "Marketing Report"
-              },
-              {
-                title: "Financial Summary",
-                date: "2024-01-13",
-                status: "Completed",
-                type: "Financial Report"
-              }
-            ].map((report, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border border-gray-200 dark:border-slate-700 rounded-lg">
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">{report.title}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">{report.type} • {report.date}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    report.status === 'Completed' 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                  }`}>
-                    {report.status}
-                  </span>
-                  <button className="btn btn-ghost btn-sm">View</button>
-                </div>
-              </div>
-            ))}
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <input
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFileUpload}
+              disabled={uploading}
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                cursor: uploading ? 'not-allowed' : 'pointer'
+              }}
+            />
+            <button
+              disabled={uploading}
+              style={{
+                padding: '15px 30px',
+                background: uploading ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s'
+              }}
+            >
+              {uploading ? 'Processing...' : '📁 Choose File'}
+            </button>
           </div>
         </div>
 
-        {/* Features Overview */}
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">What You Can Do</h2>
-          <div className="grid grid-2">
-            <div className="card">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">AI-Powered Analysis</h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Upload your data and let our AI analyze it to identify key insights, trends, and patterns automatically.
-              </p>
-              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                <li>• Automatic data analysis</li>
-                <li>• Trend identification</li>
-                <li>• Insight generation</li>
-                <li>• Pattern recognition</li>
-              </ul>
-            </div>
+        {/* Features Grid */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '20px',
+          marginBottom: '40px'
+        }}>
+          <div style={{
+            background: '#e3f2fd',
+            padding: '25px',
+            borderRadius: '12px',
+            border: '1px solid #bbdefb'
+          }}>
+            <h3 style={{ 
+              color: '#1976d2',
+              fontSize: '20px',
+              marginBottom: '15px'
+            }}>
+              🤖 AI-Powered Analysis
+            </h3>
+            <p style={{ 
+              color: '#666',
+              lineHeight: '1.6',
+              margin: 0
+            }}>
+              Our AI analyzes your data patterns and generates insights automatically
+            </p>
+          </div>
+
+          <div style={{
+            background: '#e8f5e8',
+            padding: '25px',
+            borderRadius: '12px',
+            border: '1px solid #c8e6c9'
+          }}>
+            <h3 style={{ 
+              color: '#388e3c',
+              fontSize: '20px',
+              marginBottom: '15px'
+            }}>
+              📈 Smart Visualizations
+            </h3>
+            <p style={{ 
+              color: '#666',
+              lineHeight: '1.6',
+              margin: 0
+            }}>
+              Create beautiful charts and graphs that tell your data's story
+            </p>
+          </div>
+
+          <div style={{
+            background: '#fff3e0',
+            padding: '25px',
+            borderRadius: '12px',
+            border: '1px solid #ffcc02'
+          }}>
+            <h3 style={{ 
+              color: '#f57c00',
+              fontSize: '20px',
+              marginBottom: '15px'
+            }}>
+              📄 Export Reports
+            </h3>
+            <p style={{ 
+              color: '#666',
+              lineHeight: '1.6',
+              margin: 0
+            }}>
+              Export your reports as PDF, Excel, or PowerPoint presentations
+            </p>
+          </div>
+        </div>
+
+        {/* Reports List */}
+        {reports.length > 0 && (
+          <div>
+            <h2 style={{ 
+              color: '#333',
+              fontSize: '24px',
+              marginBottom: '20px'
+            }}>
+              📋 Your Reports
+            </h2>
             
-            <div className="card">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Professional Reports</h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Generate beautiful, professional reports with charts, graphs, and visualizations.
-              </p>
-              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                <li>• Multiple chart types</li>
-                <li>• Custom templates</li>
-                <li>• Brand customization</li>
-                <li>• Export options</li>
-              </ul>
+            <div style={{ 
+              background: '#f8f9fa',
+              borderRadius: '8px',
+              overflow: 'hidden'
+            }}>
+              {reports.map((report: any) => (
+                <div key={report.id} style={{
+                  padding: '20px',
+                  borderBottom: '1px solid #dee2e6'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '15px'
+                  }}>
+                    <div>
+                      <h4 style={{ 
+                        color: '#333',
+                        fontSize: '16px',
+                        margin: 0,
+                        marginBottom: '5px'
+                      }}>
+                        {report.name}
+                      </h4>
+                      <p style={{ 
+                        color: '#666',
+                        fontSize: '14px',
+                        margin: 0
+                      }}>
+                        Created: {new Date(report.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <span style={{
+                        padding: '6px 12px',
+                        background: '#e8f5e8',
+                        color: '#388e3c',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        fontWeight: '500'
+                      }}>
+                        {report.status}
+                      </span>
+                      <button
+                        onClick={() => handleExportReport(report)}
+                        style={{
+                          padding: '8px 16px',
+                          background: '#1976d2',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          fontWeight: '500'
+                        }}
+                      >
+                        📄 Export PDF
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* AI Analysis Display */}
+                  {report.analysis && (
+                    <div style={{
+                      background: 'white',
+                      padding: '15px',
+                      borderRadius: '6px',
+                      border: '1px solid #e0e0e0'
+                    }}>
+                      <h5 style={{ 
+                        color: '#333',
+                        fontSize: '14px',
+                        margin: '0 0 10px 0',
+                        fontWeight: '600'
+                      }}>
+                        🤖 AI Analysis Summary
+                      </h5>
+                      <p style={{ 
+                        color: '#666',
+                        fontSize: '13px',
+                        margin: '0 0 10px 0',
+                        lineHeight: '1.4'
+                      }}>
+                        {report.analysis.summary}
+                      </p>
+                      
+                      {report.analysis.insights && report.analysis.insights.length > 0 && (
+                        <div style={{ marginBottom: '10px' }}>
+                          <h6 style={{ 
+                            color: '#333',
+                            fontSize: '12px',
+                            margin: '0 0 5px 0',
+                            fontWeight: '600'
+                          }}>
+                            Key Insights:
+                          </h6>
+                          <ul style={{ 
+                            margin: 0, 
+                            paddingLeft: '15px',
+                            color: '#666',
+                            fontSize: '12px'
+                          }}>
+                            {report.analysis.insights.map((insight: string, index: number) => (
+                              <li key={index}>{insight}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Account Info */}
+        <div style={{ 
+          background: '#f8f9fa',
+          padding: '20px',
+          borderRadius: '8px',
+          marginTop: '40px'
+        }}>
+          <h3 style={{ 
+            color: '#333',
+            fontSize: '18px',
+            marginBottom: '15px'
+          }}>
+            Account Information
+          </h3>
+          
+          <div style={{ display: 'grid', gap: '10px' }}>
+            <div>
+              <strong>Name:</strong> {user.name}
+            </div>
+            <div>
+              <strong>Email:</strong> {user.email}
+            </div>
+            <div>
+              <strong>Plan:</strong> {user.subscription_plan}
+            </div>
+            <div>
+              <strong>Status:</strong> {user.subscription_status}
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
-
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const session = await getServerSession(context.req, context.res, authOptions);
-  
-  if (!session) {
-    return {
-      redirect: {
-        destination: '/auth/signin',
-        permanent: false,
-      },
-    };
-  }
-
-  return {
-    props: {
-      user: session.user,
-    },
-  };
-};
