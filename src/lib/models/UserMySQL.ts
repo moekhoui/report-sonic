@@ -53,8 +53,8 @@ export class UserMySQL {
   }
 
   static async update(id: number, updates: Partial<IUser>): Promise<IUser | null> {
-    const fields = [];
-    const values = [];
+    const fields: string[] = [];
+    const values: any[] = [];
     
     Object.entries(updates).forEach(([key, value]) => {
       if (value !== undefined && key !== 'id' && key !== 'created_at' && key !== 'updated_at') {
