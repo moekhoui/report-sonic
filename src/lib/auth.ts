@@ -1,23 +1,82 @@
 import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { initDatabase } from './mysql'
-import UserMySQL from './models/UserMySQL'
+import mysql from 'mysql2/promise'
+import bcrypt from 'bcryptjs'
 
-// Validate environment variables
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
+// Direct database connection - no complex models
+const dbConfig = {
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  port: parseInt(process.env.MYSQL_PORT || '3306'),
+  ssl: {
+    rejectUnauthorized: false
+  }
+}
 
-if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-  console.error('❌ Missing Google OAuth credentials')
+// Simple database functions
+async function getConnection() {
+  return await mysql.createConnection(dbConfig)
+}
+
+async function findUserByEmail(email: string) {
+  try {
+    const connection = await getConnection()
+    const [rows] = await connection.execute('SELECT * FROM users WHERE email = ?', [email.toLowerCase().trim()])
+    await connection.end()
+    return rows.length > 0 ? rows[0] : null
+  } catch (error) {
+    console.error('Database error:', error)
+    return null
+  }
+}
+
+async function createUser(userData: any) {
+  try {
+    const { email, name, password, image, provider = 'credentials' } = userData
+    
+    let hashedPassword = null
+    if (password) {
+      hashedPassword = await bcrypt.hash(password, 12)
+    }
+
+    const connection = await getConnection()
+    const [result] = await connection.execute(`
+      INSERT INTO users (email, name, password, image, provider, subscription_plan, subscription_status)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [email.toLowerCase().trim(), name, hashedPassword, image || null, provider, 'free', 'active'])
+    
+    await connection.end()
+    
+    // Return the created user
+    return await findUserByEmail(email)
+  } catch (error) {
+    console.error('Create user error:', error)
+    return null
+  }
+}
+
+async function verifyPassword(email: string, password: string) {
+  try {
+    const user = await findUserByEmail(email)
+    if (!user || !user.password) return null
+    
+    const isValid = await bcrypt.compare(password, user.password)
+    return isValid ? user : null
+  } catch (error) {
+    console.error('Password verification error:', error)
+    return null
+  }
 }
 
 export const authOptions: NextAuthOptions = {
-  debug: process.env.NODE_ENV === 'development',
+  debug: true,
   providers: [
     GoogleProvider({
-      clientId: GOOGLE_CLIENT_ID || '',
-      clientSecret: GOOGLE_CLIENT_SECRET || '',
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
     CredentialsProvider({
       name: 'credentials',
@@ -26,27 +85,30 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
+        console.log('🔐 CREDENTIALS AUTH ATTEMPT:', credentials?.email)
+        
         if (!credentials?.email || !credentials?.password) {
+          console.log('❌ Missing credentials')
           return null
         }
 
         try {
-          await initDatabase()
-          
-          const user = await UserMySQL.verifyPassword(credentials.email, credentials.password)
+          const user = await verifyPassword(credentials.email, credentials.password)
           
           if (!user) {
+            console.log('❌ Invalid credentials for:', credentials.email)
             return null
           }
 
+          console.log('✅ CREDENTIALS AUTH SUCCESS:', user.email)
           return {
-            id: user.id!.toString(),
+            id: user.id.toString(),
             email: user.email,
             name: user.name,
-            image: user.image,
+            image: user.image || null,
           }
         } catch (error) {
-          console.error('Credentials auth error:', error)
+          console.error('❌ CREDENTIALS AUTH ERROR:', error)
           return null
         }
       }
@@ -54,30 +116,39 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
     async signIn({ user, account, profile }) {
+      console.log('🔐 SIGNIN CALLBACK:', { email: user?.email, provider: account?.provider })
+      
       if (account?.provider === 'google' && user?.email) {
         try {
-          await initDatabase()
-          
           const email = user.email.toLowerCase().trim()
-          let existingUser = await UserMySQL.findByEmail(email)
+          let existingUser = await findUserByEmail(email)
           
           if (!existingUser) {
-            const newUser = await UserMySQL.create({
+            console.log('👤 CREATING GOOGLE USER:', email)
+            const newUser = await createUser({
               name: user.name || 'Google User',
               email: email,
-              image: user.image || undefined,
+              image: user.image || null,
               provider: 'google'
             })
-            user.id = newUser.id!.toString()
+            
+            if (newUser) {
+              user.id = newUser.id.toString()
+              console.log('✅ GOOGLE USER CREATED:', newUser.id)
+            } else {
+              console.log('❌ FAILED TO CREATE GOOGLE USER')
+              return false
+            }
           } else {
-            user.id = existingUser.id!.toString()
+            user.id = existingUser.id.toString()
+            console.log('✅ EXISTING GOOGLE USER:', existingUser.id)
           }
         } catch (error) {
-          console.error('Google signIn error:', error)
+          console.error('❌ GOOGLE SIGNIN ERROR:', error)
           return false
         }
       }
@@ -106,13 +177,5 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/auth/signin',
     error: '/auth/signin',
-  },
-  events: {
-    async signIn({ user, account }) {
-      console.log('Sign-in:', user?.email, account?.provider)
-    },
-    async signOut({ session }) {
-      console.log('Sign-out:', session?.user?.email)
-    },
   },
 }

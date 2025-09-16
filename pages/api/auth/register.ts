@@ -1,9 +1,20 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { initDatabase } from '../../../src/lib/mysql'
-import UserMySQL from '../../../src/lib/models/UserMySQL'
+import mysql from 'mysql2/promise'
+import bcrypt from 'bcryptjs'
+
+const dbConfig = {
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  port: parseInt(process.env.MYSQL_PORT || '3306'),
+  ssl: {
+    rejectUnauthorized: false
+  }
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log('📝 Registration API called:', req.method)
+  console.log('📝 REGISTRATION API CALLED:', req.method)
   
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -11,63 +22,65 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const { name, email, password } = req.body
-    console.log('📝 Registration data:', { name, email, password: password ? '***' : 'missing' })
+    console.log('📝 REGISTRATION DATA:', { name, email, password: password ? '***' : 'missing' })
 
     // Validation
     if (!name || !email || !password) {
-      console.log('❌ Missing required fields')
+      console.log('❌ MISSING REQUIRED FIELDS')
       return res.status(400).json({ error: 'Name, email, and password are required' })
     }
 
     if (password.length < 6) {
-      console.log('❌ Password too short')
+      console.log('❌ PASSWORD TOO SHORT')
       return res.status(400).json({ error: 'Password must be at least 6 characters' })
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      console.log('❌ Invalid email format')
+      console.log('❌ INVALID EMAIL FORMAT')
       return res.status(400).json({ error: 'Please enter a valid email address' })
     }
 
-    console.log('🔌 Connecting to database...')
-    await initDatabase()
-    console.log('✅ Database connected successfully')
-
+    console.log('🔌 CONNECTING TO DATABASE...')
+    
     // Check if user already exists
     const normalizedEmail = email.toLowerCase().trim()
-    console.log('🔍 Checking for existing user:', normalizedEmail)
+    console.log('🔍 CHECKING FOR EXISTING USER:', normalizedEmail)
     
-    const existingUser = await UserMySQL.findByEmail(normalizedEmail)
-    console.log('👤 Existing user found:', existingUser ? 'Yes' : 'No')
+    const connection = await mysql.createConnection(dbConfig)
+    const [existingUsers] = await connection.execute('SELECT * FROM users WHERE email = ?', [normalizedEmail])
+    console.log('👤 EXISTING USER FOUND:', existingUsers.length > 0 ? 'Yes' : 'No')
     
-    if (existingUser) {
-      console.log('❌ User already exists')
+    if (existingUsers.length > 0) {
+      console.log('❌ USER ALREADY EXISTS')
+      await connection.end()
       return res.status(400).json({ error: 'User already exists with this email' })
     }
 
     // Create user
-    console.log('👤 Creating new user...')
-    const user = await UserMySQL.create({
-      name: name.trim(),
-      email: normalizedEmail,
-      password: password,
-      provider: 'credentials'
-    })
-    console.log('✅ User created successfully:', user.id)
+    console.log('👤 CREATING NEW USER...')
+    const hashedPassword = await bcrypt.hash(password, 12)
+    
+    const [result] = await connection.execute(`
+      INSERT INTO users (email, name, password, provider, subscription_plan, subscription_status)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [normalizedEmail, name.trim(), hashedPassword, 'credentials', 'free', 'active'])
+    
+    await connection.end()
+    console.log('✅ USER CREATED SUCCESSFULLY WITH ID:', result.insertId)
 
     return res.status(201).json({ 
       message: 'Account created successfully! Welcome to ReportSonic!', 
-      userId: user.id,
+      userId: result.insertId,
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
+        id: result.insertId,
+        name: name.trim(),
+        email: normalizedEmail,
       }
     })
   } catch (error: any) {
-    console.error('❌ Registration error:', error)
+    console.error('❌ REGISTRATION ERROR:', error)
     
     if (error.code === 'ER_DUP_ENTRY') {
       return res.status(400).json({ error: 'User already exists with this email' })
