@@ -19,7 +19,13 @@
     "tailwind-merge": "2.5.4",
     "react-dropzone": "14.2.3",
     "papaparse": "5.4.1",
-    "lucide-react": "0.468.0"
+    "lucide-react": "0.468.0",
+    "recharts": "2.12.7",
+    "jspdf": "2.5.2",
+    "html2canvas": "1.4.1",
+    "pdf-lib": "1.17.1",
+    "docx": "8.5.0",
+    "stripe": "16.12.0"
   },
   "devDependencies": {
     "typescript": "4.9.5",
