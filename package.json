@@ -1,13 +1,15 @@
 {
   "name": "report-sonic",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "AI-powered reporting SaaS for consultants and agencies",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "setup-mysql": "node setup-aiven-mysql.js",
+    "test-mysql": "node test-mysql-auth.js"
   },
   "dependencies": {
     "bcryptjs": "2.4.3",
@@ -42,7 +44,6 @@
     "typescript": "5.0.4"
   },
   "engines": {
-    "node": "18.x",
-    "npm": "9.x"
+    "node": "22.x"
   }
 }
