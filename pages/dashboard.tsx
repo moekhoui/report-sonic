@@ -373,7 +373,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   
-                  {/* AI Analysis Display */}
+                  {/* Enhanced AI Analysis Display */}
                   {report.analysis && (
                     <div style={{
                       background: 'white',
@@ -392,31 +392,184 @@ export default function Dashboard() {
                       <p style={{ 
                         color: '#666',
                         fontSize: '13px',
-                        margin: '0 0 10px 0',
+                        margin: '0 0 15px 0',
                         lineHeight: '1.4'
                       }}>
                         {report.analysis.summary}
                       </p>
                       
+                      {/* Data Types Overview */}
+                      {report.analysis.dataTypes && (
+                        <div style={{ 
+                          display: 'flex', 
+                          gap: '10px', 
+                          marginBottom: '15px',
+                          flexWrap: 'wrap'
+                        }}>
+                          <span style={{
+                            padding: '4px 8px',
+                            background: '#e3f2fd',
+                            color: '#1976d2',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: '500'
+                          }}>
+                            🔢 {report.analysis.dataTypes.numeric} Numeric
+                          </span>
+                          <span style={{
+                            padding: '4px 8px',
+                            background: '#e8f5e8',
+                            color: '#388e3c',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: '500'
+                          }}>
+                            📝 {report.analysis.dataTypes.text} Text
+                          </span>
+                          <span style={{
+                            padding: '4px 8px',
+                            background: '#fff3e0',
+                            color: '#f57c00',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: '500'
+                          }}>
+                            📅 {report.analysis.dataTypes.date} Date
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Key Insights */}
                       {report.analysis.insights && report.analysis.insights.length > 0 && (
-                        <div style={{ marginBottom: '10px' }}>
+                        <div style={{ marginBottom: '15px' }}>
                           <h6 style={{ 
                             color: '#333',
                             fontSize: '12px',
-                            margin: '0 0 5px 0',
+                            margin: '0 0 8px 0',
                             fontWeight: '600'
                           }}>
-                            Key Insights:
+                            🔍 Key Insights:
                           </h6>
                           <ul style={{ 
                             margin: 0, 
                             paddingLeft: '15px',
                             color: '#666',
-                            fontSize: '12px'
+                            fontSize: '12px',
+                            lineHeight: '1.4'
                           }}>
-                            {report.analysis.insights.map((insight: string, index: number) => (
-                              <li key={index}>{insight}</li>
+                            {report.analysis.insights.slice(0, 5).map((insight: string, index: number) => (
+                              <li key={index} style={{ marginBottom: '3px' }}>{insight}</li>
                             ))}
+                            {report.analysis.insights.length > 5 && (
+                              <li style={{ color: '#999', fontStyle: 'italic' }}>
+                                +{report.analysis.insights.length - 5} more insights...
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Trends */}
+                      {report.analysis.trends && report.analysis.trends.length > 0 && (
+                        <div style={{ marginBottom: '15px' }}>
+                          <h6 style={{ 
+                            color: '#333',
+                            fontSize: '12px',
+                            margin: '0 0 8px 0',
+                            fontWeight: '600'
+                          }}>
+                            📈 Trends Detected:
+                          </h6>
+                          <ul style={{ 
+                            margin: 0, 
+                            paddingLeft: '15px',
+                            color: '#666',
+                            fontSize: '12px',
+                            lineHeight: '1.4'
+                          }}>
+                            {report.analysis.trends.slice(0, 3).map((trend: string, index: number) => (
+                              <li key={index} style={{ marginBottom: '3px' }}>{trend}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Patterns */}
+                      {report.analysis.patterns && report.analysis.patterns.length > 0 && (
+                        <div style={{ marginBottom: '15px' }}>
+                          <h6 style={{ 
+                            color: '#333',
+                            fontSize: '12px',
+                            margin: '0 0 8px 0',
+                            fontWeight: '600'
+                          }}>
+                            🔍 Patterns Found:
+                          </h6>
+                          <ul style={{ 
+                            margin: 0, 
+                            paddingLeft: '15px',
+                            color: '#666',
+                            fontSize: '12px',
+                            lineHeight: '1.4'
+                          }}>
+                            {report.analysis.patterns.slice(0, 3).map((pattern: string, index: number) => (
+                              <li key={index} style={{ marginBottom: '3px' }}>{pattern}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Quality Issues */}
+                      {report.analysis.qualityIssues && report.analysis.qualityIssues.length > 0 && (
+                        <div style={{ marginBottom: '15px' }}>
+                          <h6 style={{ 
+                            color: '#d32f2f',
+                            fontSize: '12px',
+                            margin: '0 0 8px 0',
+                            fontWeight: '600'
+                          }}>
+                            ⚠️ Data Quality Issues:
+                          </h6>
+                          <ul style={{ 
+                            margin: 0, 
+                            paddingLeft: '15px',
+                            color: '#d32f2f',
+                            fontSize: '12px',
+                            lineHeight: '1.4'
+                          }}>
+                            {report.analysis.qualityIssues.slice(0, 3).map((issue: string, index: number) => (
+                              <li key={index} style={{ marginBottom: '3px' }}>{issue}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Recommendations */}
+                      {report.analysis.recommendations && report.analysis.recommendations.length > 0 && (
+                        <div style={{ marginBottom: '10px' }}>
+                          <h6 style={{ 
+                            color: '#333',
+                            fontSize: '12px',
+                            margin: '0 0 8px 0',
+                            fontWeight: '600'
+                          }}>
+                            💡 AI Recommendations:
+                          </h6>
+                          <ul style={{ 
+                            margin: 0, 
+                            paddingLeft: '15px',
+                            color: '#666',
+                            fontSize: '12px',
+                            lineHeight: '1.4'
+                          }}>
+                            {report.analysis.recommendations.slice(0, 4).map((rec: string, index: number) => (
+                              <li key={index} style={{ marginBottom: '3px' }}>{rec}</li>
+                            ))}
+                            {report.analysis.recommendations.length > 4 && (
+                              <li style={{ color: '#999', fontStyle: 'italic' }}>
+                                +{report.analysis.recommendations.length - 4} more recommendations...
+                              </li>
+                            )}
                           </ul>
                         </div>
                       )}
