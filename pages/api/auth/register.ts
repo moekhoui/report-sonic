@@ -65,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const [result] = await connection.execute(`
       INSERT INTO users (email, name, password, provider, subscription_plan, subscription_status)
       VALUES (?, ?, ?, ?, ?, ?)
-    `, [normalizedEmail, name.trim(), hashedPassword, 'credentials', 'free', 'active'])
+    `, [normalizedEmail, name.trim(), hashedPassword, 'credentials', 'free', 'active']) as any
     
     await connection.end()
     console.log('✅ USER CREATED SUCCESSFULLY WITH ID:', result.insertId)

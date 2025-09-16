@@ -46,7 +46,7 @@ async function createUser(userData: any) {
     const [result] = await connection.execute(`
       INSERT INTO users (email, name, password, image, provider, subscription_plan, subscription_status)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [email.toLowerCase().trim(), name, hashedPassword, image || null, provider, 'free', 'active'])
+    `, [email.toLowerCase().trim(), name, hashedPassword, image || null, provider, 'free', 'active']) as any
     
     await connection.end()
     
