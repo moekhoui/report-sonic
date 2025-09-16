@@ -33,7 +33,11 @@ export class UserMySQL {
     
     const result = await query(sql, [email.toLowerCase().trim(), name, hashedPassword, image, provider, subscription_plan, subscription_status]);
     
-    return this.findById((result as any).insertId);
+    const newUser = await this.findById((result as any).insertId);
+    if (!newUser) {
+      throw new Error('Failed to create user');
+    }
+    return newUser;
   }
 
   static async findById(id: number): Promise<IUser | null> {
