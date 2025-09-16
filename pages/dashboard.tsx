@@ -159,8 +159,8 @@ export default function Dashboard() {
               fontWeight: '500',
               transition: 'background 0.3s'
             }}
-            onMouseOver={(e) => e.target.style.background = '#c82333'}
-            onMouseOut={(e) => e.target.style.background = '#dc3545'}
+            onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#c82333'}
+            onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#dc3545'}
           >
             Sign Out
           </button>
