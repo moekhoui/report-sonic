@@ -29,9 +29,9 @@ export default function TestLogin() {
         console.log('🔐 SESSION:', session)
         setResult(prev => prev + '\n\nSESSION: ' + JSON.stringify(session, null, 2))
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('🔐 LOGIN ERROR:', error)
-      setResult('ERROR: ' + error.message)
+      setResult('ERROR: ' + (error?.message || 'Unknown error'))
     } finally {
       setLoading(false)
     }
