@@ -49,7 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('🔍 CHECKING FOR EXISTING USER:', normalizedEmail)
     
     const connection = await mysql.createConnection(dbConfig)
-    const [existingUsers] = await connection.execute('SELECT * FROM users WHERE email = ?', [normalizedEmail])
+    const [existingUsers] = await connection.execute('SELECT * FROM users WHERE email = ?', [normalizedEmail]) as any[]
     console.log('👤 EXISTING USER FOUND:', existingUsers.length > 0 ? 'Yes' : 'No')
     
     if (existingUsers.length > 0) {

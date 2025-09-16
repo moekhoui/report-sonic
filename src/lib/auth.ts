@@ -24,7 +24,7 @@ async function getConnection() {
 async function findUserByEmail(email: string) {
   try {
     const connection = await getConnection()
-    const [rows] = await connection.execute('SELECT * FROM users WHERE email = ?', [email.toLowerCase().trim()])
+    const [rows] = await connection.execute('SELECT * FROM users WHERE email = ?', [email.toLowerCase().trim()]) as any[]
     await connection.end()
     return rows.length > 0 ? rows[0] : null
   } catch (error) {
