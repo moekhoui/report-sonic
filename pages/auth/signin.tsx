@@ -21,7 +21,7 @@ export default function SignIn() {
       setError(errorMessage);
       addNotification('error', errorMessage);
     }
-  }, [router.query.error, addNotification]);
+  }, [router.query.error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface NotificationProps {
   type: 'success' | 'error' | 'info' | 'warning';
@@ -114,14 +114,14 @@ export function useNotification() {
     duration?: number;
   }>>([]);
 
-  const addNotification = (type: 'success' | 'error' | 'info' | 'warning', message: string, duration?: number) => {
+  const addNotification = useCallback((type: 'success' | 'error' | 'info' | 'warning', message: string, duration?: number) => {
     const id = Math.random().toString(36).substr(2, 9);
     setNotifications(prev => [...prev, { id, type, message, duration }]);
-  };
+  }, []);
 
-  const removeNotification = (id: string) => {
+  const removeNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(notification => notification.id !== id));
-  };
+  }, []);
 
   const NotificationContainer = () => (
     <div className="fixed top-4 right-4 z-50 space-y-3 max-w-sm">
