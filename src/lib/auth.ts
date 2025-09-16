@@ -69,7 +69,7 @@ export const authOptions: NextAuthOptions = {
             const newUser = await UserMySQL.create({
               name: user.name || 'Google User',
               email: email,
-              image: user.image,
+              image: user.image || undefined,
               provider: 'google'
             })
             user.id = newUser.id!.toString()
