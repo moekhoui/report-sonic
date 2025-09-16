@@ -129,7 +129,7 @@ function generateAIAnalysis(data: any[]) {
       max,
       min
     }
-  }).filter(Boolean)
+  }).filter((stat): stat is NonNullable<typeof stat> => stat !== null)
 
   // Generate insights
   const insights = []
