@@ -309,9 +309,9 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
                     {/* Analysis Summary */}
                     <div className="bg-gray-50 p-6 rounded-lg">
                       <h3 className="text-lg font-semibold mb-4">📊 Analysis Summary</h3>
-                      <p className="text-gray-700 mb-4">{analysis.summary}</p>
+                      <p className="text-gray-700 mb-4">{analysis.summary || 'No analysis summary available.'}</p>
                       
-                      {analysis.insights && analysis.insights.length > 0 && (
+                      {analysis.insights && Array.isArray(analysis.insights) && analysis.insights.length > 0 && (
                         <div className="mb-4">
                           <h4 className="font-semibold mb-2">Key Insights:</h4>
                           <ul className="list-disc list-inside space-y-1">
@@ -324,7 +324,7 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
                     </div>
 
                     {/* Patterns Section */}
-                    {analysis.trends && analysis.trends.length > 0 && (
+                    {analysis.trends && Array.isArray(analysis.trends) && analysis.trends.length > 0 && (
                       <div className="bg-blue-50 p-6 rounded-lg">
                         <h3 className="text-lg font-semibold mb-4 text-blue-900">🔍 Data Patterns</h3>
                         <ul className="space-y-2">
@@ -339,7 +339,7 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
                     )}
 
                     {/* Recommendations Section */}
-                    {analysis.recommendations && analysis.recommendations.length > 0 && (
+                    {analysis.recommendations && Array.isArray(analysis.recommendations) && analysis.recommendations.length > 0 && (
                       <div className="bg-green-50 p-6 rounded-lg">
                         <h3 className="text-lg font-semibold mb-4 text-green-900">💡 Recommendations</h3>
                         <ul className="space-y-2">
@@ -354,7 +354,7 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
                     )}
 
                     {/* Statistics Section */}
-                    {analysis.statistics && analysis.statistics.length > 0 && (
+                    {analysis.statistics && Array.isArray(analysis.statistics) && analysis.statistics.length > 0 && (
                       <div className="bg-purple-50 p-6 rounded-lg">
                         <h3 className="text-lg font-semibold mb-4 text-purple-900">📈 Statistical Analysis</h3>
                         <div className="overflow-x-auto">
@@ -371,11 +371,11 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
                             <tbody>
                               {analysis.statistics.slice(0, 5).map((stat: any, index: number) => (
                                 <tr key={index} className="border-b border-purple-100">
-                                  <td className="py-2 font-medium text-purple-700">{stat.column}</td>
-                                  <td className="py-2 text-purple-600">{stat.count}</td>
-                                  <td className="py-2 text-purple-600">{stat.average?.toFixed(2) || 'N/A'}</td>
-                                  <td className="py-2 text-purple-600">{stat.min || 'N/A'}</td>
-                                  <td className="py-2 text-purple-600">{stat.max || 'N/A'}</td>
+                                  <td className="py-2 font-medium text-purple-700">{stat?.column || 'N/A'}</td>
+                                  <td className="py-2 text-purple-600">{stat?.count || 'N/A'}</td>
+                                  <td className="py-2 text-purple-600">{stat?.average ? stat.average.toFixed(2) : 'N/A'}</td>
+                                  <td className="py-2 text-purple-600">{stat?.min || 'N/A'}</td>
+                                  <td className="py-2 text-purple-600">{stat?.max || 'N/A'}</td>
                                 </tr>
                               ))}
                             </tbody>
