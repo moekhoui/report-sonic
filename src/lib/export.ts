@@ -211,7 +211,8 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
     return pdfBlob
   } catch (error) {
     console.error('PDF export error:', error)
-    throw new Error(`Failed to generate PDF report: ${error.message}`)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    throw new Error(`Failed to generate PDF report: ${errorMessage}`)
   }
 }
 
