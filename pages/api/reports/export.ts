@@ -34,11 +34,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const dataRows = rawData.slice(1)
         
         // Generate basic chart descriptions
-        charts = headers.slice(0, 3).map((header, index) => ({
+        charts = headers.slice(0, 3).map((header: string, index: number) => ({
           id: `chart-${index}`,
           type: 'bar',
           title: `${header} Analysis`,
-          data: dataRows.slice(0, 10).map((row, i) => ({
+          data: dataRows.slice(0, 10).map((row: any[], i: number) => ({
             label: `Item ${i + 1}`,
             value: typeof row[index] === 'number' ? row[index] : Math.random() * 100
           })),
