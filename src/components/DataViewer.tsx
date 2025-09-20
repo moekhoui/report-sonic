@@ -454,9 +454,34 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold">Advanced Analytics</h3>
                 
-                {!analysis ? (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-                    <p className="text-yellow-800">No analysis data available. Please upload a file to generate analytics.</p>
+                {!analysis || !analysis.summary ? (
+                  <div className="space-y-4">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                      <p className="text-yellow-800">No analysis data available. Please upload a file to generate analytics.</p>
+                    </div>
+                    
+                    {/* Basic data summary */}
+                    <div className="bg-white border rounded-lg p-6">
+                      <h4 className="font-semibold mb-4">Data Summary</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-600">{processedData.rows.length}</div>
+                          <div className="text-sm text-gray-600">Total Rows</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-600">{processedData.columns.length}</div>
+                          <div className="text-sm text-gray-600">Columns</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-purple-600">{processedData.columns.filter(c => c.type === 'numeric').length}</div>
+                          <div className="text-sm text-gray-600">Numeric</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-orange-600">{processedData.columns.filter(c => c.type === 'text').length}</div>
+                          <div className="text-sm text-gray-600">Text</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <>
