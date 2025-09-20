@@ -1,17 +1,4 @@
 import React, { useState, useMemo } from 'react'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js'
-import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2'
 import { 
   BarChart3, 
   TrendingUp, 
@@ -23,18 +10,6 @@ import {
   EyeOff
 } from 'lucide-react'
 
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-)
 
 interface DataViewerProps {
   data: any[][]
@@ -48,7 +23,6 @@ interface DataViewerProps {
 
 export default function DataViewer({ data, headers, analysis, onExportPDF, onExportWord, onExportPowerPoint, onBack }: DataViewerProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'charts' | 'table' | 'analytics'>('overview')
-  const [selectedCharts, setSelectedCharts] = useState<string[]>([])
   const [showAllData, setShowAllData] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -86,14 +60,14 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
     return 'text'
   }
 
-  // Generate charts for each column
-  const charts = useMemo(() => {
-    const chartData: Array<{
+  // Generate chart descriptions for each column
+  const chartDescriptions = useMemo(() => {
+    const descriptions: Array<{
       id: string
       title: string
       type: string
+      description: string
       data: any
-      options?: any
     }> = []
     
     processedData.columns.forEach((column, index) => {
@@ -104,29 +78,16 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
           .slice(0, 50) // Limit for performance
         
         if (values.length > 0) {
-          chartData.push({
+          const avg = values.reduce((a, b) => a + b, 0) / values.length
+          const min = Math.min(...values)
+          const max = Math.max(...values)
+          
+          descriptions.push({
             id: `chart-${index}`,
             title: column.key,
             type: 'bar',
-            data: {
-              labels: values.map((_, i) => `Point ${i + 1}`),
-              datasets: [{
-                label: column.key,
-                data: values,
-                backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                borderColor: 'rgba(59, 130, 246, 1)',
-                borderWidth: 1
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                title: {
-                  display: true,
-                  text: `${column.key} Distribution`
-                }
-              }
-            }
+            description: `This bar chart visualizes the distribution of ${column.key} values. The data shows ${values.length} data points with an average of ${avg.toFixed(2)}, ranging from ${min} to ${max}. This visualization helps identify patterns and outliers in the ${column.key} data.`,
+            data: values
           })
         }
       } else if (column.type === 'text') {
@@ -143,35 +104,21 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
           .slice(0, 10) // Top 10 values
         
         if (sortedEntries.length > 0) {
-          chartData.push({
+          const totalCount = sortedEntries.reduce((sum, [,count]) => sum + count, 0)
+          const topValue = sortedEntries[0]
+          
+          descriptions.push({
             id: `chart-${index}`,
             title: column.key,
             type: 'pie',
-            data: {
-              labels: sortedEntries.map(([key]) => key),
-              datasets: [{
-                data: sortedEntries.map(([,count]) => count),
-                backgroundColor: [
-                  '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
-                  '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
-                ]
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                title: {
-                  display: true,
-                  text: `${column.key} Distribution`
-                }
-              }
-            }
+            description: `This pie chart shows the distribution of ${column.key} categories. The most common value is "${topValue[0]}" with ${topValue[1]} occurrences (${((topValue[1] / totalCount) * 100).toFixed(1)}% of total). This visualization helps understand the categorical distribution and identify dominant categories.`,
+            data: sortedEntries
           })
         }
       }
     })
     
-    return chartData
+    return descriptions
   }, [processedData])
 
   // Filter data based on search
@@ -185,20 +132,6 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
     )
   }, [processedData.rows, searchTerm])
 
-  const renderChart = (chart: any) => {
-    switch (chart.type) {
-      case 'bar':
-        return <Bar data={chart.data} options={chart.options} />
-      case 'line':
-        return <Line data={chart.data} options={chart.options} />
-      case 'pie':
-        return <Pie data={chart.data} options={chart.options} />
-      case 'doughnut':
-        return <Doughnut data={chart.data} options={chart.options} />
-      default:
-        return <Bar data={chart.data} options={chart.options} />
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -329,47 +262,35 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
             {activeTab === 'charts' && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Data Visualizations</h3>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setSelectedCharts(charts.map(c => c.id))}
-                      className="text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      Select All
-                    </button>
-                    <button
-                      onClick={() => setSelectedCharts([])}
-                      className="text-sm text-gray-600 hover:text-gray-800"
-                    >
-                      Clear All
-                    </button>
+                  <h3 className="text-lg font-semibold">AI-Generated Chart Descriptions</h3>
+                  <div className="text-sm text-gray-600">
+                    {chartDescriptions.length} visualizations available
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {charts.map((chart) => (
-                    <div key={chart.id} className="bg-white border rounded-lg p-4">
+                  {chartDescriptions.map((chart) => (
+                    <div key={chart.id} className="bg-white border rounded-lg p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-semibold">{chart.title}</h4>
-                        <button
-                          onClick={() => {
-                            setSelectedCharts(prev =>
-                              prev.includes(chart.id)
-                                ? prev.filter(id => id !== chart.id)
-                                : [...prev, chart.id]
-                            )
-                          }}
-                          className={`px-3 py-1 rounded text-sm ${
-                            selectedCharts.includes(chart.id)
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-gray-100 text-gray-700'
-                          }`}
-                        >
-                          {selectedCharts.includes(chart.id) ? 'Selected' : 'Select'}
-                        </button>
+                        <h4 className="font-semibold text-lg">{chart.title}</h4>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                          {chart.type.toUpperCase()}
+                        </span>
                       </div>
-                      <div className="h-64">
-                        {renderChart(chart)}
+                      <div className="space-y-4">
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <h5 className="font-medium text-gray-900 mb-2">Chart Description:</h5>
+                          <p className="text-gray-700 text-sm leading-relaxed">{chart.description}</p>
+                        </div>
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <h5 className="font-medium text-blue-900 mb-2">Data Summary:</h5>
+                          <p className="text-blue-700 text-sm">
+                            {chart.type === 'bar' 
+                              ? `Numeric data with ${chart.data.length} data points`
+                              : `Categorical data with ${chart.data.length} categories`
+                            }
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ))}
