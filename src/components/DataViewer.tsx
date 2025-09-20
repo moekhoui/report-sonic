@@ -454,98 +454,98 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold">Advanced Analytics</h3>
                 
-                {!analysis || !analysis.summary ? (
-                  <div className="space-y-4">
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-                      <p className="text-yellow-800">No analysis data available. Please upload a file to generate analytics.</p>
+                {/* Always show basic data summary */}
+                <div className="bg-white border rounded-lg p-6">
+                  <h4 className="font-semibold mb-4">Data Summary</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">{processedData.rows.length}</div>
+                      <div className="text-sm text-gray-600">Total Rows</div>
                     </div>
-                    
-                    {/* Basic data summary */}
-                    <div className="bg-white border rounded-lg p-6">
-                      <h4 className="font-semibold mb-4">Data Summary</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600">{processedData.rows.length}</div>
-                          <div className="text-sm text-gray-600">Total Rows</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-green-600">{processedData.columns.length}</div>
-                          <div className="text-sm text-gray-600">Columns</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-purple-600">{processedData.columns.filter(c => c.type === 'numeric').length}</div>
-                          <div className="text-sm text-gray-600">Numeric</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-orange-600">{processedData.columns.filter(c => c.type === 'text').length}</div>
-                          <div className="text-sm text-gray-600">Text</div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">{processedData.columns.length}</div>
+                      <div className="text-sm text-gray-600">Columns</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600">{processedData.columns.filter(c => c.type === 'numeric').length}</div>
+                      <div className="text-sm text-gray-600">Numeric</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">{processedData.columns.filter(c => c.type === 'text').length}</div>
+                      <div className="text-sm text-gray-600">Text</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Show analysis data if available */}
+                {analysis && analysis.summary && (
+                  <>
+                    {analysis.statistics && analysis.statistics.length > 0 && (
+                      <div className="bg-white border rounded-lg p-6">
+                        <h4 className="font-semibold mb-4">Statistical Analysis</h4>
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="text-left py-2">Column</th>
+                                <th className="text-left py-2">Count</th>
+                                <th className="text-left py-2">Average</th>
+                                <th className="text-left py-2">Min</th>
+                                <th className="text-left py-2">Max</th>
+                                <th className="text-left py-2">Range</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {analysis.statistics.map((stat: any, index: number) => (
+                                <tr key={index} className="border-b">
+                                  <td className="py-2 font-medium">{stat.column}</td>
+                                  <td className="py-2">{stat.count}</td>
+                                  <td className="py-2">{stat.average?.toFixed(2) || 'N/A'}</td>
+                                  <td className="py-2">{stat.min || 'N/A'}</td>
+                                  <td className="py-2">{stat.max || 'N/A'}</td>
+                                  <td className="py-2">{stat.range || 'N/A'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                
-                {analysis.statistics && analysis.statistics.length > 0 && (
-                  <div className="bg-white border rounded-lg p-6">
-                    <h4 className="font-semibold mb-4">Statistical Analysis</h4>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="text-left py-2">Column</th>
-                            <th className="text-left py-2">Count</th>
-                            <th className="text-left py-2">Average</th>
-                            <th className="text-left py-2">Min</th>
-                            <th className="text-left py-2">Max</th>
-                            <th className="text-left py-2">Range</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {analysis.statistics.map((stat: any, index: number) => (
-                            <tr key={index} className="border-b">
-                              <td className="py-2 font-medium">{stat.column}</td>
-                              <td className="py-2">{stat.count}</td>
-                              <td className="py-2">{stat.average?.toFixed(2) || 'N/A'}</td>
-                              <td className="py-2">{stat.min || 'N/A'}</td>
-                              <td className="py-2">{stat.max || 'N/A'}</td>
-                              <td className="py-2">{stat.range || 'N/A'}</td>
-                            </tr>
+                    )}
+
+                    {analysis.trends && analysis.trends.length > 0 && (
+                      <div className="bg-white border rounded-lg p-6">
+                        <h4 className="font-semibold mb-4">Trends & Patterns</h4>
+                        <ul className="space-y-2">
+                          {analysis.trends.map((trend: string, index: number) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-blue-500 mt-1">•</span>
+                              <span className="text-gray-700">{trend}</span>
+                            </li>
                           ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
+                        </ul>
+                      </div>
+                    )}
 
-                {analysis.trends && analysis.trends.length > 0 && (
-                  <div className="bg-white border rounded-lg p-6">
-                    <h4 className="font-semibold mb-4">Trends & Patterns</h4>
-                    <ul className="space-y-2">
-                      {analysis.trends.map((trend: string, index: number) => (
-                        <li key={index} className="flex items-start gap-2">
-                          <span className="text-blue-500 mt-1">•</span>
-                          <span className="text-gray-700">{trend}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {analysis.recommendations && analysis.recommendations.length > 0 && (
-                  <div className="bg-white border rounded-lg p-6">
-                    <h4 className="font-semibold mb-4">AI Recommendations</h4>
-                    <ul className="space-y-2">
-                      {analysis.recommendations.map((rec: string, index: number) => (
-                        <li key={index} className="flex items-start gap-2">
-                          <span className="text-green-500 mt-1">•</span>
-                          <span className="text-gray-700">{rec}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                    {analysis.recommendations && analysis.recommendations.length > 0 && (
+                      <div className="bg-white border rounded-lg p-6">
+                        <h4 className="font-semibold mb-4">AI Recommendations</h4>
+                        <ul className="space-y-2">
+                          {analysis.recommendations.map((rec: string, index: number) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-green-500 mt-1">•</span>
+                              <span className="text-gray-700">{rec}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </>
+                )}
+
+                {(!analysis || !analysis.summary) && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                    <p className="text-yellow-800">No analysis data available. Please upload a file to generate analytics.</p>
+                  </div>
                 )}
               </div>
             )}

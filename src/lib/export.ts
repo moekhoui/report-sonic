@@ -146,6 +146,41 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
         yPosition += 8
       })
     }
+
+    // Add AI-generated chart explanations
+    if (charts && charts.length > 0) {
+      doc.setFontSize(16)
+      doc.setFont('helvetica', 'bold')
+      doc.text('📈 AI-Generated Visualizations', 20, yPosition)
+      yPosition += 15
+      
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'normal')
+      
+      charts.forEach((chart: any, index: number) => {
+        if (yPosition > pageHeight - 30) {
+          doc.addPage()
+          yPosition = 20
+        }
+        
+        doc.setFont('helvetica', 'bold')
+        doc.text(`Chart ${index + 1}: ${chart.title}`, 20, yPosition)
+        yPosition += 8
+        
+        doc.setFont('helvetica', 'normal')
+        const chartExplanation = `This ${chart.type} chart visualizes the ${chart.title} data. The chart type was selected by AI based on the data characteristics and provides insights into patterns and trends within the dataset.`
+        const explanationLines = doc.splitTextToSize(chartExplanation, pageWidth - 40)
+        explanationLines.forEach((line: string) => {
+          if (yPosition > pageHeight - 20) {
+            doc.addPage()
+            yPosition = 20
+          }
+          doc.text(line, 25, yPosition)
+          yPosition += 6
+        })
+        yPosition += 10
+      })
+    }
     
     // Add footer to all pages
     const totalPages = doc.getNumberOfPages()
