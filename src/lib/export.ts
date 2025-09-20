@@ -46,7 +46,7 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
     // Add title and header
   doc.setFontSize(24)
   doc.setFont('helvetica', 'bold')
-    doc.text('🤖 AI-Powered Report Analysis', 20, yPosition)
+    doc.text('AI-Powered Report Analysis', 20, yPosition)
     yPosition += 15
   
   doc.setFontSize(12)
@@ -66,7 +66,7 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
     if (analysis?.summary) {
       doc.setFontSize(16)
       doc.setFont('helvetica', 'bold')
-      doc.text('📋 Executive Summary', 20, yPosition)
+      doc.text('Executive Summary', 20, yPosition)
       yPosition += 10
       
       doc.setFontSize(11)
@@ -87,7 +87,7 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
     if (analysis?.insights && analysis.insights.length > 0) {
       doc.setFontSize(16)
       doc.setFont('helvetica', 'bold')
-      doc.text('🔍 AI Insights', 20, yPosition)
+      doc.text('Key Insights', 20, yPosition)
       yPosition += 15
       
       doc.setFontSize(11)
@@ -109,7 +109,7 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
     if (analysis?.recommendations && analysis.recommendations.length > 0) {
       doc.setFontSize(16)
       doc.setFont('helvetica', 'bold')
-      doc.text('💡 AI Recommendations', 20, yPosition)
+      doc.text('Recommendations', 20, yPosition)
       yPosition += 15
       
       doc.setFontSize(11)
@@ -131,7 +131,7 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
     if (analysis?.statistics && analysis.statistics.length > 0) {
       doc.setFontSize(16)
       doc.setFont('helvetica', 'bold')
-      doc.text('📊 Statistical Summary', 20, yPosition)
+      doc.text('Statistical Summary', 20, yPosition)
       yPosition += 15
       
       doc.setFontSize(10)
@@ -186,6 +186,59 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
           doc.text(line, 25, yPosition)
           yPosition += 6
         })
+        yPosition += 10
+      })
+    }
+    
+    // Add charts section
+    if (charts && charts.length > 0) {
+      doc.setFontSize(16)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Data Visualizations', 20, yPosition)
+      yPosition += 15
+      
+      charts.forEach((chart, index) => {
+        if (yPosition > pageHeight - 40) {
+          doc.addPage()
+          yPosition = 20
+        }
+        
+        doc.setFontSize(12)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`${index + 1}. ${chart.title}`, 20, yPosition)
+        yPosition += 8
+        
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        
+        // Add chart description
+        if (chart.insights) {
+          const insightLines = doc.splitTextToSize(chart.insights, pageWidth - 40)
+          insightLines.forEach((line: string) => {
+            if (yPosition > pageHeight - 30) {
+              doc.addPage()
+              yPosition = 20
+            }
+            doc.text(line, 25, yPosition)
+            yPosition += 5
+          })
+        }
+        
+        // Add sample data
+        if (chart.data && chart.data.length > 0) {
+          doc.text('Sample Data:', 25, yPosition)
+          yPosition += 6
+          
+          chart.data.slice(0, 5).forEach((item: any) => {
+            if (yPosition > pageHeight - 20) {
+              doc.addPage()
+              yPosition = 20
+            }
+            doc.text(`  • ${item.label}: ${item.value}`, 30, yPosition)
+            yPosition += 5
+          })
+        }
+        
         yPosition += 10
       })
     }
@@ -531,7 +584,7 @@ export async function exportToPowerPoint(options: ExportOptions): Promise<Blob> 
       })
     }
     
-    const buffer = await pptx.writeFile({ outputType: 'arraybuffer' } as any)
+    const buffer = await pptx.write('arraybuffer')
     return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' })
   } catch (error) {
     console.error('PowerPoint export error:', error)
