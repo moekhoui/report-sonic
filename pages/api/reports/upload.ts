@@ -68,6 +68,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       id: Date.now().toString(),
       name: file.originalname,
       data: data,
+      rawData: rows, // Store raw data for chart generation
+      headers: headers, // Store headers for chart generation
       analysis: analysis,
       createdAt: new Date().toISOString(),
       status: 'completed'

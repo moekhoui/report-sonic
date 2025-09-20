@@ -54,12 +54,20 @@ export default function Dashboard() {
 
   const handleExportReport = async (report: any) => {
     try {
+      // Get the raw data for chart generation
+      const rawData = report.rawData || []
+      const headers = report.headers || []
+      
       const response = await fetch('/api/reports/export', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ report }),
+        body: JSON.stringify({ 
+          report,
+          rawData,
+          headers
+        }),
       })
 
       if (response.ok) {
@@ -67,7 +75,7 @@ export default function Dashboard() {
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `${report.name.replace(/\.[^/.]+$/, '')}_report.pdf`
+        a.download = `${report.name.replace(/\.[^/.]+$/, '')}_ai_report.pdf`
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
