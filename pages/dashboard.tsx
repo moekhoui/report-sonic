@@ -1,12 +1,14 @@
 import { useAuth } from '../src/contexts/AuthContext'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import DataViewer from '../src/components/DataViewer'
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth()
   const router = useRouter()
   const [reports, setReports] = useState<any[]>([])
   const [uploading, setUploading] = useState(false)
+  const [selectedReport, setSelectedReport] = useState<any>(null)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -31,14 +33,22 @@ export default function Dashboard() {
       const result = await response.json()
 
       if (response.ok) {
-        // Add to reports list
-        setReports(prev => [...prev, {
+        const newReport = {
           id: result.report.id,
           name: result.report.name,
           status: 'Completed',
           createdAt: result.report.createdAt,
-          analysis: result.report.analysis
-        }])
+          analysis: result.report.analysis,
+          rawData: result.report.rawData,
+          headers: result.report.headers
+        }
+        
+        // Add to reports list
+        setReports(prev => [...prev, newReport])
+        
+        // Set as selected report for immediate viewing
+        setSelectedReport(newReport)
+        
         console.log('✅ File processed successfully:', result.report.name)
       } else {
         console.error('❌ Upload failed:', result.error)
@@ -110,6 +120,19 @@ export default function Dashboard() {
 
   if (!user) {
     return null
+  }
+
+  // Show DataViewer if a report is selected
+  if (selectedReport) {
+    return (
+      <DataViewer
+        data={selectedReport.rawData || []}
+        headers={selectedReport.headers || []}
+        analysis={selectedReport.analysis}
+        onExportPDF={() => handleExportReport(selectedReport)}
+        onBack={() => setSelectedReport(null)}
+      />
+    )
   }
 
   return (
@@ -363,6 +386,22 @@ export default function Dashboard() {
                       }}>
                         {report.status}
                       </span>
+                      <button
+                        onClick={() => setSelectedReport(report)}
+                        style={{
+                          padding: '8px 16px',
+                          background: '#10b981',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          fontWeight: '500',
+                          marginRight: '8px'
+                        }}
+                      >
+                        📊 View Data
+                      </button>
                       <button
                         onClick={() => handleExportReport(report)}
                         style={{
