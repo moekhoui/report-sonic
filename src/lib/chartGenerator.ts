@@ -12,7 +12,9 @@ interface ChartData {
     data: number[]
     backgroundColor?: string | string[]
     borderColor?: string | string[]
+    borderWidth?: number
     fill?: boolean
+    tension?: number
   }>
 }
 
@@ -24,7 +26,7 @@ interface ChartConfig {
 }
 
 export class AIChartGenerator {
-  private chartJSNodeCanvas: ChartJSNodeCanvas
+  private chartJSNodeCanvas: any
 
   constructor() {
     this.chartJSNodeCanvas = new ChartJSNodeCanvas({
@@ -356,7 +358,7 @@ export class AIChartGenerator {
   }
 
   private getChartTypeDescription(chartType: string): string {
-    const descriptions = {
+    const descriptions: { [key: string]: string } = {
       'bar': 'Best for comparing categories',
       'line': 'Ideal for showing trends over time',
       'pie': 'Perfect for showing proportions',
