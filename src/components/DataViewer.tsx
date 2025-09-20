@@ -305,18 +305,82 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
                 </div>
 
                 {analysis && (
-                  <div className="bg-gray-50 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-4">AI Analysis Summary</h3>
-                    <p className="text-gray-700 mb-4">{analysis.summary}</p>
-                    
-                    {analysis.insights && analysis.insights.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="font-semibold mb-2">Key Insights:</h4>
-                        <ul className="list-disc list-inside space-y-1">
-                          {analysis.insights.slice(0, 5).map((insight: string, index: number) => (
-                            <li key={index} className="text-gray-700">{insight}</li>
+                  <div className="space-y-6">
+                    {/* Analysis Summary */}
+                    <div className="bg-gray-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4">📊 Analysis Summary</h3>
+                      <p className="text-gray-700 mb-4">{analysis.summary}</p>
+                      
+                      {analysis.insights && analysis.insights.length > 0 && (
+                        <div className="mb-4">
+                          <h4 className="font-semibold mb-2">Key Insights:</h4>
+                          <ul className="list-disc list-inside space-y-1">
+                            {analysis.insights.slice(0, 5).map((insight: string, index: number) => (
+                              <li key={index} className="text-gray-700">{insight}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Patterns Section */}
+                    {analysis.trends && analysis.trends.length > 0 && (
+                      <div className="bg-blue-50 p-6 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-4 text-blue-900">🔍 Data Patterns</h3>
+                        <ul className="space-y-2">
+                          {analysis.trends.map((trend: string, index: number) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-blue-500 mt-1">•</span>
+                              <span className="text-blue-800">{trend}</span>
+                            </li>
                           ))}
                         </ul>
+                      </div>
+                    )}
+
+                    {/* Recommendations Section */}
+                    {analysis.recommendations && analysis.recommendations.length > 0 && (
+                      <div className="bg-green-50 p-6 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-4 text-green-900">💡 Recommendations</h3>
+                        <ul className="space-y-2">
+                          {analysis.recommendations.map((rec: string, index: number) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-green-500 mt-1">•</span>
+                              <span className="text-green-800">{rec}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Statistics Section */}
+                    {analysis.statistics && analysis.statistics.length > 0 && (
+                      <div className="bg-purple-50 p-6 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-4 text-purple-900">📈 Statistical Analysis</h3>
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full">
+                            <thead>
+                              <tr className="border-b border-purple-200">
+                                <th className="text-left py-2 text-purple-800">Column</th>
+                                <th className="text-left py-2 text-purple-800">Count</th>
+                                <th className="text-left py-2 text-purple-800">Average</th>
+                                <th className="text-left py-2 text-purple-800">Min</th>
+                                <th className="text-left py-2 text-purple-800">Max</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {analysis.statistics.slice(0, 5).map((stat: any, index: number) => (
+                                <tr key={index} className="border-b border-purple-100">
+                                  <td className="py-2 font-medium text-purple-700">{stat.column}</td>
+                                  <td className="py-2 text-purple-600">{stat.count}</td>
+                                  <td className="py-2 text-purple-600">{stat.average?.toFixed(2) || 'N/A'}</td>
+                                  <td className="py-2 text-purple-600">{stat.min || 'N/A'}</td>
+                                  <td className="py-2 text-purple-600">{stat.max || 'N/A'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -345,7 +409,7 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {charts.map((chart) => {
                     // Generate AI description for this chart
                     const generateDescription = (chart: any) => {
@@ -393,10 +457,10 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
                           </div>
                         </div>
 
-                        {/* AI Description */}
+                        {/* Chart Description */}
                         <div className="mb-6">
                           <div className="bg-gray-50 p-4 rounded-lg">
-                            <h5 className="font-medium text-gray-900 mb-2">🤖 AI Chart Analysis:</h5>
+                            <h5 className="font-medium text-gray-900 mb-2">📊 Chart Analysis:</h5>
                             <p className="text-gray-700 text-sm leading-relaxed">{description}</p>
                           </div>
                         </div>

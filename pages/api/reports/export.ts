@@ -1,6 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { exportToPDF, exportToWord, exportToPowerPoint } from '../../../src/lib/export'
 
+// Vercel-specific configuration
+export const config = {
+  api: {
+    responseLimit: false,
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -67,8 +77,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   } catch (error: any) {
     console.error(`❌ Export error:`, error)
+    
+    // Vercel-specific error handling
+    if (error.message?.includes('timeout')) {
+      return res.status(408).json({ 
+        error: 'Export timeout - please try again with smaller data' 
+      })
+    }
+    
+    if (error.message?.includes('memory')) {
+      return res.status(413).json({ 
+        error: 'Data too large - please reduce data size' 
+      })
+    }
+    
     return res.status(500).json({ 
-      error: `Failed to generate AI-powered report` 
+      error: `Failed to generate report: ${error.message || 'Unknown error'}` 
     })
   }
 }
