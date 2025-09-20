@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { exportToPDF, exportToWord, exportToPowerPoint } from '../../../src/lib/export'
-import { AIChartGenerator } from '../../../src/lib/chartGenerator'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
