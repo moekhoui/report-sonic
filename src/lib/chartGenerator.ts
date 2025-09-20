@@ -1,6 +1,5 @@
 import { Chart, ChartConfiguration, registerables } from 'chart.js'
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas'
-import { format, parseISO, isValid } from 'date-fns'
 
 // Register Chart.js components
 Chart.register(...registerables)
@@ -32,10 +31,7 @@ export class AIChartGenerator {
     this.chartJSNodeCanvas = new ChartJSNodeCanvas({
       width: 800,
       height: 600,
-      backgroundColour: 'white',
-      plugins: {
-        modern: ['chartjs-adapter-date-fns']
-      }
+      backgroundColour: 'white'
     })
   }
 

@@ -16,9 +16,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log(`📄 Generating AI-powered ${format.toUpperCase()} report for:`, report.name)
 
-    // Skip chart generation for now due to module loading issues
+    // Generate AI-powered charts if raw data is available
     let charts: any[] = []
-    console.log('📊 Skipping chart generation due to module compatibility issues')
+    if (rawData && headers && rawData.length > 0) {
+      try {
+        console.log('📊 Generating AI-powered charts...')
+        const chartGenerator = new AIChartGenerator()
+        charts = await chartGenerator.generateMultiChartAnalysis(rawData, headers, 4)
+        console.log(`✅ Generated ${charts.length} AI-powered charts`)
+      } catch (error) {
+        console.error('❌ Chart generation error:', error)
+        // Continue without charts if generation fails
+      }
+    }
 
     // Prepare export options
     const exportOptions = {
