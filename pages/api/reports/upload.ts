@@ -57,6 +57,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const worksheet = workbook.Sheets[sheetName]
     const data = xlsx.utils.sheet_to_json(worksheet, { header: 1 })
 
+    // Extract headers and rows for chart generation
+    const headers = data[0] as string[]
+    const rows = data.slice(1) as any[][]
+
     // Clean up uploaded file
     fs.unlinkSync(file.path)
 
