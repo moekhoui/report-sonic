@@ -77,9 +77,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(200).send(Buffer.from(buffer))
 
   } catch (error: any) {
-    console.error(`❌ ${format.toUpperCase()} export error:`, error)
+    console.error(`❌ Export error:`, error)
     return res.status(500).json({ 
-      error: `Failed to generate AI-powered ${format.toUpperCase()} report` 
+      error: `Failed to generate AI-powered report` 
     })
   }
 }

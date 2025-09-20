@@ -88,7 +88,13 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
 
   // Generate charts for each column
   const charts = useMemo(() => {
-    const chartData: any[] = []
+    const chartData: Array<{
+      id: string
+      title: string
+      type: string
+      data: any
+      options?: any
+    }> = []
     
     processedData.columns.forEach((column, index) => {
       if (column.type === 'numeric') {
@@ -257,7 +263,7 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
               ].map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
-                  onClick={() => setActiveTab(id as any)}
+                  onClick={() => setActiveTab(id as 'overview' | 'charts' | 'table' | 'analytics')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
                     activeTab === id
                       ? 'border-blue-500 text-blue-600'
@@ -444,9 +450,16 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
             )}
 
             {/* Analytics Tab */}
-            {activeTab === 'analytics' && analysis && (
+            {activeTab === 'analytics' && (
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold">Advanced Analytics</h3>
+                
+                {!analysis ? (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                    <p className="text-yellow-800">No analysis data available. Please upload a file to generate analytics.</p>
+                  </div>
+                ) : (
+                  <>
                 
                 {analysis.statistics && analysis.statistics.length > 0 && (
                   <div className="bg-white border rounded-lg p-6">
@@ -506,6 +519,8 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
                       ))}
                     </ul>
                   </div>
+                )}
+                  </>
                 )}
               </div>
             )}

@@ -478,7 +478,7 @@ export async function exportToPowerPoint(options: ExportOptions): Promise<Blob> 
       })
     }
     
-    const buffer = await pptx.writeFile({ outputType: 'arraybuffer' })
+    const buffer = await pptx.writeFile({ outputType: 'arraybuffer' } as any)
     return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' })
   } catch (error) {
     console.error('PowerPoint export error:', error)
