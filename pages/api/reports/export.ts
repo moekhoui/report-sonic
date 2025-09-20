@@ -29,39 +29,63 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let charts: any[] = []
     console.log('📊 Chart generation disabled for stability')
 
-    // Prepare export options
+    // Prepare export options with safe defaults
     const exportOptions = {
       title: report.name || 'AI Report Analysis',
       companyName: 'ReportSonic AI',
-      clientName: report.clientName,
+      clientName: report.clientName || 'Client',
       content: report.analysis?.summary || 'AI-generated report content',
-      analysis: report.analysis,
+      analysis: {
+        summary: report.analysis?.summary || 'No analysis summary available',
+        insights: report.analysis?.insights || [],
+        trends: report.analysis?.trends || [],
+        recommendations: report.analysis?.recommendations || [],
+        statistics: report.analysis?.statistics || [],
+        patterns: report.analysis?.patterns || [],
+        qualityIssues: report.analysis?.qualityIssues || []
+      },
       charts: charts
     }
+
+    console.log('📋 Export options prepared:', {
+      title: exportOptions.title,
+      hasAnalysis: !!exportOptions.analysis,
+      hasSummary: !!exportOptions.analysis.summary,
+      insightsCount: exportOptions.analysis.insights.length
+    })
 
     let blob: Blob
     let filename: string
     let contentType: string
 
     // Generate the appropriate format
-    switch (format.toLowerCase()) {
-      case 'word':
-        blob = await exportToWord(exportOptions)
-        filename = `${report.name.replace(/\.[^/.]+$/, '')}_ai_report.docx`
-        contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        break
-      case 'powerpoint':
-      case 'ppt':
-        blob = await exportToPowerPoint(exportOptions)
-        filename = `${report.name.replace(/\.[^/.]+$/, '')}_ai_report.pptx`
-        contentType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-        break
-      case 'pdf':
-      default:
-        blob = await exportToPDF(exportOptions)
-        filename = `${report.name.replace(/\.[^/.]+$/, '')}_ai_report.pdf`
-        contentType = 'application/pdf'
-        break
+    try {
+      switch (format.toLowerCase()) {
+        case 'word':
+          console.log('📝 Generating Word document...')
+          blob = await exportToWord(exportOptions)
+          filename = `${report.name.replace(/\.[^/.]+$/, '')}_ai_report.docx`
+          contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          break
+        case 'powerpoint':
+        case 'ppt':
+          console.log('📊 Generating PowerPoint presentation...')
+          blob = await exportToPowerPoint(exportOptions)
+          filename = `${report.name.replace(/\.[^/.]+$/, '')}_ai_report.pptx`
+          contentType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+          break
+        case 'pdf':
+        default:
+          console.log('📄 Generating PDF document...')
+          blob = await exportToPDF(exportOptions)
+          filename = `${report.name.replace(/\.[^/.]+$/, '')}_ai_report.pdf`
+          contentType = 'application/pdf'
+          break
+      }
+      console.log(`✅ ${format.toUpperCase()} generation successful, size: ${blob.size} bytes`)
+    } catch (exportError: any) {
+      console.error(`❌ ${format.toUpperCase()} generation failed:`, exportError)
+      throw new Error(`Failed to generate ${format.toUpperCase()} report: ${exportError.message}`)
     }
 
     // Convert blob to buffer
