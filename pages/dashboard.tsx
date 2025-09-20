@@ -62,7 +62,7 @@ export default function Dashboard() {
     }
   }
 
-  const handleExportReport = async (report: any) => {
+  const handleExportReport = async (report: any, format: 'pdf' | 'word' | 'powerpoint' = 'pdf') => {
     try {
       // Get the raw data for chart generation
       const rawData = report.rawData || []
@@ -76,7 +76,8 @@ export default function Dashboard() {
         body: JSON.stringify({ 
           report,
           rawData,
-          headers
+          headers,
+          format
         }),
       })
 
@@ -85,13 +86,22 @@ export default function Dashboard() {
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `${report.name.replace(/\.[^/.]+$/, '')}_ai_report.pdf`
+        
+        // Set appropriate file extension based on format
+        const extensions = {
+          pdf: 'pdf',
+          word: 'docx',
+          powerpoint: 'pptx'
+        }
+        
+        a.download = `${report.name.replace(/\.[^/.]+$/, '')}_ai_report.${extensions[format]}`
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
       } else {
-        alert('Export failed. Please try again.')
+        const errorData = await response.json()
+        alert(`Export failed: ${errorData.error || 'Please try again.'}`)
       }
     } catch (error) {
       console.error('Export failed:', error)
@@ -129,7 +139,9 @@ export default function Dashboard() {
         data={selectedReport.rawData || []}
         headers={selectedReport.headers || []}
         analysis={selectedReport.analysis}
-        onExportPDF={() => handleExportReport(selectedReport)}
+        onExportPDF={() => handleExportReport(selectedReport, 'pdf')}
+        onExportWord={() => handleExportReport(selectedReport, 'word')}
+        onExportPowerPoint={() => handleExportReport(selectedReport, 'powerpoint')}
         onBack={() => setSelectedReport(null)}
       />
     )
@@ -402,21 +414,56 @@ export default function Dashboard() {
                       >
                         📊 View Data
                       </button>
-                      <button
-                        onClick={() => handleExportReport(report)}
-                        style={{
-                          padding: '8px 16px',
-                          background: '#1976d2',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          cursor: 'pointer',
-                          fontWeight: '500'
-                        }}
-                      >
-                        📄 Export PDF
-                      </button>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button
+                          onClick={() => handleExportReport(report, 'pdf')}
+                          style={{
+                            padding: '6px 12px',
+                            background: '#dc2626',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                            fontWeight: '500'
+                          }}
+                          title="Export as PDF"
+                        >
+                          📄 PDF
+                        </button>
+                        <button
+                          onClick={() => handleExportReport(report, 'word')}
+                          style={{
+                            padding: '6px 12px',
+                            background: '#1976d2',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                            fontWeight: '500'
+                          }}
+                          title="Export as Word Document"
+                        >
+                          📝 Word
+                        </button>
+                        <button
+                          onClick={() => handleExportReport(report, 'powerpoint')}
+                          style={{
+                            padding: '6px 12px',
+                            background: '#ea580c',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                            fontWeight: '500'
+                          }}
+                          title="Export as PowerPoint Presentation"
+                        >
+                          📊 PPT
+                        </button>
+                      </div>
                     </div>
                   </div>
                   

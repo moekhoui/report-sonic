@@ -41,10 +41,12 @@ interface DataViewerProps {
   headers: string[]
   analysis: any
   onExportPDF: () => void
+  onExportWord: () => void
+  onExportPowerPoint: () => void
   onBack?: () => void
 }
 
-export default function DataViewer({ data, headers, analysis, onExportPDF, onBack }: DataViewerProps) {
+export default function DataViewer({ data, headers, analysis, onExportPDF, onExportWord, onExportPowerPoint, onBack }: DataViewerProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'charts' | 'table' | 'analytics'>('overview')
   const [selectedCharts, setSelectedCharts] = useState<string[]>([])
   const [showAllData, setShowAllData] = useState(false)
@@ -214,13 +216,32 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onBac
                 </p>
               </div>
             </div>
-            <button
-              onClick={onExportPDF}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Export PDF Report
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={onExportPDF}
+                className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm"
+                title="Export as PDF"
+              >
+                <Download className="w-4 h-4" />
+                PDF
+              </button>
+              <button
+                onClick={onExportWord}
+                className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm"
+                title="Export as Word Document"
+              >
+                <Download className="w-4 h-4" />
+                Word
+              </button>
+              <button
+                onClick={onExportPowerPoint}
+                className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 flex items-center gap-2 text-sm"
+                title="Export as PowerPoint Presentation"
+              >
+                <Download className="w-4 h-4" />
+                PowerPoint
+              </button>
+            </div>
           </div>
         </div>
 

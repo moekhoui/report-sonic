@@ -1,78 +1,489 @@
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx'
+import PptxGenJS from 'pptxgenjs'
 
 export interface ExportOptions {
   title: string
   companyName: string
   clientName?: string
   content: string
+  analysis?: {
+    summary?: string
+    insights?: string[]
+    trends?: string[]
+    recommendations?: string[]
+    statistics?: any[]
+    patterns?: string[]
+    qualityIssues?: string[]
+  }
   charts?: Array<{
     id: string
     type: string
-    title: string
     data: any[]
+    title?: string
+    insights?: string
   }>
 }
 
 export async function exportToPDF(options: ExportOptions): Promise<Blob> {
-  const { title, companyName, clientName, content } = options
-  
-  // Create a new PDF document
-  const doc = new jsPDF()
-  
-  // Set font
-  doc.setFont('helvetica')
-  
-  // Add title
-  doc.setFontSize(24)
-  doc.setFont('helvetica', 'bold')
-  doc.text(title, 20, 30)
-  
-  // Add company and client info
-  doc.setFontSize(12)
-  doc.setFont('helvetica', 'normal')
-  doc.text(companyName, 20, 45)
-  if (clientName) {
-    doc.text(`Client: ${clientName}`, 20, 55)
+  try {
+    const { title, companyName, clientName, content, analysis, charts } = options
+    
+    // Create a new PDF document
+    const doc = new jsPDF('p', 'mm', 'a4')
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
+    let yPosition = 20
+    
+    // Add title and header
+    doc.setFontSize(24)
+    doc.setFont('helvetica', 'bold')
+    doc.text('🤖 AI-Powered Report Analysis', 20, yPosition)
+    yPosition += 15
+    
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'normal')
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, yPosition)
+    yPosition += 10
+    
+    doc.text(`Company: ${companyName}`, 20, yPosition)
+    yPosition += 8
+    if (clientName) {
+      doc.text(`Client: ${clientName}`, 20, yPosition)
+      yPosition += 8
+    }
+    yPosition += 15
+    
+    // Add executive summary
+    if (analysis?.summary) {
+      doc.setFontSize(16)
+      doc.setFont('helvetica', 'bold')
+      doc.text('📋 Executive Summary', 20, yPosition)
+      yPosition += 10
+      
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'normal')
+      const summaryLines = doc.splitTextToSize(analysis.summary, pageWidth - 40)
+      summaryLines.forEach((line: string) => {
+        if (yPosition > pageHeight - 30) {
+          doc.addPage()
+          yPosition = 20
+        }
+        doc.text(line, 20, yPosition)
+        yPosition += 6
+      })
+      yPosition += 15
+    }
+    
+    // Add insights
+    if (analysis?.insights && analysis.insights.length > 0) {
+      doc.setFontSize(16)
+      doc.setFont('helvetica', 'bold')
+      doc.text('🔍 AI Insights', 20, yPosition)
+      yPosition += 15
+      
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'normal')
+      
+      analysis.insights.forEach((insight: string, index: number) => {
+        if (yPosition > pageHeight - 20) {
+          doc.addPage()
+          yPosition = 20
+        }
+        
+        doc.text(`${index + 1}. ${insight}`, 20, yPosition)
+        yPosition += 8
+      })
+      yPosition += 10
+    }
+    
+    // Add recommendations
+    if (analysis?.recommendations && analysis.recommendations.length > 0) {
+      doc.setFontSize(16)
+      doc.setFont('helvetica', 'bold')
+      doc.text('💡 AI Recommendations', 20, yPosition)
+      yPosition += 15
+      
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'normal')
+      
+      analysis.recommendations.forEach((rec: string, index: number) => {
+        if (yPosition > pageHeight - 20) {
+          doc.addPage()
+          yPosition = 20
+        }
+        
+        doc.text(`${index + 1}. ${rec}`, 20, yPosition)
+        yPosition += 8
+      })
+      yPosition += 10
+    }
+    
+    // Add statistics
+    if (analysis?.statistics && analysis.statistics.length > 0) {
+      doc.setFontSize(16)
+      doc.setFont('helvetica', 'bold')
+      doc.text('📊 Statistical Summary', 20, yPosition)
+      yPosition += 15
+      
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      
+      analysis.statistics.forEach((stat: any) => {
+        if (yPosition > pageHeight - 30) {
+          doc.addPage()
+          yPosition = 20
+        }
+        
+        doc.setFont('helvetica', 'bold')
+        doc.text(`${stat.column}:`, 20, yPosition)
+        yPosition += 6
+        
+        doc.setFont('helvetica', 'normal')
+        const statText = `Count: ${stat.count} | Avg: ${stat.average?.toFixed(2) || 'N/A'} | Min: ${stat.min || 'N/A'} | Max: ${stat.max || 'N/A'}`
+        doc.text(statText, 25, yPosition)
+        yPosition += 8
+      })
+    }
+    
+    // Add footer to all pages
+    const totalPages = doc.getNumberOfPages()
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i)
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`Page ${i} of ${totalPages} | Generated by ReportSonic AI`, pageWidth - 60, pageHeight - 10)
+    }
+    
+    // Generate blob
+    const pdfBlob = doc.output('blob')
+    return pdfBlob
+  } catch (error) {
+    console.error('PDF export error:', error)
+    throw new Error('Failed to generate PDF report')
   }
-  
-  // Add date
-  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 65)
-  
-  // Add content
-  doc.setFontSize(11)
-  const lines = doc.splitTextToSize(content, 170)
-  doc.text(lines, 20, 85)
-  
-  // Add page numbers
-  const pageCount = doc.getNumberOfPages()
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i)
-    doc.setFontSize(10)
-    doc.text(`Page ${i} of ${pageCount}`, 20, 285)
-  }
-  
-  // Generate blob
-  const pdfBlob = doc.output('blob')
-  return pdfBlob
 }
 
 export async function exportToWord(options: ExportOptions): Promise<Blob> {
-  // For now, return a simple text file
-  // In production, you would use the docx library
-  const { title, companyName, clientName, content } = options
-  
-  const wordContent = `
-${title}
-${companyName}
-${clientName ? `Client: ${clientName}` : ''}
-Generated on: ${new Date().toLocaleDateString()}
+  try {
+    const { title, companyName, clientName, content, analysis, charts } = options
+    
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: [
+          // Title
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: title,
+                bold: true,
+                size: 32,
+                color: "2E86AB"
+              })
+            ],
+            heading: HeadingLevel.TITLE,
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 400 }
+          }),
+          
+          // Header info
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `Generated on: ${new Date().toLocaleDateString()}`,
+                size: 20
+              })
+            ],
+            spacing: { after: 200 }
+          }),
+          
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `Company: ${companyName}`,
+                size: 20
+              })
+            ],
+            spacing: { after: 200 }
+          }),
+          
+          ...(clientName ? [new Paragraph({
+            children: [
+              new TextRun({
+                text: `Client: ${clientName}`,
+                size: 20
+              })
+            ],
+            spacing: { after: 400 }
+          })] : []),
+          
+          // Executive Summary
+          ...(analysis?.summary ? [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Executive Summary",
+                  bold: true,
+                  size: 24,
+                  color: "2E86AB"
+                })
+              ],
+              heading: HeadingLevel.HEADING_1,
+              spacing: { before: 400, after: 200 }
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: analysis.summary,
+                  size: 22
+                })
+              ],
+              spacing: { after: 400 }
+            })
+          ] : []),
+          
+          // Insights
+          ...(analysis?.insights && analysis.insights.length > 0 ? [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "AI Insights",
+                  bold: true,
+                  size: 24,
+                  color: "2E86AB"
+                })
+              ],
+              heading: HeadingLevel.HEADING_1,
+              spacing: { before: 400, after: 200 }
+            }),
+            ...analysis.insights.map((insight, index) => 
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `${index + 1}. ${insight}`,
+                    size: 22
+                  })
+                ],
+                spacing: { after: 200 }
+              })
+            )
+          ] : []),
+          
+          // Recommendations
+          ...(analysis?.recommendations && analysis.recommendations.length > 0 ? [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "AI Recommendations",
+                  bold: true,
+                  size: 24,
+                  color: "2E86AB"
+                })
+              ],
+              heading: HeadingLevel.HEADING_1,
+              spacing: { before: 400, after: 200 }
+            }),
+            ...analysis.recommendations.map((rec, index) => 
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `${index + 1}. ${rec}`,
+                    size: 22
+                  })
+                ],
+                spacing: { after: 200 }
+              })
+            )
+          ] : []),
+          
+          // Statistics
+          ...(analysis?.statistics && analysis.statistics.length > 0 ? [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Statistical Summary",
+                  bold: true,
+                  size: 24,
+                  color: "2E86AB"
+                })
+              ],
+              heading: HeadingLevel.HEADING_1,
+              spacing: { before: 400, after: 200 }
+            }),
+            ...analysis.statistics.map(stat => 
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `${stat.column}: Count: ${stat.count} | Avg: ${stat.average?.toFixed(2) || 'N/A'} | Min: ${stat.min || 'N/A'} | Max: ${stat.max || 'N/A'}`,
+                    size: 20
+                  })
+                ],
+                spacing: { after: 200 }
+              })
+            )
+          ] : [])
+        ]
+      }]
+    })
+    
+    const buffer = await Packer.toBuffer(doc)
+    return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+  } catch (error) {
+    console.error('Word export error:', error)
+    throw new Error('Failed to generate Word document')
+  }
+}
 
-${content}
-  `.trim()
-  
-  const blob = new Blob([wordContent], { type: 'text/plain' })
-  return blob
+export async function exportToPowerPoint(options: ExportOptions): Promise<Blob> {
+  try {
+    const { title, companyName, clientName, analysis, charts } = options
+    
+    const pptx = new PptxGenJS()
+    
+    // Title slide
+    const titleSlide = pptx.addSlide()
+    titleSlide.addText(title, {
+      x: 1,
+      y: 1,
+      w: 8,
+      h: 2,
+      fontSize: 32,
+      bold: true,
+      color: "2E86AB",
+      align: "center"
+    })
+    titleSlide.addText(`Generated on: ${new Date().toLocaleDateString()}`, {
+      x: 1,
+      y: 3,
+      w: 8,
+      h: 1,
+      fontSize: 18,
+      align: "center"
+    })
+    titleSlide.addText(`Company: ${companyName}`, {
+      x: 1,
+      y: 4,
+      w: 8,
+      h: 1,
+      fontSize: 18,
+      align: "center"
+    })
+    if (clientName) {
+      titleSlide.addText(`Client: ${clientName}`, {
+        x: 1,
+        y: 5,
+        w: 8,
+        h: 1,
+        fontSize: 18,
+        align: "center"
+      })
+    }
+    
+    // Executive Summary slide
+    if (analysis?.summary) {
+      const summarySlide = pptx.addSlide()
+      summarySlide.addText("Executive Summary", {
+        x: 0.5,
+        y: 0.5,
+        w: 9,
+        h: 1,
+        fontSize: 24,
+        bold: true,
+        color: "2E86AB"
+      })
+      summarySlide.addText(analysis.summary, {
+        x: 0.5,
+        y: 1.5,
+        w: 9,
+        h: 4,
+        fontSize: 16,
+        valign: "top"
+      })
+    }
+    
+    // Insights slide
+    if (analysis?.insights && analysis.insights.length > 0) {
+      const insightsSlide = pptx.addSlide()
+      insightsSlide.addText("AI Insights", {
+        x: 0.5,
+        y: 0.5,
+        w: 9,
+        h: 1,
+        fontSize: 24,
+        bold: true,
+        color: "2E86AB"
+      })
+      
+      const insightsText = analysis.insights.map((insight, index) => `${index + 1}. ${insight}`).join('\n\n')
+      insightsSlide.addText(insightsText, {
+        x: 0.5,
+        y: 1.5,
+        w: 9,
+        h: 4,
+        fontSize: 14,
+        valign: "top"
+      })
+    }
+    
+    // Recommendations slide
+    if (analysis?.recommendations && analysis.recommendations.length > 0) {
+      const recSlide = pptx.addSlide()
+      recSlide.addText("AI Recommendations", {
+        x: 0.5,
+        y: 0.5,
+        w: 9,
+        h: 1,
+        fontSize: 24,
+        bold: true,
+        color: "2E86AB"
+      })
+      
+      const recText = analysis.recommendations.map((rec, index) => `${index + 1}. ${rec}`).join('\n\n')
+      recSlide.addText(recText, {
+        x: 0.5,
+        y: 1.5,
+        w: 9,
+        h: 4,
+        fontSize: 14,
+        valign: "top"
+      })
+    }
+    
+    // Statistics slide
+    if (analysis?.statistics && analysis.statistics.length > 0) {
+      const statsSlide = pptx.addSlide()
+      statsSlide.addText("Statistical Summary", {
+        x: 0.5,
+        y: 0.5,
+        w: 9,
+        h: 1,
+        fontSize: 24,
+        bold: true,
+        color: "2E86AB"
+      })
+      
+      const statsText = analysis.statistics.map(stat => 
+        `${stat.column}: Count: ${stat.count} | Avg: ${stat.average?.toFixed(2) || 'N/A'} | Min: ${stat.min || 'N/A'} | Max: ${stat.max || 'N/A'}`
+      ).join('\n\n')
+      
+      statsSlide.addText(statsText, {
+        x: 0.5,
+        y: 1.5,
+        w: 9,
+        h: 4,
+        fontSize: 14,
+        valign: "top"
+      })
+    }
+    
+    const buffer = await pptx.writeFile({ outputType: 'arraybuffer' })
+    return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' })
+  } catch (error) {
+    console.error('PowerPoint export error:', error)
+    throw new Error('Failed to generate PowerPoint presentation')
+  }
 }
 
 export function downloadFile(blob: Blob, filename: string) {
@@ -85,4 +496,3 @@ export function downloadFile(blob: Blob, filename: string) {
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
 }
-
