@@ -761,9 +761,11 @@ export async function exportToPowerPoint(options: ExportOptions): Promise<Blob> 
         })
         
         // Chart data table
-        if (chart.data && chart.data.length > 0) {
-          const chartDataText = chart.data.slice(0, 8).map((item, i) => 
-            `${item.label}: ${item.value}`
+        if (chart.data && chart.data.datasets && chart.data.datasets[0]) {
+          const labels = chart.data.labels || []
+          const values = chart.data.datasets[0].data
+          const chartDataText = labels.slice(0, 8).map((label: string, i: number) =>
+            `${label}: ${values[i] || 0}`
           ).join('\n')
           
           chartSlide.addText(chartDataText, {

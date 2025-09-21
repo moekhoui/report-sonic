@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         })
         
         // Generate charts using the same logic as DataViewer
-        processedColumns.forEach((column, index) => {
+        processedColumns.forEach((column: { key: string; type: string; index: number }, index: number) => {
           if (column.type === 'numeric') {
             const values = dataRows
               .map((row: any[]) => Number(row[column.index]))
@@ -62,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 title: column.key,
                 type: 'bar',
                 data: {
-                  labels: values.map((_, i) => `Point ${i + 1}`),
+                  labels: values.map((_: number, i: number) => `Point ${i + 1}`),
                   datasets: [{
                     label: column.key,
                     data: values,
