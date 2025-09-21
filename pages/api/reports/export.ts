@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { exportToPDF, exportToWord, exportToPowerPoint } from '../../../src/lib/export'
+import { AIChartGenerator } from '../../../src/lib/chartGenerator'
 
 // Vercel-specific configuration
 export const config = {
@@ -25,152 +26,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log(`📄 Generating AI-powered ${format.toUpperCase()} report for:`, report.name)
 
-    // Generate charts using EXACT same logic as DataViewer
+    // Generate charts using AIChartGenerator for REAL Chart.js images
     let charts: any[] = []
     try {
       if (rawData && rawData.length > 1) {
-        const headers = rawData[0]
+        const dataHeaders = rawData[0]
         const dataRows = rawData.slice(1)
         
-        // Detect column type function (EXACT copy from DataViewer)
-        function detectColumnType(rows: any[][], columnIndex: number): 'numeric' | 'text' | 'date' {
-          const sample = rows.slice(0, Math.min(10, rows.length)).map(row => row[columnIndex])
-          
-          // Check if all are numbers
-          if (sample.every(val => !isNaN(Number(val)) && val !== '')) {
-            return 'numeric'
-          }
-          
-          // Check if all are dates
-          if (sample.every(val => {
-            const date = new Date(val)
-            return !isNaN(date.getTime())
-          })) {
-            return 'date'
-          }
-          
-          return 'text'
-        }
+        console.log('📊 Generating REAL Chart.js images using AIChartGenerator...')
+        const chartGenerator = new AIChartGenerator()
+        const chartResults = await chartGenerator.generateMultiChartAnalysis(dataRows, dataHeaders, 5)
         
-        // Process data EXACTLY like DataViewer
-        const processedColumns = headers.map((header: string, index: number) => ({
-          key: header,
-          index,
-          type: detectColumnType(dataRows, index)
+        charts = chartResults.map((result, index) => ({
+          id: `chart-${index}`,
+          title: result.config.title,
+          type: result.config.type,
+          data: result.config.data,
+          options: result.config.options,
+          insights: result.insights,
+          image: result.image // This is the actual Chart.js generated image!
         }))
         
-        // Generate charts EXACTLY like DataViewer
-        processedColumns.forEach((column: { key: string; type: string; index: number }, index: number) => {
-          if (column.type === 'numeric') {
-            const values = dataRows
-              .map((row: any[]) => Number(row[column.index]))
-              .filter((val: number) => !isNaN(val))
-              .slice(0, 50) // Limit for performance
-            
-            if (values.length > 0) {
-              const avg = values.reduce((a: number, b: number) => a + b, 0) / values.length
-              const min = Math.min(...values)
-              const max = Math.max(...values)
-              const stdDev = Math.sqrt(values.reduce((sum: number, val: number) => sum + Math.pow(val - avg, 2), 0) / values.length)
-              
-              // AI-generated insights based on actual data
-              let insights = `This bar chart reveals the distribution pattern of ${column.key} values across ${values.length} data points. `
-              if (max - min < avg * 0.1) {
-                insights += `The data shows remarkable consistency with a narrow range (${min.toFixed(2)} - ${max.toFixed(2)}), indicating stable performance. `
-              } else if (max > avg * 2) {
-                insights += `Significant variability detected with extreme values reaching ${max.toFixed(2)}, suggesting potential outliers or diverse performance levels. `
-              } else {
-                insights += `Moderate variability observed with values ranging from ${min.toFixed(2)} to ${max.toFixed(2)}, showing balanced distribution. `
-              }
-              insights += `The average of ${avg.toFixed(2)} with a standard deviation of ${stdDev.toFixed(2)} indicates ${stdDev < avg * 0.2 ? 'low' : stdDev < avg * 0.5 ? 'moderate' : 'high'} data dispersion. This visualization is crucial for identifying trends, outliers, and performance patterns that drive strategic decision-making.`
-              
-              charts.push({
-                id: `chart-${index}`,
-                title: column.key,
-                type: 'bar',
-                data: {
-                  labels: values.map((_: number, i: number) => `Point ${i + 1}`),
-                  datasets: [{
-                    label: column.key,
-                    data: values,
-                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                    borderColor: 'rgba(59, 130, 246, 1)',
-                    borderWidth: 1
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  plugins: {
-                    title: {
-                      display: true,
-                      text: `${column.key} Distribution`
-                    }
-                  }
-                },
-                insights: insights
-              })
-            }
-          } else if (column.type === 'text') {
-            const valueCounts: { [key: string]: number } = {}
-            dataRows.forEach((row: any[]) => {
-              const value = String(row[column.index] || '')
-              if (value) {
-                valueCounts[value] = (valueCounts[value] || 0) + 1
-              }
-            })
-            
-            const sortedEntries = Object.entries(valueCounts)
-              .sort(([,a], [,b]) => b - a)
-              .slice(0, 10) // Top 10 values
-            
-            if (sortedEntries.length > 0) {
-              const totalCount = sortedEntries.reduce((sum, [,count]) => sum + count, 0)
-              const topValue = sortedEntries[0][0]
-              const topCount = sortedEntries[0][1]
-              const topPercentage = (topCount / totalCount) * 100
-              const uniqueValues = sortedEntries.length
-              
-              // AI-generated insights based on actual data
-              let insights = `This pie chart illustrates the categorical distribution of ${column.key} across ${totalCount} total entries. `
-              if (topPercentage > 50) {
-                insights += `The data shows strong concentration with "${topValue}" dominating at ${topPercentage.toFixed(1)}% of all entries, indicating a clear market leader or primary category. `
-              } else if (topPercentage > 30) {
-                insights += `Moderate concentration observed with "${topValue}" representing ${topPercentage.toFixed(1)}% of entries, suggesting a competitive landscape with a leading category. `
-              } else {
-                insights += `Highly diversified distribution with "${topValue}" at only ${topPercentage.toFixed(1)}% of entries, indicating fragmented market segments or balanced categories. `
-              }
-              insights += `The presence of ${uniqueValues} unique categories demonstrates ${uniqueValues > 5 ? 'high' : 'moderate'} diversity in this field. This visualization is essential for understanding market segmentation, customer preferences, and strategic positioning opportunities.`
-              
-              charts.push({
-                id: `chart-${index}`,
-                title: column.key,
-                type: 'pie',
-                data: {
-                  labels: sortedEntries.map(([key]) => key),
-                  datasets: [{
-                    data: sortedEntries.map(([,count]) => count),
-                    backgroundColor: [
-                      '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
-                      '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
-                    ]
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  plugins: {
-                    title: {
-                      display: true,
-                      text: `${column.key} Distribution`
-                    }
-                  }
-                },
-                insights: insights
-              })
-            }
-          }
-        })
+        console.log('📊 Generated REAL Chart.js images:', charts.length)
       }
-      console.log('📊 Generated EXACT DataViewer charts for export:', charts.length)
     } catch (chartError) {
       console.log('📊 Chart generation failed, continuing without charts:', chartError)
       charts = []
