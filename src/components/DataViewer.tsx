@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,6 +12,7 @@ import {
   Legend,
 } from 'chart.js'
 import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2'
+import html2canvas from 'html2canvas'
 import { 
   BarChart3, 
   TrendingUp, 
@@ -40,9 +41,9 @@ interface DataViewerProps {
   data: any[][]
   headers: string[]
   analysis: any
-  onExportPDF: () => void
-  onExportWord: () => void
-  onExportPowerPoint: () => void
+  onExportPDF: (chartImages?: string[]) => void
+  onExportWord: (chartImages?: string[]) => void
+  onExportPowerPoint: (chartImages?: string[]) => void
   onBack?: () => void
 }
 
@@ -51,6 +52,8 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
   const [selectedCharts, setSelectedCharts] = useState<string[]>([])
   const [showAllData, setShowAllData] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [isCapturing, setIsCapturing] = useState(false)
+  const chartsContainerRef = useRef<HTMLDivElement>(null)
 
   // Process data for display
   const processedData = useMemo(() => {
@@ -185,6 +188,60 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
     )
   }, [processedData.rows, searchTerm])
 
+  // Capture charts as high-quality images
+  const captureCharts = async (): Promise<string[]> => {
+    if (!chartsContainerRef.current) return []
+    
+    setIsCapturing(true)
+    try {
+      // Wait a bit for charts to fully render
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Capture the entire charts container
+      const canvas = await html2canvas(chartsContainerRef.current, {
+        scale: 3, // High resolution for print quality
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: chartsContainerRef.current.scrollWidth,
+        height: chartsContainerRef.current.scrollHeight
+      })
+      
+      // Convert to base64 image
+      const imageDataUrl = canvas.toDataURL('image/png', 1.0)
+      
+      console.log('📸 Charts captured successfully:', {
+        width: canvas.width,
+        height: canvas.height,
+        dataUrlLength: imageDataUrl.length
+      })
+      
+      return [imageDataUrl]
+    } catch (error) {
+      console.error('❌ Chart capture failed:', error)
+      return []
+    } finally {
+      setIsCapturing(false)
+    }
+  }
+
+  // Enhanced export functions with chart capture
+  const handleExportPDF = async () => {
+    const chartImages = await captureCharts()
+    onExportPDF(chartImages)
+  }
+
+  const handleExportWord = async () => {
+    const chartImages = await captureCharts()
+    onExportWord(chartImages)
+  }
+
+  const handleExportPowerPoint = async () => {
+    const chartImages = await captureCharts()
+    onExportPowerPoint(chartImages)
+  }
+
   const renderChart = (chart: any) => {
     switch (chart.type) {
       case 'bar':
@@ -224,28 +281,31 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
             </div>
             <div className="flex gap-2">
               <button
-                onClick={onExportPDF}
-                className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm"
-                title="Export as PDF"
+                onClick={handleExportPDF}
+                disabled={isCapturing}
+                className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Export as PDF with high-quality charts"
               >
                 <Download className="w-4 h-4" />
-                PDF
+                {isCapturing ? 'Capturing...' : 'PDF'}
               </button>
               <button
-                onClick={onExportWord}
-                className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm"
-                title="Export as Word Document"
+                onClick={handleExportWord}
+                disabled={isCapturing}
+                className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Export as Word Document with high-quality charts"
               >
                 <Download className="w-4 h-4" />
-                Word
+                {isCapturing ? 'Capturing...' : 'Word'}
               </button>
               <button
-                onClick={onExportPowerPoint}
-                className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 flex items-center gap-2 text-sm"
-                title="Export as PowerPoint Presentation"
+                onClick={handleExportPowerPoint}
+                disabled={isCapturing}
+                className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Export as PowerPoint Presentation with high-quality charts"
               >
                 <Download className="w-4 h-4" />
-                PowerPoint
+                {isCapturing ? 'Capturing...' : 'PowerPoint'}
               </button>
             </div>
           </div>
@@ -345,7 +405,7 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div ref={chartsContainerRef} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {charts.map((chart) => {
                     // Generate AI description for this chart
                     const generateDescription = (chart: any) => {

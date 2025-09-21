@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { report, rawData, headers, format = 'pdf' } = req.body
+    const { report, rawData, headers, format = 'pdf', chartImages = [] } = req.body
 
     if (!report) {
       return res.status(400).json({ error: 'Report data is required' })
@@ -26,98 +26,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log(`📄 Generating AI-powered ${format.toUpperCase()} report for:`, report.name)
 
-    // Generate charts using AIChartGenerator for REAL Chart.js images
+    // Use captured chart images if available, otherwise generate fallback charts
     let charts: any[] = []
-    try {
-      if (rawData && rawData.length > 1) {
-        const dataHeaders = rawData[0]
-        const dataRows = rawData.slice(1)
-        
-        console.log('📊 Generating charts with data structures...')
-        console.log('📊 Data headers:', dataHeaders)
-        console.log('📊 Data rows count:', dataRows.length)
-        
-        // Generate charts directly without ChartJSNodeCanvas for now
-        for (let i = 0; i < Math.min(dataHeaders.length, 5); i++) {
-          const columnData = dataRows.map((row: any[]) => row[i]).filter((val: any) => val !== null && val !== undefined && val !== '')
-          
-          if (columnData.length > 0) {
-            // Determine data type
-            const isNumeric = columnData.every((val: any) => !isNaN(Number(val)))
-            const chartType = isNumeric ? 'bar' : 'pie'
-            
-            let chartData: any
-            let insights: string
-            
-            if (isNumeric) {
-              const numericData = columnData.map((val: any) => Number(val)).filter((val: any) => !isNaN(val))
-              const avg = numericData.reduce((a: number, b: number) => a + b, 0) / numericData.length
-              const min = Math.min(...numericData)
-              const max = Math.max(...numericData)
-              
-              chartData = {
-                labels: numericData.map((_: any, idx: number) => `Point ${idx + 1}`),
-                datasets: [{
-                  label: dataHeaders[i],
-                  data: numericData,
-                  backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                  borderColor: 'rgba(59, 130, 246, 1)',
-                  borderWidth: 1
-                }]
-              }
-              
-              insights = `This bar chart shows the distribution of ${dataHeaders[i]} values. Range: ${min.toFixed(2)} - ${max.toFixed(2)}, Average: ${avg.toFixed(2)}, Data Points: ${numericData.length}. The visualization reveals patterns and trends in the numerical data.`
-            } else {
-              const valueCounts: { [key: string]: number } = {}
-              columnData.forEach((value: any) => {
-                const key = String(value)
-                valueCounts[key] = (valueCounts[key] || 0) + 1
-              })
-              
-              const sortedEntries = Object.entries(valueCounts)
-                .sort(([,a], [,b]) => b - a)
-                .slice(0, 10)
-              
-              const total = sortedEntries.reduce((sum: number, [,count]) => sum + count, 0)
-              const topValue = sortedEntries[0]?.[0] || 'N/A'
-              const topCount = sortedEntries[0]?.[1] || 0
-              const topPercentage = total > 0 ? ((topCount / total) * 100).toFixed(1) : '0'
-              
-              chartData = {
-                labels: sortedEntries.map(([key]) => key),
-                datasets: [{
-                  data: sortedEntries.map(([,count]) => count),
-                  backgroundColor: [
-                    '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
-                    '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
-                  ]
-                }]
-              }
-              
-              insights = `This pie chart illustrates the categorical distribution of ${dataHeaders[i]}. Top category "${topValue}" represents ${topPercentage}% of all entries. Total categories: ${sortedEntries.length}, Total records: ${total}. This visualization helps identify dominant patterns and market segments.`
-            }
-            
-            charts.push({
-              id: `chart-${i}`,
-              title: dataHeaders[i],
-              type: chartType,
-              data: chartData,
-              insights: insights,
-              image: null // No image for now, but chart data is ready
-            })
-          }
-        }
-        
-        console.log('📊 Generated charts:', charts.length)
-      } else {
-        console.log('📊 No raw data available for chart generation')
-      }
-    } catch (chartError: any) {
-      console.error('❌ Chart generation failed:', chartError)
-      console.error('❌ Chart error stack:', chartError.stack)
+    
+    if (chartImages && chartImages.length > 0) {
+      console.log('📸 Using captured chart images:', chartImages.length)
+      
+      // Create charts with captured images
+      charts = chartImages.map((imageDataUrl: string, index: number) => ({
+        id: `chart-${index}`,
+        title: `Chart ${index + 1}`,
+        type: 'image',
+        data: null,
+        insights: `This high-quality chart was captured from the DataViewer dashboard, showing professional visualizations with exact styling and formatting.`,
+        image: imageDataUrl // This is the actual captured chart image!
+      }))
+      
+      console.log('📸 Created charts with captured images:', charts.length)
+    } else {
+      console.log('📊 No chart images provided, generating fallback charts...')
       
       // Fallback: Generate simple charts without images
-      console.log('📊 Using fallback chart generation...')
       if (rawData && rawData.length > 1) {
         const dataHeaders = rawData[0]
         const dataRows = rawData.slice(1)

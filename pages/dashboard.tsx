@@ -62,7 +62,7 @@ export default function Dashboard() {
     }
   }
 
-  const handleExportReport = async (report: any, format: 'pdf' | 'word' | 'powerpoint' = 'pdf') => {
+  const handleExportReport = async (report: any, format: 'pdf' | 'word' | 'powerpoint' = 'pdf', chartImages?: string[]) => {
     try {
       // Get the raw data for chart generation
       const rawData = report.rawData || []
@@ -77,7 +77,8 @@ export default function Dashboard() {
           report,
           rawData,
           headers,
-          format
+          format,
+          chartImages // Include captured chart images
         }),
       })
 
@@ -139,9 +140,9 @@ export default function Dashboard() {
         data={selectedReport.rawData || []}
         headers={selectedReport.headers || []}
         analysis={selectedReport.analysis}
-        onExportPDF={() => handleExportReport(selectedReport, 'pdf')}
-        onExportWord={() => handleExportReport(selectedReport, 'word')}
-        onExportPowerPoint={() => handleExportReport(selectedReport, 'powerpoint')}
+        onExportPDF={(chartImages) => handleExportReport(selectedReport, 'pdf', chartImages)}
+        onExportWord={(chartImages) => handleExportReport(selectedReport, 'word', chartImages)}
+        onExportPowerPoint={(chartImages) => handleExportReport(selectedReport, 'powerpoint', chartImages)}
         onBack={() => setSelectedReport(null)}
       />
     )
