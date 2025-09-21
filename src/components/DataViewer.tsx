@@ -550,15 +550,15 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
 
                       {/* Chart Description */}
                       <div className="mb-6">
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-                          <h5 className="font-medium text-blue-900 mb-2 flex items-center">
+                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
+                          <h5 className="font-medium text-purple-900 mb-2 flex items-center">
                             <BarChart3 className="w-4 h-4 mr-2" />
                             AI-Powered Chart Analysis
                           </h5>
-                          <p className="text-blue-800 text-sm leading-relaxed mb-3">{chart.description}</p>
-                          <div className="bg-white p-3 rounded border border-blue-200">
-                            <h6 className="font-medium text-blue-900 mb-1">Key Insights:</h6>
-                            <p className="text-blue-700 text-sm">{chart.insights}</p>
+                          <p className="text-purple-800 text-sm leading-relaxed mb-3">{chart.description}</p>
+                          <div className="bg-white p-3 rounded border border-purple-200">
+                            <h6 className="font-medium text-purple-900 mb-1">Key Insights:</h6>
+                            <p className="text-purple-700 text-sm">{chart.insights}</p>
                           </div>
                         </div>
                       </div>

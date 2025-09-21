@@ -3,18 +3,16 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../src/lib/auth';
 import Link from 'next/link';
 import ThemeToggle from '../src/components/ThemeToggle';
+import Logo from '../src/components/Logo';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 transition-all duration-500">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-slate-900 dark:to-slate-800 transition-all duration-500">
       {/* Navigation */}
       <nav className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-700 sticky top-0 z-50">
         <div className="container">
           <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 gradient-primary rounded-lg"></div>
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">ReportSonic</span>
-            </div>
+            <Logo size="md" variant="full" />
             <div className="flex items-center gap-6">
               <ThemeToggle />
               <Link href="/auth/signin" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
@@ -158,10 +156,7 @@ export default function Home() {
       <footer className="bg-gray-900 dark:bg-slate-950 text-white py-12">
         <div className="container">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center gap-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 gradient-primary rounded-lg"></div>
-              <span className="text-xl font-bold">ReportSonic</span>
-            </div>
+            <Logo size="sm" variant="full" className="mb-4 md:mb-0" />
             <p className="text-gray-400">
               © 2024 ReportSonic. All rights reserved.
             </p>

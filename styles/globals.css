@@ -3,14 +3,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Clean Design System */
+/* Clean Design System - Report Sonic Colors */
 :root {
-  /* Colors */
-  --primary: 59 130 246;
+  /* Colors - Purple/Pink theme based on Report Sonic logo */
+  --primary: 139 92 246; /* Purple-500 */
   --primary-foreground: 255 255 255;
   --secondary: 241 245 249;
   --secondary-foreground: 15 23 42;
-  --accent: 139 92 246;
+  --accent: 236 72 153; /* Pink-500 */
   --accent-foreground: 255 255 255;
   --background: 255 255 255;
   --foreground: 15 23 42;
@@ -18,7 +18,7 @@
   --muted-foreground: 100 116 139;
   --border: 226 232 240;
   --input: 255 255 255;
-  --ring: 59 130 246;
+  --ring: 139 92 246; /* Purple-500 */
   --card: 255 255 255;
   --card-foreground: 15 23 42;
   --destructive: 239 68 68;
@@ -27,13 +27,13 @@
   --success-foreground: 255 255 255;
 }
 
-/* Dark Mode */
+/* Dark Mode - Report Sonic Colors */
 [data-theme="dark"] {
-  --primary: 99 102 241;
+  --primary: 168 85 247; /* Purple-500 for dark mode */
   --primary-foreground: 255 255 255;
   --secondary: 30 41 59;
   --secondary-foreground: 248 250 252;
-  --accent: 168 85 247;
+  --accent: 244 114 182; /* Pink-400 for dark mode */
   --accent-foreground: 255 255 255;
   --background: 2 6 23;
   --foreground: 248 250 252;
@@ -41,7 +41,7 @@
   --muted-foreground: 148 163 184;
   --border: 51 65 85;
   --input: 15 23 42;
-  --ring: 99 102 241;
+  --ring: 168 85 247; /* Purple-500 for dark mode */
   --card: 15 23 42;
   --card-foreground: 248 250 252;
   --destructive: 248 113 113;
@@ -387,9 +387,9 @@ p {
   background-color: rgb(var(--muted));
 }
 
-/* Gradients */
+/* Gradients - Report Sonic Theme */
 .gradient-primary {
-  background: linear-gradient(135deg, rgb(59 130 246) 0%, rgb(139 92 246) 100%);
+  background: linear-gradient(135deg, rgb(139 92 246) 0%, rgb(236 72 153) 100%);
 }
 
 /* Animations */

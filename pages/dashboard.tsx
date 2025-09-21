@@ -2,6 +2,7 @@ import { useAuth } from '../src/contexts/AuthContext'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import DataViewer from '../src/components/DataViewer'
+import Logo from '../src/components/Logo'
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth()
@@ -105,7 +106,7 @@ export default function Dashboard() {
   return (
     <div style={{ 
       minHeight: '100vh', 
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
       padding: '20px'
     }}>
       <div style={{
@@ -126,6 +127,9 @@ export default function Dashboard() {
           borderBottom: '2px solid #f0f0f0'
         }}>
           <div>
+            <div style={{ marginBottom: '20px' }}>
+              <Logo size="lg" variant="full" />
+            </div>
             <h1 style={{ 
               color: '#333',
               fontSize: '32px',
@@ -209,7 +213,7 @@ export default function Dashboard() {
               disabled={uploading}
               style={{
                 padding: '15px 30px',
-                background: uploading ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: uploading ? '#ccc' : 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',

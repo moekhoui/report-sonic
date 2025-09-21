@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
+import Logo from '../../src/components/Logo'
 
 export default function SignUp() {
   const [name, setName] = useState('')
@@ -82,7 +83,7 @@ export default function SignUp() {
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
       padding: '20px'
     }}>
       <div style={{
@@ -93,6 +94,9 @@ export default function SignUp() {
         width: '100%',
         maxWidth: '400px'
       }}>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <Logo size="lg" variant="full" className="justify-center" />
+        </div>
         <h1 style={{ 
           textAlign: 'center', 
           marginBottom: '30px',
@@ -126,7 +130,7 @@ export default function SignUp() {
                 fontSize: '16px',
                 transition: 'border-color 0.3s'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
+              onFocus={(e) => e.target.style.borderColor = '#a855f7'}
               onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
             />
           </div>
@@ -153,7 +157,7 @@ export default function SignUp() {
                 fontSize: '16px',
                 transition: 'border-color 0.3s'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
+              onFocus={(e) => e.target.style.borderColor = '#a855f7'}
               onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
             />
           </div>
@@ -180,7 +184,7 @@ export default function SignUp() {
                 fontSize: '16px',
                 transition: 'border-color 0.3s'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
+              onFocus={(e) => e.target.style.borderColor = '#a855f7'}
               onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
             />
           </div>
@@ -207,7 +211,7 @@ export default function SignUp() {
                 fontSize: '16px',
                 transition: 'border-color 0.3s'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
+              onFocus={(e) => e.target.style.borderColor = '#a855f7'}
               onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
             />
           </div>
@@ -218,7 +222,7 @@ export default function SignUp() {
             style={{
               width: '100%',
               padding: '12px',
-              background: loading ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: loading ? '#ccc' : 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -329,7 +333,7 @@ export default function SignUp() {
           color: '#666'
         }}>
           <Link href="/auth/signin" style={{ 
-            color: '#667eea', 
+            color: '#a855f7', 
             textDecoration: 'none',
             fontWeight: '500'
           }}>
