@@ -20,15 +20,17 @@ export interface ExportOptions {
   charts?: Array<{
     id: string
     type: string
-    data: any[]
+    data: any
     title?: string
     insights?: string
   }>
+  aiIntroduction?: string
+  aiConclusion?: string
 }
 
 export async function exportToPDF(options: ExportOptions): Promise<Blob> {
   try {
-    const { title, companyName, clientName, content, analysis, charts } = options
+    const { title, companyName, clientName, content, analysis, charts, aiIntroduction, aiConclusion } = options
     
     // Create a new PDF document with error handling
     let doc: any
@@ -61,6 +63,27 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
       yPosition += 8
     }
     yPosition += 15
+    
+    // Add AI Introduction
+    if (aiIntroduction) {
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.text('AI Analysis Introduction', 20, yPosition)
+      yPosition += 10
+      
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'normal')
+      const introLines = doc.splitTextToSize(aiIntroduction, pageWidth - 40)
+      introLines.forEach((line: string) => {
+        if (yPosition > pageHeight - 30) {
+          doc.addPage()
+          yPosition = 20
+        }
+        doc.text(line, 20, yPosition)
+        yPosition += 6
+      })
+      yPosition += 15
+    }
     
     // Add executive summary
     if (analysis?.summary) {
@@ -175,11 +198,12 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
         yPosition += 8
         
         // Create enhanced chart visualization based on chart type
-        if (chart.data && chart.data.length > 0) {
+        if (chart.data && chart.data.datasets && chart.data.datasets[0]) {
           const chartWidth = pageWidth - 40
           const chartHeight = 50
-          const maxValue = Math.max(...chart.data.map((item: any) => item.value))
-          const minValue = Math.min(...chart.data.map((item: any) => item.value))
+          const chartData = chart.data.datasets[0].data
+          const maxValue = Math.max(...chartData)
+          const minValue = Math.min(...chartData)
           
           // Draw chart background with border
           doc.setDrawColor(100, 100, 100)
@@ -193,14 +217,14 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
           
           if (chart.type === 'bar') {
             // Draw bars with enhanced styling
-            const barWidth = (chartWidth - 20) / chart.data.length
-            chart.data.forEach((item: any, i: number) => {
-              const barHeight = ((item.value - minValue) / (maxValue - minValue)) * (chartHeight - 20)
+            const barWidth = (chartWidth - 20) / chartData.length
+            chartData.forEach((value: number, i: number) => {
+              const barHeight = ((value - minValue) / (maxValue - minValue)) * (chartHeight - 20)
               const x = 30 + (i * barWidth)
               const y = yPosition + chartHeight - 10 - barHeight
               
               // Bar color based on value (gradient effect)
-              const intensity = (item.value - minValue) / (maxValue - minValue)
+              const intensity = (value - minValue) / (maxValue - minValue)
               if (intensity > 0.7) {
                 doc.setFillColor(52, 134, 171) // Blue for high values
               } else if (intensity > 0.4) {
@@ -213,42 +237,19 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
               // Value label on top of bar
               doc.setFontSize(7)
               doc.setFont('helvetica', 'normal')
-              doc.text(item.value.toString(), x + barWidth/2 - 3, y - 2)
-            })
-          } else if (chart.type === 'line') {
-            // Draw line chart
-            doc.setDrawColor(52, 134, 171)
-            doc.setLineWidth(1)
-            const pointWidth = (chartWidth - 20) / (chart.data.length - 1)
-            for (let i = 0; i < chart.data.length - 1; i++) {
-              const x1 = 30 + (i * pointWidth)
-              const y1 = yPosition + chartHeight - 10 - ((chart.data[i].value - minValue) / (maxValue - minValue)) * (chartHeight - 20)
-              const x2 = 30 + ((i + 1) * pointWidth)
-              const y2 = yPosition + chartHeight - 10 - ((chart.data[i + 1].value - minValue) / (maxValue - minValue)) * (chartHeight - 20)
-              doc.line(x1, y1, x2, y2)
-            }
-            
-            // Draw data points
-            chart.data.forEach((item: any, i: number) => {
-              const x = 30 + (i * pointWidth)
-              const y = yPosition + chartHeight - 10 - ((item.value - minValue) / (maxValue - minValue)) * (chartHeight - 20)
-              doc.setFillColor(52, 134, 171)
-              doc.circle(x, y, 1, 'F')
+              doc.text(value.toString(), x + barWidth/2 - 3, y - 2)
             })
           } else if (chart.type === 'pie') {
             // Draw pie chart representation (simplified as bar chart)
-            const total = chart.data.reduce((sum: number, item: any) => sum + item.value, 0)
-            let currentAngle = 0
-            const centerX = 20 + chartWidth / 2
-            const centerY = yPosition + chartHeight / 2
-            const radius = Math.min(chartWidth, chartHeight) / 4
+            const total = chartData.reduce((sum: number, value: number) => sum + value, 0)
+            const labels = chart.data.labels || []
             
-            chart.data.forEach((item: any, i: number) => {
-              const sliceAngle = (item.value / total) * 360
+            chartData.forEach((value: number, i: number) => {
+              const sliceAngle = (value / total) * 360
               const color = i % 3 === 0 ? [52, 134, 171] : i % 3 === 1 ? [46, 125, 50] : [255, 152, 0]
               doc.setFillColor(color[0], color[1], color[2])
               // Simplified pie representation as colored rectangles
-              const rectHeight = (item.value / total) * (chartHeight - 20)
+              const rectHeight = (value / total) * (chartHeight - 20)
               doc.rect(30 + i * 15, yPosition + 10, 12, rectHeight, 'F')
             })
           }
@@ -256,9 +257,11 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
           // Draw axis labels
           doc.setFontSize(7)
           doc.setFont('helvetica', 'normal')
-          chart.data.forEach((item: any, i: number) => {
-            const x = 30 + (i * (chartWidth - 20) / chart.data.length)
-            doc.text(item.label, x, yPosition + chartHeight + 5)
+          const labels = chart.data.labels || []
+          chartData.forEach((value: number, i: number) => {
+            const x = 30 + (i * (chartWidth - 20) / chartData.length)
+            const label = labels[i] || `Point ${i + 1}`
+            doc.text(label, x, yPosition + chartHeight + 5)
           })
           
           // Add value range info
@@ -315,6 +318,27 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
         
         yPosition += 10
       })
+    }
+    
+    // Add AI Conclusion
+    if (aiConclusion) {
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.text('AI Analysis Conclusion', 20, yPosition)
+      yPosition += 10
+      
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'normal')
+      const conclusionLines = doc.splitTextToSize(aiConclusion, pageWidth - 40)
+      conclusionLines.forEach((line: string) => {
+        if (yPosition > pageHeight - 30) {
+          doc.addPage()
+          yPosition = 20
+        }
+        doc.text(line, 20, yPosition)
+        yPosition += 6
+      })
+      yPosition += 15
     }
     
     // Add footer to all pages

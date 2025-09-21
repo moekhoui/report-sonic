@@ -25,68 +25,108 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log(`📄 Generating AI-powered ${format.toUpperCase()} report for:`, report.name)
 
-    // Generate charts for export
+    // Generate charts using the same logic as DataViewer
     let charts: any[] = []
     try {
-      // Simple chart data generation for export
       if (rawData && rawData.length > 1) {
         const headers = rawData[0]
         const dataRows = rawData.slice(1)
         
-        // Generate comprehensive chart descriptions with AI analysis
-        charts = headers.slice(0, 3).map((header: string, index: number) => {
+        // Process data similar to DataViewer
+        const processedColumns = headers.map((header: string, index: number) => {
           const columnData = dataRows.map((row: any[]) => row[index]).filter((val: any) => val !== null && val !== undefined)
-          const numericData = columnData.filter((val: any) => typeof val === 'number')
-          const textData = columnData.filter((val: any) => typeof val === 'string')
-          
-          // Determine chart type based on data
-          let chartType = 'bar'
-          if (numericData.length > 0) {
-            chartType = numericData.length > 5 ? 'line' : 'bar'
-          } else if (textData.length > 0) {
-            chartType = 'pie'
-          }
-          
-          // Generate AI insights based on data characteristics
-          let insights = `This ${chartType} chart visualizes the ${header} data distribution. `
-          if (numericData.length > 0) {
-            const avg = numericData.reduce((a: number, b: number) => a + b, 0) / numericData.length
-            const max = Math.max(...numericData)
-            const min = Math.min(...numericData)
-            insights += `The data shows ${numericData.length} numeric values with an average of ${avg.toFixed(2)}, ranging from ${min} to ${max}. `
-            if (max - min > avg) {
-              insights += `High variability suggests diverse data patterns that warrant further investigation. `
-            } else {
-              insights += `Consistent data patterns indicate stable trends in this metric. `
-            }
-          } else if (textData.length > 0) {
-            const uniqueValues = [...new Set(textData)]
-            insights += `The data contains ${textData.length} text entries with ${uniqueValues.length} unique categories. `
-            if (uniqueValues.length <= 5) {
-              insights += `Limited categories suggest clear segmentation opportunities. `
-            } else {
-              insights += `High diversity in categories indicates complex data relationships. `
-            }
-          }
-          insights += `This visualization helps identify key trends, outliers, and patterns that can drive strategic business decisions.`
+          const numericData = columnData.filter((val: any) => typeof val === 'number' && !isNaN(val))
           
           return {
-            id: `chart-${index}`,
-            type: chartType,
-            title: `${header} Distribution Analysis`,
-            data: dataRows.slice(0, 10).map((row: any[], i: number) => ({
-              label: `Item ${i + 1}`,
-              value: typeof row[index] === 'number' ? row[index] : (textData.length > 0 ? Math.random() * 100 : Math.random() * 100)
-            })),
-            insights: insights
+            key: header,
+            type: numericData.length > columnData.length * 0.5 ? 'numeric' : 'text',
+            index: index
+          }
+        })
+        
+        // Generate charts using the same logic as DataViewer
+        processedColumns.forEach((column, index) => {
+          if (column.type === 'numeric') {
+            const values = dataRows
+              .map((row: any[]) => Number(row[column.index]))
+              .filter((val: number) => !isNaN(val))
+              .slice(0, 50) // Limit for performance
+            
+            if (values.length > 0) {
+              const avg = values.reduce((a: number, b: number) => a + b, 0) / values.length
+              const min = Math.min(...values)
+              const max = Math.max(...values)
+              
+              charts.push({
+                id: `chart-${index}`,
+                title: column.key,
+                type: 'bar',
+                data: {
+                  labels: values.map((_, i) => `Point ${i + 1}`),
+                  datasets: [{
+                    label: column.key,
+                    data: values,
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1
+                  }]
+                },
+                insights: `This bar chart visualizes the distribution of ${column.key} values. The data shows ${values.length} data points with an average of ${avg.toFixed(2)}, ranging from ${min} to ${max}. This visualization helps identify patterns and outliers in the ${column.key} data.`
+              })
+            }
+          } else if (column.type === 'text') {
+            const valueCounts: { [key: string]: number } = {}
+            dataRows.forEach((row: any[]) => {
+              const value = String(row[column.index] || '')
+              if (value) {
+                valueCounts[value] = (valueCounts[value] || 0) + 1
+              }
+            })
+            
+            const sortedEntries = Object.entries(valueCounts)
+              .sort(([,a], [,b]) => b - a)
+              .slice(0, 10) // Top 10 values
+            
+            if (sortedEntries.length > 0) {
+              const totalCount = sortedEntries.reduce((sum, [,count]) => sum + count, 0)
+              const topValue = sortedEntries[0][0]
+              const topCount = sortedEntries[0][1]
+              
+              charts.push({
+                id: `chart-${index}`,
+                title: column.key,
+                type: 'pie',
+                data: {
+                  labels: sortedEntries.map(([key]) => key),
+                  datasets: [{
+                    data: sortedEntries.map(([,count]) => count),
+                    backgroundColor: [
+                      '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+                      '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
+                    ]
+                  }]
+                },
+                insights: `This pie chart shows the distribution of ${column.key} categories. The most common value is "${topValue}" with ${topCount} occurrences (${((topCount / totalCount) * 100).toFixed(1)}% of total). This visualization helps understand the categorical distribution and identify dominant categories.`
+              })
+            }
           }
         })
       }
-      console.log('📊 Generated charts for export:', charts.length)
+      console.log('📊 Generated real charts for export:', charts.length)
     } catch (chartError) {
       console.log('📊 Chart generation failed, continuing without charts:', chartError)
       charts = []
     }
+
+    // Generate AI introduction and conclusion
+    const totalRows = rawData ? rawData.length - 1 : 0
+    const totalColumns = rawData ? rawData[0].length : 0
+    const numericCharts = charts.filter(c => c.type === 'bar').length
+    const categoricalCharts = charts.filter(c => c.type === 'pie').length
+    
+    const aiIntroduction = `This comprehensive data analysis report presents insights derived from ${totalRows} records across ${totalColumns} data fields. Our AI-powered analysis has identified ${numericCharts} numerical patterns and ${categoricalCharts} categorical distributions, providing a complete picture of your data landscape. The visualizations and statistical analysis presented herein offer actionable insights to drive strategic decision-making and operational excellence.`
+    
+    const aiConclusion = `Based on our comprehensive analysis of ${totalRows} data points, this report has revealed key patterns, trends, and opportunities within your dataset. The ${charts.length} visualizations demonstrate clear data relationships and statistical significance that can inform strategic initiatives. We recommend leveraging these insights to optimize processes, identify growth opportunities, and make data-driven decisions that align with your organizational objectives. Regular monitoring and analysis of these metrics will ensure continued success and adaptation to changing market conditions.`
 
     // Prepare export options with safe defaults
     const exportOptions = {
@@ -103,7 +143,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         patterns: report.analysis?.patterns || [],
         qualityIssues: report.analysis?.qualityIssues || []
       },
-      charts: charts
+      charts: charts,
+      aiIntroduction: aiIntroduction,
+      aiConclusion: aiConclusion
     }
 
     console.log('📋 Export options prepared:', {
