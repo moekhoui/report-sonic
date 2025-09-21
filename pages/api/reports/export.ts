@@ -35,9 +35,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         // Generate comprehensive chart descriptions with AI analysis
         charts = headers.slice(0, 3).map((header: string, index: number) => {
-          const columnData = dataRows.map((row: any[]) => row[index]).filter(val => val !== null && val !== undefined)
-          const numericData = columnData.filter(val => typeof val === 'number')
-          const textData = columnData.filter(val => typeof val === 'string')
+          const columnData = dataRows.map((row: any[]) => row[index]).filter((val: any) => val !== null && val !== undefined)
+          const numericData = columnData.filter((val: any) => typeof val === 'number')
+          const textData = columnData.filter((val: any) => typeof val === 'string')
           
           // Determine chart type based on data
           let chartType = 'bar'
