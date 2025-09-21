@@ -716,7 +716,7 @@ export async function exportToPowerPoint(options: ExportOptions): Promise<Blob> 
         const chartSlide = pptx.addSlide()
         
         // Chart title
-        chartSlide.addText(chart.title, {
+        chartSlide.addText(chart.title || 'Untitled Chart', {
           x: 0.5,
           y: 0.5,
           w: 9,
