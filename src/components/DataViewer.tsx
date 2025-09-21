@@ -177,6 +177,13 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
     return chartData
   }, [processedData])
 
+  // Auto-select all charts when charts are generated
+  React.useEffect(() => {
+    if (charts.length > 0 && selectedCharts.length === 0) {
+      setSelectedCharts(charts.map(c => c.id))
+    }
+  }, [charts, selectedCharts.length])
+
   // Filter data based on search
   const filteredRows = useMemo(() => {
     if (!searchTerm) return processedData.rows
@@ -188,7 +195,7 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
     )
   }, [processedData.rows, searchTerm])
 
-  // Capture charts as high-quality images
+  // Capture charts as optimized images
   const captureCharts = async (): Promise<string[]> => {
     if (!chartsContainerRef.current) return []
     
@@ -197,27 +204,49 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
       // Wait a bit for charts to fully render
       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      // Capture the entire charts container
-      const canvas = await html2canvas(chartsContainerRef.current, {
-        scale: 3, // High resolution for print quality
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        width: chartsContainerRef.current.scrollWidth,
-        height: chartsContainerRef.current.scrollHeight
+      // Capture only selected charts
+      const selectedChartElements = Array.from(chartsContainerRef.current.children).filter((_, index) => {
+        const chartId = `chart-${index}`
+        return selectedCharts.includes(chartId)
       })
       
-      // Convert to base64 image
-      const imageDataUrl = canvas.toDataURL('image/png', 1.0)
+      if (selectedChartElements.length === 0) {
+        console.log('📸 No selected charts to capture')
+        return []
+      }
       
-      console.log('📸 Charts captured successfully:', {
-        width: canvas.width,
-        height: canvas.height,
-        dataUrlLength: imageDataUrl.length
-      })
+      const capturedImages: string[] = []
       
-      return [imageDataUrl]
+      // Capture each selected chart individually
+      for (const chartElement of selectedChartElements) {
+        try {
+          const canvas = await html2canvas(chartElement as HTMLElement, {
+            scale: 2, // Reduced scale to reduce payload size
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            width: (chartElement as HTMLElement).scrollWidth,
+            height: (chartElement as HTMLElement).scrollHeight
+          })
+          
+          // Convert to base64 image with compression
+          const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8) // JPEG with 80% quality
+          
+          console.log('📸 Chart captured:', {
+            width: canvas.width,
+            height: canvas.height,
+            dataUrlLength: imageDataUrl.length
+          })
+          
+          capturedImages.push(imageDataUrl)
+        } catch (chartError) {
+          console.error('❌ Failed to capture individual chart:', chartError)
+        }
+      }
+      
+      console.log('📸 Total charts captured:', capturedImages.length)
+      return capturedImages
     } catch (error) {
       console.error('❌ Chart capture failed:', error)
       return []
@@ -228,16 +257,46 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
 
   // Enhanced export functions with chart capture
   const handleExportPDF = async () => {
+    if (charts.length === 0) {
+      alert('No charts available to export. Please ensure your data has been processed and charts are generated.')
+      return
+    }
+    
+    if (selectedCharts.length === 0) {
+      alert('Please select at least one chart to export. Use the "Select All" button or select individual charts.')
+      return
+    }
+    
     const chartImages = await captureCharts()
     onExportPDF(chartImages)
   }
 
   const handleExportWord = async () => {
+    if (charts.length === 0) {
+      alert('No charts available to export. Please ensure your data has been processed and charts are generated.')
+      return
+    }
+    
+    if (selectedCharts.length === 0) {
+      alert('Please select at least one chart to export. Use the "Select All" button or select individual charts.')
+      return
+    }
+    
     const chartImages = await captureCharts()
     onExportWord(chartImages)
   }
 
   const handleExportPowerPoint = async () => {
+    if (charts.length === 0) {
+      alert('No charts available to export. Please ensure your data has been processed and charts are generated.')
+      return
+    }
+    
+    if (selectedCharts.length === 0) {
+      alert('Please select at least one chart to export. Use the "Select All" button or select individual charts.')
+      return
+    }
+    
     const chartImages = await captureCharts()
     onExportPowerPoint(chartImages)
   }
@@ -282,30 +341,30 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
             <div className="flex gap-2">
               <button
                 onClick={handleExportPDF}
-                disabled={isCapturing}
+                disabled={isCapturing || charts.length === 0 || selectedCharts.length === 0}
                 className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Export as PDF with high-quality charts"
+                title={charts.length === 0 ? 'No charts available' : selectedCharts.length === 0 ? 'Please select charts to export' : 'Export as PDF with high-quality charts'}
               >
                 <Download className="w-4 h-4" />
-                {isCapturing ? 'Capturing...' : 'PDF'}
+                {isCapturing ? 'Capturing...' : `PDF (${selectedCharts.length}/${charts.length})`}
               </button>
               <button
                 onClick={handleExportWord}
-                disabled={isCapturing}
+                disabled={isCapturing || charts.length === 0 || selectedCharts.length === 0}
                 className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Export as Word Document with high-quality charts"
+                title={charts.length === 0 ? 'No charts available' : selectedCharts.length === 0 ? 'Please select charts to export' : 'Export as Word Document with high-quality charts'}
               >
                 <Download className="w-4 h-4" />
-                {isCapturing ? 'Capturing...' : 'Word'}
+                {isCapturing ? 'Capturing...' : `Word (${selectedCharts.length}/${charts.length})`}
               </button>
               <button
                 onClick={handleExportPowerPoint}
-                disabled={isCapturing}
+                disabled={isCapturing || charts.length === 0 || selectedCharts.length === 0}
                 className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Export as PowerPoint Presentation with high-quality charts"
+                title={charts.length === 0 ? 'No charts available' : selectedCharts.length === 0 ? 'Please select charts to export' : 'Export as PowerPoint Presentation with high-quality charts'}
               >
                 <Download className="w-4 h-4" />
-                {isCapturing ? 'Capturing...' : 'PowerPoint'}
+                {isCapturing ? 'Capturing...' : `PowerPoint (${selectedCharts.length}/${charts.length})`}
               </button>
             </div>
           </div>

@@ -7,7 +7,7 @@ export const config = {
   api: {
     responseLimit: false,
     bodyParser: {
-      sizeLimit: '10mb',
+      sizeLimit: '50mb', // Increased to handle chart images
     },
   },
 }
@@ -25,6 +25,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     console.log(`📄 Generating AI-powered ${format.toUpperCase()} report for:`, report.name)
+    console.log(`📸 Chart images received:`, chartImages.length)
+    
+    // Log payload size for debugging
+    const payloadSize = JSON.stringify(req.body).length
+    console.log(`📊 Payload size: ${(payloadSize / 1024 / 1024).toFixed(2)} MB`)
+    
+    if (payloadSize > 45 * 1024 * 1024) { // 45MB limit
+      return res.status(413).json({ 
+        error: 'Payload too large. Please select fewer charts or try again.' 
+      })
+    }
 
     // Use captured chart images if available, otherwise generate fallback charts
     let charts: any[] = []
