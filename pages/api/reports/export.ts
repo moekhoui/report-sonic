@@ -50,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           // Generate AI insights based on data characteristics
           let insights = `This ${chartType} chart visualizes the ${header} data distribution. `
           if (numericData.length > 0) {
-            const avg = numericData.reduce((a, b) => a + b, 0) / numericData.length
+            const avg = numericData.reduce((a: number, b: number) => a + b, 0) / numericData.length
             const max = Math.max(...numericData)
             const min = Math.min(...numericData)
             insights += `The data shows ${numericData.length} numeric values with an average of ${avg.toFixed(2)}, ranging from ${min} to ${max}. `
