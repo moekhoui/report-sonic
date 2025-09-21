@@ -241,10 +241,17 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
       const selectedChartsData = charts.filter(chart => selectedCharts.includes(chart.id))
       
       // Add chart instances to the data
-      const chartsWithInstances = selectedChartsData.map(chart => ({
-        ...chart,
-        chartInstance: chartInstancesRef.current.get(chart.id)
-      }))
+      const chartsWithInstances = selectedChartsData.map(chart => {
+        const chartInstance = chartInstancesRef.current.get(chart.id)
+        console.log('📊 Chart instance for', chart.id, ':', chartInstance ? 'Found' : 'Not found')
+        return {
+          ...chart,
+          chartInstance: chartInstance
+        }
+      })
+      
+      console.log('📊 Total chart instances stored:', chartInstancesRef.current.size)
+      console.log('📊 Charts with instances:', chartsWithInstances.filter(c => c.chartInstance).length)
 
       const exportOptions: ClientExportOptions = {
         title: reportName,
@@ -255,8 +262,8 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
         charts: chartsWithInstances,
         rawData: data,
         headers: headers,
-        aiIntroduction: `This comprehensive data analysis report presents AI-powered insights derived from ${processedData.rows.length} records across ${processedData.columns.length} data fields. Our advanced analytical engine has processed the dataset to identify patterns, trends, and opportunities within your data.`,
-        aiConclusion: `Based on our comprehensive analysis of ${processedData.rows.length} data points across ${processedData.columns.length} fields, this report provides actionable insights for strategic decision-making. The visualizations and analysis presented here offer a foundation for data-driven business optimization and growth.`
+        aiIntroduction: `This comprehensive data analysis report presents AI-powered insights derived from ${processedData.rows.length} records across ${processedData.columns.length} data fields. Our advanced analytical engine has processed this dataset to identify patterns, trends, and opportunities within your data. The analysis encompasses statistical analysis, pattern recognition, and predictive insights that translate complex data relationships into actionable business intelligence. Each visualization is accompanied by AI-generated insights that provide context, interpretation, and strategic recommendations. This report serves as a foundation for data-driven decision-making and strategic optimization.`,
+        aiConclusion: `Based on our comprehensive analysis of ${processedData.rows.length} data points across ${processedData.columns.length} fields, this report has revealed critical insights that can transform your business strategy. The analysis encompasses ${charts.length} key visualizations that uncover hidden patterns, trends, and opportunities within your dataset. Our AI-powered recommendations focus on leveraging these insights to optimize operational efficiency, identify market opportunities, and drive strategic growth. The data quality assessment and statistical analysis provide a foundation for executive decision-making and competitive advantage. We recommend implementing regular data monitoring, expanding successful patterns identified in the analysis, and using these insights to inform quarterly strategic reviews. The visualizations presented provide actionable intelligence for immediate implementation and long-term strategic planning.`
       }
 
       // Generate the export
@@ -283,9 +290,16 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
 
   const renderChart = (chart: any) => {
     const chartRef = (ref: any) => {
-      if (ref && ref.chartInstance) {
-        storeChartInstance(chart.id, ref.chartInstance)
-      }
+      // Wait for chart to be fully rendered before storing instance
+      setTimeout(() => {
+        if (ref && ref.chartInstance) {
+          console.log('📊 Storing chart instance for:', chart.id)
+          storeChartInstance(chart.id, ref.chartInstance)
+        } else if (ref && ref.canvas && ref.canvas.chart) {
+          console.log('📊 Storing canvas chart instance for:', chart.id)
+          storeChartInstance(chart.id, ref.canvas.chart)
+        }
+      }, 100)
     }
 
     switch (chart.type) {

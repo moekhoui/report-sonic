@@ -70,21 +70,27 @@ export class ClientExporter {
       return columnData.length > 0 && !columnData.every(val => !isNaN(Number(val)))
     })
 
-    // Generate statistical summary
-    const statistics = numericColumns.map(header => {
-      const index = headers.indexOf(header)
-      const values = rows.map(row => Number(row[index])).filter(val => !isNaN(val))
-      
-      return {
-        column: header,
-        count: values.length,
-        average: values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0,
-        min: values.length > 0 ? Math.min(...values) : 0,
-        max: values.length > 0 ? Math.max(...values) : 0,
-        median: values.length > 0 ? this.calculateMedian(values) : 0,
-        stdDev: values.length > 0 ? this.calculateStandardDeviation(values) : 0
-      }
-    })
+        // Generate statistical summary
+        const statistics = numericColumns.map(header => {
+          const index = headers.indexOf(header)
+          const values = rows.map(row => Number(row[index])).filter(val => !isNaN(val))
+          
+          const avg = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0
+          const min = values.length > 0 ? Math.min(...values) : 0
+          const max = values.length > 0 ? Math.max(...values) : 0
+          const median = values.length > 0 ? this.calculateMedian(values) : 0
+          const stdDev = values.length > 0 ? this.calculateStandardDeviation(values) : 0
+          
+          return {
+            column: header,
+            count: values.length,
+            average: avg,
+            min: min,
+            max: max,
+            median: median,
+            stdDev: stdDev
+          }
+        })
 
     this.updateProgress('analyzing', 40, 'Generating insights...')
 
@@ -106,8 +112,13 @@ export class ClientExporter {
       `Schedule quarterly reviews to track trend patterns and performance metrics`
     ]
 
-    // Generate executive summary
-    const summary = `This comprehensive analysis of ${rows.length} data records reveals ${numericColumns.length} quantitative metrics and ${categoricalColumns.length} categorical segments. The dataset demonstrates ${this.calculateDataCompleteness(data)}% data completeness with ${this.detectOutliers(data, headers).length} identified outliers. Key performance indicators show ${numericColumns.length > 0 ? `average ${numericColumns[0]} of ${statistics[0]?.average?.toFixed(2) || 'N/A'}` : 'varying patterns'}. The analysis provides actionable insights for strategic decision-making and operational optimization.`
+    // Generate comprehensive executive summary
+    const dataCompleteness = this.calculateDataCompleteness(data)
+    const outlierCount = this.detectOutliers(data, headers).length
+    const topMetric = numericColumns.length > 0 ? numericColumns[0] : 'key performance indicators'
+    const avgValue = statistics.length > 0 ? statistics[0].average : 0
+    
+    const summary = `This comprehensive data analysis report presents AI-powered insights derived from ${rows.length} records across ${headers.length} data fields. Our advanced analytical engine has processed this ${dataCompleteness > 80 ? 'high-quality' : dataCompleteness > 60 ? 'moderate-quality' : 'developing'} dataset with ${dataCompleteness}% data completeness, identifying ${numericColumns.length} numerical patterns and ${categoricalColumns.length} categorical distributions. The analysis reveals ${outlierCount > 0 ? `${outlierCount} potential outliers requiring attention` : 'consistent data patterns'} with ${statistics.length} key statistical insights. Primary performance indicator ${topMetric} shows ${typeof avgValue === 'number' ? `average value of ${avgValue.toFixed(2)}` : 'significant variation'}. This analysis provides actionable insights for strategic decision-making, operational optimization, and business growth.`
 
     this.updateProgress('analyzing', 60, 'Analysis complete')
 
@@ -379,7 +390,10 @@ export class ClientExporter {
           yPosition += 6
           
           doc.setFont('helvetica', 'normal')
-          const statText = `Count: ${stat.count} | Avg: ${stat.average.toFixed(2)} | Median: ${stat.median.toFixed(2)} | StdDev: ${stat.stdDev.toFixed(2)} | Range: ${stat.min} - ${stat.max}`
+          const avgValue = typeof stat.average === 'number' ? stat.average.toFixed(2) : 'N/A'
+          const medianValue = typeof stat.median === 'number' ? stat.median.toFixed(2) : 'N/A'
+          const stdDevValue = typeof stat.stdDev === 'number' ? stat.stdDev.toFixed(2) : 'N/A'
+          const statText = `Count: ${stat.count} | Avg: ${avgValue} | Median: ${medianValue} | StdDev: ${stdDevValue} | Range: ${stat.min} - ${stat.max}`
           doc.text(statText, 25, yPosition)
           yPosition += 8
         })
