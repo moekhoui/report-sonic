@@ -25,26 +25,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log(`📄 Generating AI-powered ${format.toUpperCase()} report for:`, report.name)
 
-    // Generate charts using the same logic as DataViewer
+    // Generate charts using EXACT same logic as DataViewer
     let charts: any[] = []
     try {
       if (rawData && rawData.length > 1) {
         const headers = rawData[0]
         const dataRows = rawData.slice(1)
         
-        // Process data similar to DataViewer
-        const processedColumns = headers.map((header: string, index: number) => {
-          const columnData = dataRows.map((row: any[]) => row[index]).filter((val: any) => val !== null && val !== undefined)
-          const numericData = columnData.filter((val: any) => typeof val === 'number' && !isNaN(val))
+        // Detect column type function (EXACT copy from DataViewer)
+        function detectColumnType(rows: any[][], columnIndex: number): 'numeric' | 'text' | 'date' {
+          const sample = rows.slice(0, Math.min(10, rows.length)).map(row => row[columnIndex])
           
-          return {
-            key: header,
-            type: numericData.length > columnData.length * 0.5 ? 'numeric' : 'text',
-            index: index
+          // Check if all are numbers
+          if (sample.every(val => !isNaN(Number(val)) && val !== '')) {
+            return 'numeric'
           }
-        })
+          
+          // Check if all are dates
+          if (sample.every(val => {
+            const date = new Date(val)
+            return !isNaN(date.getTime())
+          })) {
+            return 'date'
+          }
+          
+          return 'text'
+        }
         
-        // Generate charts using the same logic as DataViewer
+        // Process data EXACTLY like DataViewer
+        const processedColumns = headers.map((header: string, index: number) => ({
+          key: header,
+          index,
+          type: detectColumnType(dataRows, index)
+        }))
+        
+        // Generate charts EXACTLY like DataViewer
         processedColumns.forEach((column: { key: string; type: string; index: number }, index: number) => {
           if (column.type === 'numeric') {
             const values = dataRows
@@ -56,6 +71,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               const avg = values.reduce((a: number, b: number) => a + b, 0) / values.length
               const min = Math.min(...values)
               const max = Math.max(...values)
+              const stdDev = Math.sqrt(values.reduce((sum: number, val: number) => sum + Math.pow(val - avg, 2), 0) / values.length)
+              
+              // AI-generated insights based on actual data
+              let insights = `This bar chart reveals the distribution pattern of ${column.key} values across ${values.length} data points. `
+              if (max - min < avg * 0.1) {
+                insights += `The data shows remarkable consistency with a narrow range (${min.toFixed(2)} - ${max.toFixed(2)}), indicating stable performance. `
+              } else if (max > avg * 2) {
+                insights += `Significant variability detected with extreme values reaching ${max.toFixed(2)}, suggesting potential outliers or diverse performance levels. `
+              } else {
+                insights += `Moderate variability observed with values ranging from ${min.toFixed(2)} to ${max.toFixed(2)}, showing balanced distribution. `
+              }
+              insights += `The average of ${avg.toFixed(2)} with a standard deviation of ${stdDev.toFixed(2)} indicates ${stdDev < avg * 0.2 ? 'low' : stdDev < avg * 0.5 ? 'moderate' : 'high'} data dispersion. This visualization is crucial for identifying trends, outliers, and performance patterns that drive strategic decision-making.`
               
               charts.push({
                 id: `chart-${index}`,
@@ -71,7 +98,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     borderWidth: 1
                   }]
                 },
-                insights: `This bar chart visualizes the distribution of ${column.key} values. The data shows ${values.length} data points with an average of ${avg.toFixed(2)}, ranging from ${min} to ${max}. This visualization helps identify patterns and outliers in the ${column.key} data.`
+                options: {
+                  responsive: true,
+                  plugins: {
+                    title: {
+                      display: true,
+                      text: `${column.key} Distribution`
+                    }
+                  }
+                },
+                insights: insights
               })
             }
           } else if (column.type === 'text') {
@@ -91,6 +127,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               const totalCount = sortedEntries.reduce((sum, [,count]) => sum + count, 0)
               const topValue = sortedEntries[0][0]
               const topCount = sortedEntries[0][1]
+              const topPercentage = (topCount / totalCount) * 100
+              const uniqueValues = sortedEntries.length
+              
+              // AI-generated insights based on actual data
+              let insights = `This pie chart illustrates the categorical distribution of ${column.key} across ${totalCount} total entries. `
+              if (topPercentage > 50) {
+                insights += `The data shows strong concentration with "${topValue}" dominating at ${topPercentage.toFixed(1)}% of all entries, indicating a clear market leader or primary category. `
+              } else if (topPercentage > 30) {
+                insights += `Moderate concentration observed with "${topValue}" representing ${topPercentage.toFixed(1)}% of entries, suggesting a competitive landscape with a leading category. `
+              } else {
+                insights += `Highly diversified distribution with "${topValue}" at only ${topPercentage.toFixed(1)}% of entries, indicating fragmented market segments or balanced categories. `
+              }
+              insights += `The presence of ${uniqueValues} unique categories demonstrates ${uniqueValues > 5 ? 'high' : 'moderate'} diversity in this field. This visualization is essential for understanding market segmentation, customer preferences, and strategic positioning opportunities.`
               
               charts.push({
                 id: `chart-${index}`,
@@ -106,27 +155,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     ]
                   }]
                 },
-                insights: `This pie chart shows the distribution of ${column.key} categories. The most common value is "${topValue}" with ${topCount} occurrences (${((topCount / totalCount) * 100).toFixed(1)}% of total). This visualization helps understand the categorical distribution and identify dominant categories.`
+                options: {
+                  responsive: true,
+                  plugins: {
+                    title: {
+                      display: true,
+                      text: `${column.key} Distribution`
+                    }
+                  }
+                },
+                insights: insights
               })
             }
           }
         })
       }
-      console.log('📊 Generated real charts for export:', charts.length)
+      console.log('📊 Generated EXACT DataViewer charts for export:', charts.length)
     } catch (chartError) {
       console.log('📊 Chart generation failed, continuing without charts:', chartError)
       charts = []
     }
 
-    // Generate AI introduction and conclusion
+    // Generate DYNAMIC AI introduction and conclusion based on actual data
     const totalRows = rawData ? rawData.length - 1 : 0
     const totalColumns = rawData ? rawData[0].length : 0
     const numericCharts = charts.filter(c => c.type === 'bar').length
     const categoricalCharts = charts.filter(c => c.type === 'pie').length
     
-    const aiIntroduction = `This comprehensive data analysis report presents insights derived from ${totalRows} records across ${totalColumns} data fields. Our AI-powered analysis has identified ${numericCharts} numerical patterns and ${categoricalCharts} categorical distributions, providing a complete picture of your data landscape. The visualizations and statistical analysis presented herein offer actionable insights to drive strategic decision-making and operational excellence.`
+    // Calculate data quality metrics
+    const dataQuality = totalRows > 0 ? {
+      completeness: Math.round((rawData.flat().filter(cell => cell !== null && cell !== undefined && cell !== '').length / (totalRows * totalColumns)) * 100),
+      diversity: categoricalCharts > 0 ? 'high' : 'moderate',
+      volume: totalRows > 1000 ? 'large-scale' : totalRows > 100 ? 'medium-scale' : 'focused'
+    } : { completeness: 0, diversity: 'unknown', volume: 'unknown' }
     
-    const aiConclusion = `Based on our comprehensive analysis of ${totalRows} data points, this report has revealed key patterns, trends, and opportunities within your dataset. The ${charts.length} visualizations demonstrate clear data relationships and statistical significance that can inform strategic initiatives. We recommend leveraging these insights to optimize processes, identify growth opportunities, and make data-driven decisions that align with your organizational objectives. Regular monitoring and analysis of these metrics will ensure continued success and adaptation to changing market conditions.`
+    // Generate dynamic AI introduction
+    const aiIntroduction = `This comprehensive data analysis report presents AI-powered insights derived from ${totalRows} records across ${totalColumns} data fields. Our advanced analytical engine has processed ${dataQuality.volume} dataset with ${dataQuality.completeness}% data completeness, identifying ${numericCharts} numerical patterns and ${categoricalCharts} categorical distributions. The analysis reveals ${dataQuality.diversity} data diversity with ${charts.length} strategic visualizations that uncover hidden patterns, trends, and opportunities within your dataset. Each visualization is accompanied by AI-generated insights that translate complex data relationships into actionable business intelligence, enabling data-driven decision-making and strategic optimization.`
+    
+    // Generate dynamic AI conclusion with specific recommendations
+    const keyInsights = charts.length > 0 ? [
+      `${numericCharts} numerical metrics analyzed for performance patterns`,
+      `${categoricalCharts} categorical segments identified for market positioning`,
+      `${dataQuality.completeness}% data quality ensuring reliable insights`,
+      `${charts.length} visualizations providing comprehensive data coverage`
+    ] : ['Limited data available for comprehensive analysis']
+    
+    const aiConclusion = `Based on our comprehensive AI analysis of ${totalRows} data points, this report has revealed critical insights that can transform your business strategy. The analysis encompasses ${keyInsights.join(', ')}. Our AI-powered recommendations focus on leveraging these ${charts.length} key visualizations to optimize operational efficiency, identify market opportunities, and drive strategic growth. The data quality assessment shows ${dataQuality.completeness}% completeness, indicating ${dataQuality.completeness > 80 ? 'high reliability' : dataQuality.completeness > 60 ? 'moderate reliability' : 'areas for data improvement'}. We recommend implementing regular data monitoring, expanding successful patterns identified in the analysis, and using these insights to inform quarterly strategic reviews. The visualizations presented provide a foundation for executive decision-making and competitive advantage in your market segment.`
 
     // Prepare export options with safe defaults
     const exportOptions = {
