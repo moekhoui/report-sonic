@@ -112,7 +112,7 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
       doc.text('Recommendations', 20, yPosition)
       yPosition += 15
       
-      doc.setFontSize(11)
+  doc.setFontSize(11)
       doc.setFont('helvetica', 'normal')
       
       analysis.recommendations.forEach((rec: string, index: number) => {
@@ -155,42 +155,8 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
       })
     }
 
-    // Add AI-generated chart explanations
-    if (charts && charts.length > 0) {
-      doc.setFontSize(16)
-      doc.setFont('helvetica', 'bold')
-      doc.text('📈 AI-Generated Visualizations', 20, yPosition)
-      yPosition += 15
-      
-  doc.setFontSize(11)
-      doc.setFont('helvetica', 'normal')
-      
-      charts.forEach((chart: any, index: number) => {
-        if (yPosition > pageHeight - 30) {
-          doc.addPage()
-          yPosition = 20
-        }
-        
-        doc.setFont('helvetica', 'bold')
-        doc.text(`Chart ${index + 1}: ${chart.title}`, 20, yPosition)
-        yPosition += 8
-        
-        doc.setFont('helvetica', 'normal')
-        const chartExplanation = `This ${chart.type} chart visualizes the ${chart.title} data. The chart type was selected by AI based on the data characteristics and provides insights into patterns and trends within the dataset.`
-        const explanationLines = doc.splitTextToSize(chartExplanation, pageWidth - 40)
-        explanationLines.forEach((line: string) => {
-          if (yPosition > pageHeight - 20) {
-            doc.addPage()
-            yPosition = 20
-          }
-          doc.text(line, 25, yPosition)
-          yPosition += 6
-        })
-        yPosition += 10
-      })
-    }
     
-    // Add charts section
+    // Add charts section with visual charts
     if (charts && charts.length > 0) {
       doc.setFontSize(16)
       doc.setFont('helvetica', 'bold')
@@ -198,7 +164,7 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
       yPosition += 15
       
       charts.forEach((chart, index) => {
-        if (yPosition > pageHeight - 40) {
+        if (yPosition > pageHeight - 60) {
           doc.addPage()
           yPosition = 20
         }
@@ -208,11 +174,112 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
         doc.text(`${index + 1}. ${chart.title}`, 20, yPosition)
         yPosition += 8
         
-        doc.setFontSize(10)
-        doc.setFont('helvetica', 'normal')
+        // Create enhanced chart visualization based on chart type
+        if (chart.data && chart.data.length > 0) {
+          const chartWidth = pageWidth - 40
+          const chartHeight = 50
+          const maxValue = Math.max(...chart.data.map((item: any) => item.value))
+          const minValue = Math.min(...chart.data.map((item: any) => item.value))
+          
+          // Draw chart background with border
+          doc.setDrawColor(100, 100, 100)
+          doc.setLineWidth(0.5)
+          doc.rect(20, yPosition, chartWidth, chartHeight)
+          
+          // Add chart title
+          doc.setFontSize(10)
+          doc.setFont('helvetica', 'bold')
+          doc.text(`Chart Type: ${chart.type.toUpperCase()}`, 22, yPosition - 5)
+          
+          if (chart.type === 'bar') {
+            // Draw bars with enhanced styling
+            const barWidth = (chartWidth - 20) / chart.data.length
+            chart.data.forEach((item: any, i: number) => {
+              const barHeight = ((item.value - minValue) / (maxValue - minValue)) * (chartHeight - 20)
+              const x = 30 + (i * barWidth)
+              const y = yPosition + chartHeight - 10 - barHeight
+              
+              // Bar color based on value (gradient effect)
+              const intensity = (item.value - minValue) / (maxValue - minValue)
+              if (intensity > 0.7) {
+                doc.setFillColor(52, 134, 171) // Blue for high values
+              } else if (intensity > 0.4) {
+                doc.setFillColor(46, 125, 50) // Green for medium values
+              } else {
+                doc.setFillColor(255, 152, 0) // Orange for low values
+              }
+              doc.rect(x + 1, y, barWidth - 2, barHeight, 'F')
+              
+              // Value label on top of bar
+              doc.setFontSize(7)
+              doc.setFont('helvetica', 'normal')
+              doc.text(item.value.toString(), x + barWidth/2 - 3, y - 2)
+            })
+          } else if (chart.type === 'line') {
+            // Draw line chart
+            doc.setDrawColor(52, 134, 171)
+            doc.setLineWidth(1)
+            const pointWidth = (chartWidth - 20) / (chart.data.length - 1)
+            for (let i = 0; i < chart.data.length - 1; i++) {
+              const x1 = 30 + (i * pointWidth)
+              const y1 = yPosition + chartHeight - 10 - ((chart.data[i].value - minValue) / (maxValue - minValue)) * (chartHeight - 20)
+              const x2 = 30 + ((i + 1) * pointWidth)
+              const y2 = yPosition + chartHeight - 10 - ((chart.data[i + 1].value - minValue) / (maxValue - minValue)) * (chartHeight - 20)
+              doc.line(x1, y1, x2, y2)
+            }
+            
+            // Draw data points
+            chart.data.forEach((item: any, i: number) => {
+              const x = 30 + (i * pointWidth)
+              const y = yPosition + chartHeight - 10 - ((item.value - minValue) / (maxValue - minValue)) * (chartHeight - 20)
+              doc.setFillColor(52, 134, 171)
+              doc.circle(x, y, 1, 'F')
+            })
+          } else if (chart.type === 'pie') {
+            // Draw pie chart representation (simplified as bar chart)
+            const total = chart.data.reduce((sum: number, item: any) => sum + item.value, 0)
+            let currentAngle = 0
+            const centerX = 20 + chartWidth / 2
+            const centerY = yPosition + chartHeight / 2
+            const radius = Math.min(chartWidth, chartHeight) / 4
+            
+            chart.data.forEach((item: any, i: number) => {
+              const sliceAngle = (item.value / total) * 360
+              const color = i % 3 === 0 ? [52, 134, 171] : i % 3 === 1 ? [46, 125, 50] : [255, 152, 0]
+              doc.setFillColor(color[0], color[1], color[2])
+              // Simplified pie representation as colored rectangles
+              const rectHeight = (item.value / total) * (chartHeight - 20)
+              doc.rect(30 + i * 15, yPosition + 10, 12, rectHeight, 'F')
+            })
+          }
+          
+          // Draw axis labels
+          doc.setFontSize(7)
+          doc.setFont('helvetica', 'normal')
+          chart.data.forEach((item: any, i: number) => {
+            const x = 30 + (i * (chartWidth - 20) / chart.data.length)
+            doc.text(item.label, x, yPosition + chartHeight + 5)
+          })
+          
+          // Add value range info
+          doc.setFontSize(8)
+          doc.text(`Range: ${minValue} - ${maxValue}`, 20, yPosition + chartHeight + 15)
+          
+          yPosition += chartHeight + 30
+        }
         
-        // Add chart description
+        // Add comprehensive chart analysis
         if (chart.insights) {
+          doc.setFontSize(10)
+          doc.setFont('helvetica', 'normal')
+          
+          // Chart analysis header
+          doc.setFont('helvetica', 'bold')
+          doc.text('AI Analysis:', 25, yPosition)
+          yPosition += 6
+          
+          // Main insights
+          doc.setFont('helvetica', 'normal')
           const insightLines = doc.splitTextToSize(chart.insights, pageWidth - 40)
           insightLines.forEach((line: string) => {
             if (yPosition > pageHeight - 30) {
@@ -222,19 +289,26 @@ export async function exportToPDF(options: ExportOptions): Promise<Blob> {
             doc.text(line, 25, yPosition)
             yPosition += 5
           })
-        }
-        
-        // Add sample data
-        if (chart.data && chart.data.length > 0) {
-          doc.text('Sample Data:', 25, yPosition)
+          
+          // Additional AI recommendations
+          doc.setFont('helvetica', 'bold')
+          doc.text('Key Takeaways:', 25, yPosition)
           yPosition += 6
           
-          chart.data.slice(0, 5).forEach((item: any) => {
+          doc.setFont('helvetica', 'normal')
+          const takeaways = [
+            `• This ${chart.type} visualization reveals important data patterns`,
+            `• Use this insight to inform strategic decision-making`,
+            `• Consider monitoring trends over time for deeper analysis`,
+            `• Data quality and consistency are crucial for accurate insights`
+          ]
+          
+          takeaways.forEach((takeaway: string) => {
             if (yPosition > pageHeight - 20) {
               doc.addPage()
               yPosition = 20
             }
-            doc.text(`  • ${item.label}: ${item.value}`, 30, yPosition)
+            doc.text(takeaway, 25, yPosition)
             yPosition += 5
           })
         }
@@ -428,6 +502,58 @@ export async function exportToWord(options: ExportOptions): Promise<Blob> {
                 spacing: { after: 200 }
               })
             )
+          ] : []),
+          
+          // Charts section
+          ...(charts && charts.length > 0 ? [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Data Visualizations",
+                  bold: true,
+                  size: 24,
+                  color: "2E86AB"
+                })
+              ],
+              heading: HeadingLevel.HEADING_1,
+              spacing: { before: 400, after: 200 }
+            }),
+            ...charts.map((chart, index) => 
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `${index + 1}. ${chart.title}`,
+                    bold: true,
+                    size: 22,
+                    color: "2E86AB"
+                  })
+                ],
+                spacing: { before: 200, after: 100 }
+              })
+            ),
+            ...charts.map((chart, index) => 
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `Chart Type: ${chart.type} | Data Points: ${chart.data?.length || 0}`,
+                    size: 20,
+                    color: "666666"
+                  })
+                ],
+                spacing: { after: 100 }
+              })
+            ),
+            ...charts.map((chart, index) => 
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: chart.insights || `This ${chart.type} chart visualizes the ${chart.title} data with ${chart.data?.length || 0} data points.`,
+                    size: 20
+                  })
+                ],
+                spacing: { after: 200 }
+              })
+            )
           ] : [])
         ]
       }]
@@ -581,6 +707,50 @@ export async function exportToPowerPoint(options: ExportOptions): Promise<Blob> 
         h: 4,
         fontSize: 14,
         valign: "top"
+      })
+    }
+    
+    // Charts slides
+    if (charts && charts.length > 0) {
+      charts.forEach((chart, index) => {
+        const chartSlide = pptx.addSlide()
+        
+        // Chart title
+        chartSlide.addText(chart.title, {
+          x: 0.5,
+          y: 0.5,
+          w: 9,
+          h: 1,
+          fontSize: 24,
+          bold: true,
+          color: "2E86AB"
+        })
+        
+        // Chart description
+        chartSlide.addText(chart.insights || `This ${chart.type} chart visualizes the data with ${chart.data?.length || 0} data points.`, {
+          x: 0.5,
+          y: 1.5,
+          w: 9,
+          h: 1,
+          fontSize: 16,
+          color: "666666"
+        })
+        
+        // Chart data table
+        if (chart.data && chart.data.length > 0) {
+          const chartDataText = chart.data.slice(0, 8).map((item, i) => 
+            `${item.label}: ${item.value}`
+          ).join('\n')
+          
+          chartSlide.addText(chartDataText, {
+            x: 0.5,
+            y: 2.5,
+            w: 9,
+            h: 3,
+            fontSize: 14,
+            valign: "top"
+          })
+        }
       })
     }
     
