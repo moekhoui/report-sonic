@@ -891,7 +891,6 @@ export async function exportToPowerPoint(options: ExportOptions): Promise<Blob> 
           w: 9,
           h: 3.5,
           fontSize: 14,
-          font: "Courier New",
           valign: "top"
         })
         
