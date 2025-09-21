@@ -11,8 +11,8 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js'
+import type { Chart } from 'chart.js'
 import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2'
-import html2canvas from 'html2canvas'
 import { 
   BarChart3, 
   TrendingUp, 
@@ -21,8 +21,10 @@ import {
   Download, 
   Filter,
   Eye,
-  EyeOff
+  EyeOff,
+  Loader2
 } from 'lucide-react'
+import { exportToFormat, downloadFile, ClientExportOptions, ExportProgress } from '../lib/clientExport'
 
 // Register Chart.js components
 ChartJS.register(
@@ -41,19 +43,21 @@ interface DataViewerProps {
   data: any[][]
   headers: string[]
   analysis: any
-  onExportPDF: (chartImages?: string[]) => void
-  onExportWord: (chartImages?: string[]) => void
-  onExportPowerPoint: (chartImages?: string[]) => void
+  reportName?: string
+  companyName?: string
+  clientName?: string
   onBack?: () => void
 }
 
-export default function DataViewer({ data, headers, analysis, onExportPDF, onExportWord, onExportPowerPoint, onBack }: DataViewerProps) {
+export default function DataViewer({ data, headers, analysis, reportName = 'Data Analysis Report', companyName = 'ReportSonic AI', clientName, onBack }: DataViewerProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'charts' | 'table'>('overview')
   const [selectedCharts, setSelectedCharts] = useState<string[]>([])
   const [showAllData, setShowAllData] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [isCapturing, setIsCapturing] = useState(false)
-  const chartsContainerRef = useRef<HTMLDivElement>(null)
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null)
+  const [exportFormat, setExportFormat] = useState<'pdf' | 'word' | 'powerpoint'>('pdf')
+  const chartInstancesRef = useRef<Map<string, Chart>>(new Map())
 
   // Process data for display
   const processedData = useMemo(() => {
@@ -89,7 +93,7 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
     return 'text'
   }
 
-  // Generate charts for each column
+  // Generate charts for each column with enhanced descriptions
   const charts = useMemo(() => {
     const chartData: Array<{
       id: string
@@ -97,6 +101,8 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
       type: string
       data: any
       options?: any
+      description?: string
+      insights?: string
     }> = []
     
     processedData.columns.forEach((column, index) => {
@@ -107,6 +113,11 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
           .slice(0, 50) // Limit for performance
         
         if (values.length > 0) {
+          const avg = values.reduce((a, b) => a + b, 0) / values.length
+          const min = Math.min(...values)
+          const max = Math.max(...values)
+          const median = values.sort((a, b) => a - b)[Math.floor(values.length / 2)]
+          
           chartData.push({
             id: `chart-${index}`,
             title: column.key,
@@ -123,13 +134,16 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
             },
             options: {
               responsive: true,
+              maintainAspectRatio: false,
               plugins: {
                 title: {
                   display: true,
                   text: `${column.key} Distribution`
                 }
               }
-            }
+            },
+            description: `This bar chart visualizes the distribution of ${column.key} values across ${values.length} data points. The visualization shows the spread and concentration of values, helping identify patterns and outliers in the dataset.`,
+            insights: `Analysis reveals an average value of ${avg.toFixed(2)}, with a range from ${min} to ${max} and a median of ${median.toFixed(2)}. This ${column.key} data shows ${values.length > 20 ? 'good' : 'limited'} sample size for statistical analysis.`
           })
         }
       } else if (column.type === 'text') {
@@ -146,6 +160,10 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
           .slice(0, 10) // Top 10 values
         
         if (sortedEntries.length > 0) {
+          const totalCount = sortedEntries.reduce((sum, [,count]) => sum + count, 0)
+          const topValue = sortedEntries[0]
+          const topPercentage = ((topValue[1] / totalCount) * 100).toFixed(1)
+          
           chartData.push({
             id: `chart-${index}`,
             title: column.key,
@@ -162,13 +180,16 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
             },
             options: {
               responsive: true,
+              maintainAspectRatio: false,
               plugins: {
                 title: {
                   display: true,
                   text: `${column.key} Distribution`
                 }
               }
-            }
+            },
+            description: `This pie chart displays the categorical distribution of ${column.key} values, showing the relative frequency of each category within the dataset. The visualization helps understand the composition and balance of categorical data.`,
+            insights: `The most common value is "${topValue[0]}" representing ${topPercentage}% of all records (${topValue[1]} occurrences). This categorical distribution shows ${sortedEntries.length} distinct categories with varying frequencies.`
           })
         }
       }
@@ -195,124 +216,89 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
     )
   }, [processedData.rows, searchTerm])
 
-  // Capture charts as optimized images
-  const captureCharts = async (): Promise<string[]> => {
-    if (!chartsContainerRef.current) return []
+  // Store chart instances for native export
+  const storeChartInstance = (chartId: string, chartInstance: Chart) => {
+    chartInstancesRef.current.set(chartId, chartInstance)
+  }
+
+  // New client-side export function
+  const handleExport = async (format: 'pdf' | 'word' | 'powerpoint') => {
+    if (charts.length === 0) {
+      alert('No charts available to export. Please ensure your data has been processed and charts are generated.')
+      return
+    }
     
-    setIsCapturing(true)
+    if (selectedCharts.length === 0) {
+      alert('Please select at least one chart to export. Use the "Select All" button or select individual charts.')
+      return
+    }
+
+    setIsExporting(true)
+    setExportProgress({ stage: 'preparing', progress: 0, message: 'Preparing export...' })
+
     try {
-      // Wait a bit for charts to fully render
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Prepare export options with selected charts
+      const selectedChartsData = charts.filter(chart => selectedCharts.includes(chart.id))
       
-      // Capture only selected charts
-      const selectedChartElements = Array.from(chartsContainerRef.current.children).filter((_, index) => {
-        const chartId = `chart-${index}`
-        return selectedCharts.includes(chartId)
+      // Add chart instances to the data
+      const chartsWithInstances = selectedChartsData.map(chart => ({
+        ...chart,
+        chartInstance: chartInstancesRef.current.get(chart.id)
+      }))
+
+      const exportOptions: ClientExportOptions = {
+        title: reportName,
+        companyName: companyName,
+        clientName: clientName,
+        content: analysis?.summary || 'Data analysis report generated by ReportSonic AI',
+        analysis: analysis,
+        charts: chartsWithInstances,
+        rawData: data,
+        headers: headers,
+        aiIntroduction: `This comprehensive data analysis report presents AI-powered insights derived from ${processedData.rows.length} records across ${processedData.columns.length} data fields. Our advanced analytical engine has processed the dataset to identify patterns, trends, and opportunities within your data.`,
+        aiConclusion: `Based on our comprehensive analysis of ${processedData.rows.length} data points across ${processedData.columns.length} fields, this report provides actionable insights for strategic decision-making. The visualizations and analysis presented here offer a foundation for data-driven business optimization and growth.`
+      }
+
+      // Generate the export
+      const blob = await exportToFormat(format, exportOptions, (progress) => {
+        setExportProgress(progress)
       })
+
+      // Download the file
+      const timestamp = new Date().toISOString().slice(0, 10)
+      const filename = `${reportName.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_report.${format === 'powerpoint' ? 'pptx' : format === 'word' ? 'docx' : 'pdf'}`
       
-      if (selectedChartElements.length === 0) {
-        console.log('📸 No selected charts to capture')
-        return []
-      }
+      downloadFile(blob, filename)
       
-      const capturedImages: string[] = []
+      console.log(`✅ ${format.toUpperCase()} export completed successfully`)
       
-      // Capture each selected chart individually
-      for (const chartElement of selectedChartElements) {
-        try {
-          const canvas = await html2canvas(chartElement as HTMLElement, {
-            scale: 2, // Reduced scale to reduce payload size
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#ffffff',
-            logging: false,
-            width: (chartElement as HTMLElement).scrollWidth,
-            height: (chartElement as HTMLElement).scrollHeight
-          })
-          
-          // Convert to base64 image with compression
-          const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8) // JPEG with 80% quality
-          
-          console.log('📸 Chart captured:', {
-            width: canvas.width,
-            height: canvas.height,
-            dataUrlLength: imageDataUrl.length
-          })
-          
-          capturedImages.push(imageDataUrl)
-        } catch (chartError) {
-          console.error('❌ Failed to capture individual chart:', chartError)
-        }
-      }
-      
-      console.log('📸 Total charts captured:', capturedImages.length)
-      return capturedImages
     } catch (error) {
-      console.error('❌ Chart capture failed:', error)
-      return []
+      console.error(`❌ ${format.toUpperCase()} export failed:`, error)
+      alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
-      setIsCapturing(false)
+      setIsExporting(false)
+      setExportProgress(null)
     }
-  }
-
-  // Enhanced export functions with chart capture
-  const handleExportPDF = async () => {
-    if (charts.length === 0) {
-      alert('No charts available to export. Please ensure your data has been processed and charts are generated.')
-      return
-    }
-    
-    if (selectedCharts.length === 0) {
-      alert('Please select at least one chart to export. Use the "Select All" button or select individual charts.')
-      return
-    }
-    
-    const chartImages = await captureCharts()
-    onExportPDF(chartImages)
-  }
-
-  const handleExportWord = async () => {
-    if (charts.length === 0) {
-      alert('No charts available to export. Please ensure your data has been processed and charts are generated.')
-      return
-    }
-    
-    if (selectedCharts.length === 0) {
-      alert('Please select at least one chart to export. Use the "Select All" button or select individual charts.')
-      return
-    }
-    
-    const chartImages = await captureCharts()
-    onExportWord(chartImages)
-  }
-
-  const handleExportPowerPoint = async () => {
-    if (charts.length === 0) {
-      alert('No charts available to export. Please ensure your data has been processed and charts are generated.')
-      return
-    }
-    
-    if (selectedCharts.length === 0) {
-      alert('Please select at least one chart to export. Use the "Select All" button or select individual charts.')
-      return
-    }
-    
-    const chartImages = await captureCharts()
-    onExportPowerPoint(chartImages)
   }
 
   const renderChart = (chart: any) => {
+    const chartRef = (ref: any) => {
+      if (ref && ref.chartInstance) {
+        storeChartInstance(chart.id, ref.chartInstance)
+      }
+    }
+
     switch (chart.type) {
       case 'bar':
-        return <Bar data={chart.data} options={chart.options} />
+        return <Bar ref={chartRef} data={chart.data} options={chart.options} />
       case 'line':
-        return <Line data={chart.data} options={chart.options} />
+        return <Line ref={chartRef} data={chart.data} options={chart.options} />
       case 'pie':
-        return <Pie data={chart.data} options={chart.options} />
+        return <Pie ref={chartRef} data={chart.data} options={chart.options} />
       case 'doughnut':
-        return <Doughnut data={chart.data} options={chart.options} />
+        return <Doughnut ref={chartRef} data={chart.data} options={chart.options} />
       default:
-        return <Bar data={chart.data} options={chart.options} />
+        return <Bar ref={chartRef} data={chart.data} options={chart.options} />
     }
   }
 
@@ -340,35 +326,52 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
             </div>
             <div className="flex gap-2">
               <button
-                onClick={handleExportPDF}
-                disabled={isCapturing || charts.length === 0 || selectedCharts.length === 0}
+                onClick={() => handleExport('pdf')}
+                disabled={isExporting || charts.length === 0 || selectedCharts.length === 0}
                 className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                title={charts.length === 0 ? 'No charts available' : selectedCharts.length === 0 ? 'Please select charts to export' : 'Export as PDF with high-quality charts'}
+                title={charts.length === 0 ? 'No charts available' : selectedCharts.length === 0 ? 'Please select charts to export' : 'Export as PDF with native Chart.js quality'}
               >
-                <Download className="w-4 h-4" />
-                {isCapturing ? 'Capturing...' : `PDF (${selectedCharts.length}/${charts.length})`}
+                {isExporting && exportFormat === 'pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {isExporting && exportFormat === 'pdf' ? 'Exporting...' : `PDF (${selectedCharts.length}/${charts.length})`}
               </button>
               <button
-                onClick={handleExportWord}
-                disabled={isCapturing || charts.length === 0 || selectedCharts.length === 0}
+                onClick={() => handleExport('word')}
+                disabled={isExporting || charts.length === 0 || selectedCharts.length === 0}
                 className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                title={charts.length === 0 ? 'No charts available' : selectedCharts.length === 0 ? 'Please select charts to export' : 'Export as Word Document with high-quality charts'}
+                title={charts.length === 0 ? 'No charts available' : selectedCharts.length === 0 ? 'Please select charts to export' : 'Export as Word Document with native Chart.js quality'}
               >
-                <Download className="w-4 h-4" />
-                {isCapturing ? 'Capturing...' : `Word (${selectedCharts.length}/${charts.length})`}
+                {isExporting && exportFormat === 'word' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {isExporting && exportFormat === 'word' ? 'Exporting...' : `Word (${selectedCharts.length}/${charts.length})`}
               </button>
               <button
-                onClick={handleExportPowerPoint}
-                disabled={isCapturing || charts.length === 0 || selectedCharts.length === 0}
+                onClick={() => handleExport('powerpoint')}
+                disabled={isExporting || charts.length === 0 || selectedCharts.length === 0}
                 className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                title={charts.length === 0 ? 'No charts available' : selectedCharts.length === 0 ? 'Please select charts to export' : 'Export as PowerPoint Presentation with high-quality charts'}
+                title={charts.length === 0 ? 'No charts available' : selectedCharts.length === 0 ? 'Please select charts to export' : 'Export as PowerPoint Presentation with native Chart.js quality'}
               >
-                <Download className="w-4 h-4" />
-                {isCapturing ? 'Capturing...' : `PowerPoint (${selectedCharts.length}/${charts.length})`}
+                {isExporting && exportFormat === 'powerpoint' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {isExporting && exportFormat === 'powerpoint' ? 'Exporting...' : `PowerPoint (${selectedCharts.length}/${charts.length})`}
               </button>
             </div>
           </div>
         </div>
+
+        {/* Export Progress Indicator */}
+        {exportProgress && (
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Export Progress</h3>
+              <span className="text-sm text-gray-600">{exportProgress.progress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                style={{ width: `${exportProgress.progress}%` }}
+              ></div>
+            </div>
+            <p className="text-sm text-gray-600">{exportProgress.message}</p>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow-sm mb-6">
@@ -464,72 +467,61 @@ export default function DataViewer({ data, headers, analysis, onExportPDF, onExp
                   </div>
                 </div>
 
-                <div ref={chartsContainerRef} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {charts.map((chart) => {
-                    // Generate AI description for this chart
-                    const generateDescription = (chart: any) => {
-                      if (chart.type === 'bar') {
-                        const values = chart.data.datasets[0].data
-                        const avg = values.reduce((a: number, b: number) => a + b, 0) / values.length
-                        const min = Math.min(...values)
-                        const max = Math.max(...values)
-                        return `This bar chart visualizes the distribution of ${chart.title} values. The data shows ${values.length} data points with an average of ${avg.toFixed(2)}, ranging from ${min} to ${max}. This visualization helps identify patterns and outliers in the ${chart.title} data.`
-                      } else if (chart.type === 'pie') {
-                        const totalCount = chart.data.datasets[0].data.reduce((a: number, b: number) => a + b, 0)
-                        const topValue = chart.data.labels[0]
-                        const topCount = chart.data.datasets[0].data[0]
-                        return `This pie chart shows the distribution of ${chart.title} categories. The most common value is "${topValue}" with ${topCount} occurrences (${((topCount / totalCount) * 100).toFixed(1)}% of total). This visualization helps understand the categorical distribution and identify dominant categories.`
-                      }
-                      return `This ${chart.type} chart provides insights into the ${chart.title} data distribution.`
-                    }
-
-                    const description = generateDescription(chart)
-
-                    return (
-                      <div key={chart.id} className="bg-white border rounded-lg p-6">
-                        <div className="flex items-center justify-between mb-6">
-                          <h4 className="font-semibold text-xl">{chart.title}</h4>
-                          <div className="flex items-center gap-3">
-                            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                              {chart.type.toUpperCase()}
-                            </span>
-                            <button
-                              onClick={() => {
-                                setSelectedCharts(prev =>
-                                  prev.includes(chart.id)
-                                    ? prev.filter(id => id !== chart.id)
-                                    : [...prev, chart.id]
-                                )
-                              }}
-                              className={`px-3 py-1 rounded text-sm ${
-                                selectedCharts.includes(chart.id)
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-gray-100 text-gray-700'
-                              }`}
-                            >
-                              {selectedCharts.includes(chart.id) ? 'Selected' : 'Select'}
-                            </button>
-                          </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {charts.map((chart) => (
+                    <div key={chart.id} className="bg-white border rounded-lg p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h4 className="font-semibold text-xl">{chart.title}</h4>
+                        <div className="flex items-center gap-3">
+                          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                            {chart.type.toUpperCase()}
+                          </span>
+                          <button
+                            onClick={() => {
+                              setSelectedCharts(prev =>
+                                prev.includes(chart.id)
+                                  ? prev.filter(id => id !== chart.id)
+                                  : [...prev, chart.id]
+                              )
+                            }}
+                            className={`px-3 py-1 rounded text-sm transition-colors ${
+                              selectedCharts.includes(chart.id)
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {selectedCharts.includes(chart.id) ? '✓ Selected' : 'Select'}
+                          </button>
                         </div>
+                      </div>
 
-                        {/* Chart Description */}
-                        <div className="mb-6">
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <h5 className="font-medium text-gray-900 mb-2">📊 Chart Analysis:</h5>
-                            <p className="text-gray-700 text-sm leading-relaxed">{description}</p>
-                          </div>
-                        </div>
-
-                        {/* Visual Chart */}
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <h5 className="font-medium text-gray-900 mb-4">📊 Visual Chart:</h5>
-                          <div className="h-80">
-                            {renderChart(chart)}
+                      {/* Chart Description */}
+                      <div className="mb-6">
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+                          <h5 className="font-medium text-blue-900 mb-2 flex items-center">
+                            <BarChart3 className="w-4 h-4 mr-2" />
+                            AI-Powered Chart Analysis
+                          </h5>
+                          <p className="text-blue-800 text-sm leading-relaxed mb-3">{chart.description}</p>
+                          <div className="bg-white p-3 rounded border border-blue-200">
+                            <h6 className="font-medium text-blue-900 mb-1">Key Insights:</h6>
+                            <p className="text-blue-700 text-sm">{chart.insights}</p>
                           </div>
                         </div>
                       </div>
-                    )
-                  })}
+
+                      {/* Visual Chart */}
+                      <div className="bg-gray-50 p-4 rounded-lg border">
+                        <h5 className="font-medium text-gray-900 mb-4 flex items-center">
+                          <TrendingUp className="w-4 h-4 mr-2" />
+                          Interactive Visualization
+                        </h5>
+                        <div className="h-80 bg-white rounded border">
+                          {renderChart(chart)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

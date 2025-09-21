@@ -62,53 +62,7 @@ export default function Dashboard() {
     }
   }
 
-  const handleExportReport = async (report: any, format: 'pdf' | 'word' | 'powerpoint' = 'pdf', chartImages?: string[]) => {
-    try {
-      // Get the raw data for chart generation
-      const rawData = report.rawData || []
-      const headers = report.headers || []
-      
-      const response = await fetch('/api/reports/export', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          report,
-          rawData,
-          headers,
-          format,
-          chartImages // Include captured chart images
-        }),
-      })
-
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        
-        // Set appropriate file extension based on format
-        const extensions = {
-          pdf: 'pdf',
-          word: 'docx',
-          powerpoint: 'pptx'
-        }
-        
-        a.download = `${report.name.replace(/\.[^/.]+$/, '')}_ai_report.${extensions[format]}`
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
-      } else {
-        const errorData = await response.json()
-        alert(`Export failed: ${errorData.error || 'Please try again.'}`)
-      }
-    } catch (error) {
-      console.error('Export failed:', error)
-      alert('Export failed. Please try again.')
-    }
-  }
+  // Remove old export function - now handled by DataViewer component
 
   const handleLogout = async () => {
     await logout()
@@ -140,9 +94,9 @@ export default function Dashboard() {
         data={selectedReport.rawData || []}
         headers={selectedReport.headers || []}
         analysis={selectedReport.analysis}
-        onExportPDF={(chartImages) => handleExportReport(selectedReport, 'pdf', chartImages)}
-        onExportWord={(chartImages) => handleExportReport(selectedReport, 'word', chartImages)}
-        onExportPowerPoint={(chartImages) => handleExportReport(selectedReport, 'powerpoint', chartImages)}
+        reportName={selectedReport.name}
+        companyName="ReportSonic AI"
+        clientName={user?.name}
         onBack={() => setSelectedReport(null)}
       />
     )
@@ -402,69 +356,30 @@ export default function Dashboard() {
                       <button
                         onClick={() => setSelectedReport(report)}
                         style={{
-                          padding: '8px 16px',
-                          background: '#10b981',
+                          padding: '10px 20px',
+                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                           color: 'white',
                           border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '12px',
+                          borderRadius: '8px',
+                          fontSize: '14px',
                           cursor: 'pointer',
-                          fontWeight: '500',
-                          marginRight: '8px'
+                          fontWeight: '600',
+                          boxShadow: '0 2px 4px rgba(16, 185, 129, 0.3)',
+                          transition: 'all 0.3s'
+                        }}
+                        onMouseOver={(e) => {
+                          const target = e.target as HTMLButtonElement
+                          target.style.transform = 'translateY(-2px)'
+                          target.style.boxShadow = '0 4px 8px rgba(16, 185, 129, 0.4)'
+                        }}
+                        onMouseOut={(e) => {
+                          const target = e.target as HTMLButtonElement
+                          target.style.transform = 'translateY(0)'
+                          target.style.boxShadow = '0 2px 4px rgba(16, 185, 129, 0.3)'
                         }}
                       >
-                        📊 View Data
+                        📊 View & Export Data
                       </button>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <button
-                          onClick={() => handleExportReport(report, 'pdf')}
-                          style={{
-                            padding: '6px 12px',
-                            background: '#dc2626',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            cursor: 'pointer',
-                            fontWeight: '500'
-                          }}
-                          title="Export as PDF"
-                        >
-                          📄 PDF
-                        </button>
-                        <button
-                          onClick={() => handleExportReport(report, 'word')}
-                          style={{
-                            padding: '6px 12px',
-                            background: '#1976d2',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            cursor: 'pointer',
-                            fontWeight: '500'
-                          }}
-                          title="Export as Word Document"
-                        >
-                          📝 Word
-                        </button>
-                        <button
-                          onClick={() => handleExportReport(report, 'powerpoint')}
-                          style={{
-                            padding: '6px 12px',
-                            background: '#ea580c',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            cursor: 'pointer',
-                            fontWeight: '500'
-                          }}
-                          title="Export as PowerPoint Presentation"
-                        >
-                          📊 PPT
-                        </button>
-                      </div>
                     </div>
                   </div>
                   
