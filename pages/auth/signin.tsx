@@ -5,8 +5,8 @@ import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 
 export default function SignIn() {
-  const [email, setEmail] = useState('test@reportsonic.com')
-  const [password, setPassword] = useState('test123456')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -44,22 +44,13 @@ export default function SignIn() {
     setMessage('')
 
     try {
-      const result = await signIn('google', { 
-        callbackUrl: '/dashboard',
-        redirect: false 
+      // Use NextAuth signIn with redirect for Google OAuth
+      await signIn('google', { 
+        callbackUrl: '/dashboard'
       })
-      
-      if (result?.ok) {
-        setMessage('Google sign-in successful! Redirecting...')
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 1000)
-      } else {
-        setError('Google sign-in failed. Please try again.')
-      }
     } catch (err) {
+      console.error('Google sign-in error:', err)
       setError('Google sign-in failed. Please try again.')
-    } finally {
       setLoading(false)
     }
   }
