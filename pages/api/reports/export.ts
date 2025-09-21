@@ -184,7 +184,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     // Calculate data quality metrics
     const dataQuality = totalRows > 0 ? {
-      completeness: Math.round((rawData.flat().filter(cell => cell !== null && cell !== undefined && cell !== '').length / (totalRows * totalColumns)) * 100),
+      completeness: Math.round((rawData.flat().filter((cell: any) => cell !== null && cell !== undefined && cell !== '').length / (totalRows * totalColumns)) * 100),
       diversity: categoricalCharts > 0 ? 'high' : 'moderate',
       volume: totalRows > 1000 ? 'large-scale' : totalRows > 100 ? 'medium-scale' : 'focused'
     } : { completeness: 0, diversity: 'unknown', volume: 'unknown' }
