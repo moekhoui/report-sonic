@@ -94,7 +94,7 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
     return 'text'
   }
 
-  // Generate charts for each column with enhanced descriptions
+  // Generate enhanced charts with business insights
   const charts = useMemo(() => {
     const chartData: Array<{
       id: string
@@ -104,7 +104,19 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
       options?: any
       description?: string
       insights?: string
+      xAxisLabel?: string
+      yAxisLabel?: string
     }> = []
+    
+    // Detect context for enhanced chart generation
+    const context = {
+      hasMultipleNumericColumns: processedData.columns.filter(c => c.type === 'numeric').length > 1,
+      isTimeSeries: processedData.columns.some(c => c.type === 'date'),
+      isMultiDimensional: processedData.columns.length > 3,
+      hasMultipleCategories: processedData.columns.filter(c => c.type === 'text').length > 1,
+      domain: analysis?.context?.domain || 'Unknown',
+      industry: analysis?.context?.industry || 'General Business'
+    }
     
     processedData.columns.forEach((column, index) => {
       if (column.type === 'numeric') {
@@ -114,37 +126,68 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
           .slice(0, 50) // Limit for performance
         
         if (values.length > 0) {
+          // Enhanced chart type recommendation
+          const chartType = context.hasMultipleNumericColumns && values.length > 10 ? 'scatter' :
+                           values.length > 20 ? 'line' : 'bar'
+          
           const avg = values.reduce((a, b) => a + b, 0) / values.length
           const min = Math.min(...values)
           const max = Math.max(...values)
           const median = values.sort((a, b) => a - b)[Math.floor(values.length / 2)]
           
+          // Generate business insights
+          const trend = values.length > 1 ? (values[values.length - 1] > values[0] ? 'increasing' : 'decreasing') : 'stable'
+          const changePercent = values.length > 1 ? ((values[values.length - 1] - values[0]) / values[0] * 100).toFixed(1) : '0'
+          
           chartData.push({
             id: `chart-${index}`,
             title: column.key,
-            type: 'bar',
+            type: chartType,
             data: {
               labels: values.map((_, i) => `Point ${i + 1}`),
               datasets: [{
                 label: column.key,
                 data: values,
-                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                backgroundColor: chartType === 'scatter' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(59, 130, 246, 0.6)',
                 borderColor: 'rgba(59, 130, 246, 1)',
-                borderWidth: 1
+                borderWidth: 1,
+                fill: chartType === 'line' ? true : false,
+                tension: chartType === 'line' ? 0.4 : 0
               }]
             },
             options: {
               responsive: true,
               maintainAspectRatio: false,
+              scales: {
+                x: {
+                  display: true,
+                  title: {
+                    display: true,
+                    text: chartType === 'line' ? 'Data Points' : 'Categories',
+                    font: { size: 14, weight: 'bold' }
+                  }
+                },
+                y: {
+                  display: true,
+                  title: {
+                    display: true,
+                    text: `${column.key} Value`,
+                    font: { size: 14, weight: 'bold' }
+                  }
+                }
+              },
               plugins: {
                 title: {
                   display: true,
-                  text: `${column.key} Distribution`
+                  text: `${column.key} - ${chartType.toUpperCase()} Analysis`,
+                  font: { size: 16, weight: 'bold' }
                 }
               }
             },
-            description: `This bar chart visualizes the distribution of ${column.key} values across ${values.length} data points. The visualization shows the spread and concentration of values, helping identify patterns and outliers in the dataset.`,
-            insights: `Analysis reveals an average value of ${avg.toFixed(2)}, with a range from ${min} to ${max} and a median of ${median.toFixed(2)}. This ${column.key} data shows ${values.length > 20 ? 'good' : 'limited'} sample size for statistical analysis.`
+            xAxisLabel: chartType === 'line' ? 'Data Points' : 'Categories',
+            yAxisLabel: `${column.key} Value`,
+            description: `This ${chartType} chart visualizes the ${chartType === 'scatter' ? 'correlation patterns' : chartType === 'line' ? 'trend over time' : 'distribution'} of ${column.key} values across ${values.length} data points.`,
+            insights: `${column.key} shows ${values.length} data points with ${trend} trend (${changePercent}% change). Average: ${avg.toFixed(2)}, Range: ${min}-${max}. ${trend === 'increasing' ? 'Growth indicates positive momentum - sustain current strategies' : trend === 'decreasing' ? 'Decline requires attention - investigate root causes' : 'Stable performance suggests consistent operations'}.`
           })
         }
       } else if (column.type === 'text') {
@@ -168,7 +211,7 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
           chartData.push({
             id: `chart-${index}`,
             title: column.key,
-            type: 'pie',
+            type: 'doughnut',
             data: {
               labels: sortedEntries.map(([key]) => key),
               datasets: [{
@@ -185,19 +228,22 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
               plugins: {
                 title: {
                   display: true,
-                  text: `${column.key} Distribution`
+                  text: `${column.key} - Category Distribution`,
+                  font: { size: 16, weight: 'bold' }
                 }
               }
             },
-            description: `This pie chart displays the categorical distribution of ${column.key} values, showing the relative frequency of each category within the dataset. The visualization helps understand the composition and balance of categorical data.`,
-            insights: `The most common value is "${topValue[0]}" representing ${topPercentage}% of all records (${topValue[1]} occurrences). This categorical distribution shows ${sortedEntries.length} distinct categories with varying frequencies.`
+            xAxisLabel: 'Categories',
+            yAxisLabel: 'Percentage',
+            description: `This doughnut chart displays the categorical distribution of ${column.key} values, showing the relative frequency of each category within the dataset.`,
+            insights: `The dominant category "${topValue[0]}" represents ${topPercentage}% of all ${column.key} data. This ${topPercentage > 50 ? 'concentration suggests market dominance' : 'distribution indicates market diversity'}. Recommendation: ${topPercentage > 50 ? 'Leverage dominant position and explore expansion opportunities' : 'Analyze underperforming categories and develop targeted strategies'}.`
           })
         }
       }
     })
     
     return chartData
-  }, [processedData])
+  }, [processedData, analysis])
 
   // Auto-select all charts when charts are generated
   React.useEffect(() => {
@@ -481,8 +527,33 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
 
                 {analysis && (
                   <div className="bg-gray-50 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-4">Analysis Summary</h3>
+                    <h3 className="text-lg font-semibold mb-4">Enhanced AI Analysis Summary</h3>
                     <p className="text-gray-700 mb-4">{analysis.summary}</p>
+                    
+                    {/* Context Information */}
+                    {analysis.context && (
+                      <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <h4 className="font-semibold mb-2 text-blue-900">Detected Context:</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <span className="font-medium text-blue-800">Domain:</span>
+                            <span className="text-blue-700 ml-2">{analysis.context.domain}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-blue-800">Industry:</span>
+                            <span className="text-blue-700 ml-2">{analysis.context.industry}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-blue-800">Level:</span>
+                            <span className="text-blue-700 ml-2">{analysis.context.sophistication}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-blue-800">Strategy:</span>
+                            <span className="text-blue-700 ml-2">{analysis.strategy || 'Standard'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                     {analysis.insights && analysis.insights.length > 0 && (
                       <div className="mb-4">
@@ -490,6 +561,29 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
                         <ul className="list-disc list-inside space-y-1">
                           {analysis.insights.slice(0, 5).map((insight: string, index: number) => (
                             <li key={index} className="text-gray-700">{insight}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {/* Enhanced Analysis Fields */}
+                    {analysis.riskOpportunities && analysis.riskOpportunities.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="font-semibold mb-2">Risk & Opportunities:</h4>
+                        <ul className="list-disc list-inside space-y-1">
+                          {analysis.riskOpportunities.slice(0, 3).map((item: string, index: number) => (
+                            <li key={index} className="text-gray-700">{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {analysis.nextSteps && analysis.nextSteps.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="font-semibold mb-2">Recommended Next Steps:</h4>
+                        <ul className="list-disc list-inside space-y-1">
+                          {analysis.nextSteps.slice(0, 3).map((step: string, index: number) => (
+                            <li key={index} className="text-gray-700">{step}</li>
                           ))}
                         </ul>
                       </div>
@@ -548,17 +642,39 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
                         </div>
                       </div>
 
-                      {/* Chart Description */}
+                      {/* Enhanced Chart Description */}
                       <div className="mb-6">
-                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
-                          <h5 className="font-medium text-purple-900 mb-2 flex items-center">
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+                          <h5 className="font-medium text-blue-900 mb-2 flex items-center">
                             <BarChart3 className="w-4 h-4 mr-2" />
-                            AI-Powered Chart Analysis
+                            AI-Powered Business Intelligence
                           </h5>
-                          <p className="text-purple-800 text-sm leading-relaxed mb-3">{chart.description}</p>
-                          <div className="bg-white p-3 rounded border border-purple-200">
-                            <h6 className="font-medium text-purple-900 mb-1">Key Insights:</h6>
-                            <p className="text-purple-700 text-sm">{chart.insights}</p>
+                          <p className="text-blue-800 text-sm leading-relaxed mb-3">{chart.description}</p>
+                          
+                          {/* Axis Information */}
+                          {(chart.xAxisLabel || chart.yAxisLabel) && (
+                            <div className="bg-blue-100 p-3 rounded border border-blue-200 mb-3">
+                              <h6 className="font-medium text-blue-900 mb-2">Chart Configuration:</h6>
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                {chart.xAxisLabel && (
+                                  <div>
+                                    <span className="font-medium text-blue-800">X-Axis:</span>
+                                    <span className="text-blue-700 ml-2">{chart.xAxisLabel}</span>
+                                  </div>
+                                )}
+                                {chart.yAxisLabel && (
+                                  <div>
+                                    <span className="font-medium text-blue-800">Y-Axis:</span>
+                                    <span className="text-blue-700 ml-2">{chart.yAxisLabel}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div className="bg-white p-3 rounded border border-blue-200">
+                            <h6 className="font-medium text-blue-900 mb-1">Business Insights:</h6>
+                            <p className="text-blue-700 text-sm">{chart.insights}</p>
                           </div>
                         </div>
                       </div>

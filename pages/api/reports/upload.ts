@@ -65,13 +65,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Clean up uploaded file
     fs.unlinkSync(file.path)
 
-    // Generate Super AI analysis using multiple providers
-    console.log('🤖 Starting Super AI Analysis...')
+    // Generate Enhanced Super AI analysis using multiple providers
+    console.log('🤖 Starting Enhanced Super AI Analysis...')
     const superAnalysis = await superAI.superAnalyze(rows, headers)
-    console.log(`✅ Super AI Analysis complete: ${superAnalysis.primary.provider}`)
+    console.log(`✅ Enhanced Super AI Analysis complete: ${superAnalysis.primary.provider}`)
     
     // Use the combined analysis from all AI providers
     const analysis = superAnalysis.combined
+    
+    // Add context and strategy information
+    if (superAnalysis.context) {
+      analysis.context = superAnalysis.context
+      analysis.strategy = superAnalysis.strategy
+      console.log(`🏢 Detected Domain: ${superAnalysis.context.domain} | Industry: ${superAnalysis.context.industry}`)
+      console.log(`📊 Analysis Strategy: ${superAnalysis.strategy}`)
+    }
 
     // Create report
     const report = {
