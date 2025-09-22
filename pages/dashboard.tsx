@@ -2,6 +2,7 @@ import { useAuth } from '../src/contexts/AuthContext'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import DataViewer from '../src/components/DataViewer'
+import { DashboardHeader } from '../src/components/DashboardHeader'
 import Logo from '../src/components/Logo'
 
 export default function Dashboard() {
@@ -148,85 +149,51 @@ export default function Dashboard() {
             </p>
           </div>
           
-          <button
-            onClick={handleLogout}
-            style={{
-              padding: '12px 24px',
-              background: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              transition: 'background 0.3s'
-            }}
-            onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#c82333'}
-            onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#dc3545'}
-          >
-            Sign Out
-          </button>
-        </div>
-
-        {/* Upload Section */}
-        <div style={{ 
-          background: '#f8f9fa',
-          padding: '30px',
-          borderRadius: '12px',
-          marginBottom: '40px',
-          border: '2px dashed #dee2e6',
-          textAlign: 'center'
-        }}>
-          <h2 style={{ 
-            color: '#333',
-            fontSize: '24px',
-            marginBottom: '15px'
-          }}>
-            📊 Upload Excel File
-          </h2>
-          
-          <p style={{ 
-            color: '#666',
-            marginBottom: '20px',
-            fontSize: '16px'
-          }}>
-            Upload your Excel file and let AI generate a comprehensive report
-          </p>
-
-          <div style={{ position: 'relative', display: 'inline-block' }}>
-            <input
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              onChange={handleFileUpload}
-              disabled={uploading}
-              style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                width: '100%',
-                height: '100%',
-                opacity: 0,
-                cursor: uploading ? 'not-allowed' : 'pointer'
-              }}
-            />
+          <div style={{ display: 'flex', gap: '10px' }}>
             <button
-              disabled={uploading}
+              onClick={() => router.push('/subscription')}
               style={{
-                padding: '15px 30px',
-                background: uploading ? '#ccc' : 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+                padding: '12px 24px',
+                background: '#28a745',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: uploading ? 'not-allowed' : 'pointer',
-                transition: 'all 0.3s'
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'background 0.3s'
               }}
+              onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#218838'}
+              onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#28a745'}
             >
-              {uploading ? 'Processing...' : '📁 Choose File'}
+              Subscription
+            </button>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: '12px 24px',
+                background: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'background 0.3s'
+              }}
+              onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#c82333'}
+              onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#dc3545'}
+            >
+              Sign Out
             </button>
           </div>
         </div>
+
+        {/* Dashboard Header with Usage Display and File Upload */}
+        <DashboardHeader
+          onFileUpload={handleFileUpload}
+          uploading={uploading}
+        />
 
         {/* Features Grid */}
         <div style={{ 

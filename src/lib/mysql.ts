@@ -62,11 +62,15 @@ export async function initDatabase() {
         password VARCHAR(255),
         image VARCHAR(500),
         provider VARCHAR(50) DEFAULT 'credentials',
-        subscription_plan ENUM('free', 'pro', 'enterprise') DEFAULT 'free',
+        subscription_plan ENUM('free', 'starter', 'professional') DEFAULT 'free',
         subscription_status ENUM('active', 'canceled', 'past_due') DEFAULT 'active',
         stripe_customer_id VARCHAR(255),
         stripe_subscription_id VARCHAR(255),
         current_period_end DATETIME,
+        monthly_cells_used INT DEFAULT 0,
+        monthly_reports_used INT DEFAULT 0,
+        total_cells_used INT DEFAULT 0,
+        last_reset_date DATE DEFAULT CURRENT_DATE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
@@ -82,9 +86,26 @@ export async function initDatabase() {
         data JSON,
         charts JSON,
         settings JSON,
+        cells_used INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Create usage_logs table for analytics
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS usage_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        report_id INT,
+        action_type ENUM('report_generated', 'cells_used', 'limit_reached') NOT NULL,
+        cells_used INT DEFAULT 0,
+        reports_used INT DEFAULT 0,
+        details JSON,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (report_id) REFERENCES reports(id) ON DELETE SET NULL
       )
     `);
 

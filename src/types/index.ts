@@ -11,13 +11,35 @@ export interface User {
 export interface Subscription {
   id: string
   userId: string
-  plan: 'free' | 'pro' | 'enterprise'
+  plan: 'free' | 'starter' | 'professional'
   status: 'active' | 'canceled' | 'past_due'
   stripeCustomerId: string
   stripeSubscriptionId?: string
   currentPeriodEnd: Date
+  monthlyCellsUsed: number
+  monthlyReportsUsed: number
+  totalCellsUsed: number
+  lastResetDate: Date
   createdAt: Date
   updatedAt: Date
+}
+
+export interface PricingLimits {
+  reportsPerMonth: number
+  cellsPerMonth: number
+  maxCellsPerReport: number
+  exportFormats: string[]
+  whiteLabel: boolean
+  overageRate?: number // $0.10 per 10,000 cells for professional
+}
+
+export interface UsageStats {
+  monthlyCellsUsed: number
+  monthlyReportsUsed: number
+  totalCellsUsed: number
+  cellsRemaining: number
+  reportsRemaining: number
+  lastResetDate: Date
 }
 
 export interface Report {
