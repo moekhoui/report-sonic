@@ -533,7 +533,7 @@ export class AIChartGenerator {
       
       description = `This ${chartType} chart shows the distribution of ${columnName} categories, with ${uniqueCount} distinct values across ${totalCount} total records.`
       
-      businessInsight = `The dominant category "${topValue[0]}" represents ${topPercentage}% of all ${columnName} data. This ${topPercentage > 50 ? 'concentration suggests market dominance' : 'distribution indicates market diversity'}. Recommendation: ${topPercentage > 50 ? 'Leverage dominant position and explore expansion opportunities' : 'Analyze underperforming categories and develop targeted strategies'}.`
+      businessInsight = `The dominant category "${topValue[0]}" represents ${topPercentage}% of all ${columnName} data. This ${parseFloat(topPercentage) > 50 ? 'concentration suggests market dominance' : 'distribution indicates market diversity'}. Recommendation: ${parseFloat(topPercentage) > 50 ? 'Leverage dominant position and explore expansion opportunities' : 'Analyze underperforming categories and develop targeted strategies'}.`
     } else if (chartType === 'scatter') {
       description = `This scatter plot reveals the relationship between ${columnName} and other variables, showing correlation patterns across ${totalCount} data points.`
       
