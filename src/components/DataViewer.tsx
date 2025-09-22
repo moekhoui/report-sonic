@@ -236,7 +236,7 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
             xAxisLabel: 'Categories',
             yAxisLabel: 'Percentage',
             description: `This doughnut chart displays the categorical distribution of ${column.key} values, showing the relative frequency of each category within the dataset.`,
-            insights: `The dominant category "${topValue[0]}" represents ${topPercentage}% of all ${column.key} data. This ${topPercentage > 50 ? 'concentration suggests market dominance' : 'distribution indicates market diversity'}. Recommendation: ${topPercentage > 50 ? 'Leverage dominant position and explore expansion opportunities' : 'Analyze underperforming categories and develop targeted strategies'}.`
+            insights: `The dominant category "${topValue[0]}" represents ${topPercentage}% of all ${column.key} data. This ${parseFloat(topPercentage) > 50 ? 'concentration suggests market dominance' : 'distribution indicates market diversity'}. Recommendation: ${parseFloat(topPercentage) > 50 ? 'Leverage dominant position and explore expansion opportunities' : 'Analyze underperforming categories and develop targeted strategies'}.`
           })
         }
       }
