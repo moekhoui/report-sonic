@@ -114,6 +114,7 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             name: user.name,
             image: user.image || null,
+            role: user.role || 'user',
           }
         } catch (error) {
           console.error('❌ CREDENTIALS AUTH ERROR:', error)
@@ -146,6 +147,7 @@ export const authOptions: NextAuthOptions = {
             
             if (newUser) {
               user.id = newUser.id.toString()
+              ;(user as any).role = newUser.role || 'user'
               console.log('✅ GOOGLE USER CREATED:', newUser.id)
             } else {
               console.log('❌ FAILED TO CREATE GOOGLE USER')
@@ -153,6 +155,7 @@ export const authOptions: NextAuthOptions = {
             }
           } else {
             user.id = existingUser.id.toString()
+            ;(user as any).role = existingUser.role || 'user'
             console.log('✅ EXISTING GOOGLE USER:', existingUser.id)
           }
         } catch (error) {
@@ -177,6 +180,7 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email
         token.name = user.name
         token.image = user.image
+        token.role = (user as any).role || 'user'
       }
       return token
     },
@@ -186,6 +190,7 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email as string
         session.user.name = token.name as string
         session.user.image = token.image as string
+        ;(session.user as any).role = token.role as string || 'user'
       }
       return session
     },

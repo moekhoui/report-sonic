@@ -147,7 +147,7 @@ export default function Dashboard() {
           </div>
           
         <div style={{ display: 'flex', gap: '10px' }}>
-          {user?.role === 'superadmin' && (
+          {(user as any)?.role === 'superadmin' && (
             <button
               onClick={() => router.push('/admin/users')}
               style={{

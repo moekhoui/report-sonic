@@ -18,13 +18,13 @@ export default function AdminUsersPage() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin')
-    } else if (session?.user?.role !== 'superadmin') {
+    } else if ((session?.user as any)?.role !== 'superadmin') {
       router.push('/dashboard')
     }
   }, [status, session, router])
 
   useEffect(() => {
-    if (session?.user?.role === 'superadmin') {
+    if ((session?.user as any)?.role === 'superadmin') {
       fetchUsers()
     }
   }, [session])
@@ -94,7 +94,7 @@ export default function AdminUsersPage() {
     )
   }
 
-  if (session?.user?.role !== 'superadmin') {
+  if ((session?.user as any)?.role !== 'superadmin') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

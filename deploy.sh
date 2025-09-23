@@ -1,24 +1,33 @@
 #!/bin/bash
 
-echo "🚀 Deploying ReportSonic to Vercel..."
+echo "🚀 Starting deployment process..."
 
-# Check if Vercel CLI is installed
-if ! command -v vercel &> /dev/null; then
-    echo "📦 Installing Vercel CLI..."
-    npm install -g vercel
-fi
+# Add all changes
+echo "📝 Adding all changes to git..."
+git add .
 
-# Deploy to Vercel
-echo "🚀 Deploying to Vercel..."
-vercel --prod
+# Commit changes
+echo "💾 Committing changes..."
+git commit -m "feat: Complete pricing system improvements, admin panel, and NextAuth fixes"
 
-echo "✅ Deployment complete!"
-echo "🌐 Your app is now live at: https://your-project-name.vercel.app"
+# Push to GitHub
+echo "📤 Pushing to GitHub..."
+git push origin main
+
+echo "✅ Deployment script completed!"
+echo "🌐 Your changes should now be deploying on Vercel..."
 echo ""
-echo "📝 Don't forget to set up environment variables in Vercel dashboard:"
-echo "   - MONGODB_URI"
-echo "   - NEXTAUTH_URL"
-echo "   - NEXTAUTH_SECRET"
-echo "   - GOOGLE_CLIENT_ID (optional)"
-echo "   - GOOGLE_CLIENT_SECRET (optional)"
-
+echo "📋 What was deployed:"
+echo "   ✅ Fixed Stripe checkout errors"
+echo "   ✅ Added pricing to homepage"
+echo "   ✅ Fixed Google OAuth redirect"
+echo "   ✅ Added back to dashboard button"
+echo "   ✅ Created superadmin system"
+echo "   ✅ Optimized database storage"
+echo "   ✅ Fixed NextAuth role types"
+echo ""
+echo "🎯 Next steps:"
+echo "   1. Wait for Vercel to finish deploying"
+echo "   2. Create superadmin: node create-superadmin.js"
+echo "   3. Test the admin panel at /admin/users"
+echo "   4. Verify Stripe checkout works"
