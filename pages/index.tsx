@@ -4,7 +4,7 @@ import { authOptions } from '../src/lib/auth';
 import Link from 'next/link';
 import ThemeToggle from '../src/components/ThemeToggle';
 import Logo from '../src/components/Logo';
-import PricingPlans from '../src/components/PricingPlans';
+import { PricingPlans } from '../src/components/PricingPlans';
 
 export default function Home() {
   return (
