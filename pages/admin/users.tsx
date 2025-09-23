@@ -66,7 +66,12 @@ export default function AdminUsersPage() {
     }
   }
 
-  const handleCreateUser = async (userData: any) => {
+  const handleCreateUser = async (userData: UserWithUsage | null) => {
+    if (!userData || !userData.name || !userData.email || !userData.password) {
+      alert('Please fill in all required fields (Name, Email, Password)')
+      return
+    }
+
     try {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
@@ -142,7 +147,10 @@ export default function AdminUsersPage() {
             </div>
             <div className="flex gap-3">
               <button
-                onClick={() => setShowUserModal(true)}
+                onClick={() => {
+                  setSelectedUser(null)
+                  setShowUserModal(true)
+                }}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -340,7 +348,7 @@ export default function AdminUsersPage() {
                     type="text"
                     defaultValue={selectedUser?.name || ''}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    onChange={(e) => setSelectedUser({...selectedUser, name: e.target.value})}
+                    onChange={(e) => setSelectedUser({...(selectedUser || {}), name: e.target.value} as UserWithUsage)}
                   />
                 </div>
 
@@ -350,7 +358,7 @@ export default function AdminUsersPage() {
                     type="email"
                     defaultValue={selectedUser?.email || ''}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    onChange={(e) => setSelectedUser({...selectedUser, email: e.target.value})}
+                    onChange={(e) => setSelectedUser({...(selectedUser || {}), email: e.target.value} as UserWithUsage)}
                   />
                 </div>
 
@@ -361,7 +369,7 @@ export default function AdminUsersPage() {
                       type="password"
                       placeholder="Enter password for new user"
                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      onChange={(e) => setSelectedUser({...selectedUser, password: e.target.value})}
+                      onChange={(e) => setSelectedUser({...(selectedUser || {}), password: e.target.value} as UserWithUsage)}
                     />
                   </div>
                 )}
@@ -371,7 +379,7 @@ export default function AdminUsersPage() {
                   <select
                     defaultValue={selectedUser?.role || 'user'}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    onChange={(e) => setSelectedUser({...selectedUser, role: e.target.value as any})}
+                    onChange={(e) => setSelectedUser({...(selectedUser || {}), role: e.target.value as any} as UserWithUsage)}
                   >
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
@@ -384,7 +392,7 @@ export default function AdminUsersPage() {
                   <select
                     defaultValue={selectedUser?.subscription_plan || 'free'}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    onChange={(e) => setSelectedUser({...selectedUser, subscription_plan: e.target.value as any})}
+                    onChange={(e) => setSelectedUser({...(selectedUser || {}), subscription_plan: e.target.value as any} as UserWithUsage)}
                   >
                     <option value="free">Free</option>
                     <option value="starter">Starter</option>
@@ -398,7 +406,7 @@ export default function AdminUsersPage() {
                     type="number"
                     defaultValue={selectedUser?.monthly_reports_used || 0}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    onChange={(e) => setSelectedUser({...selectedUser, monthly_reports_used: parseInt(e.target.value)})}
+                    onChange={(e) => setSelectedUser({...(selectedUser || {}), monthly_reports_used: parseInt(e.target.value)} as UserWithUsage)}
                   />
                 </div>
 
@@ -408,7 +416,7 @@ export default function AdminUsersPage() {
                     type="number"
                     defaultValue={selectedUser?.monthly_cells_used || 0}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    onChange={(e) => setSelectedUser({...selectedUser, monthly_cells_used: parseInt(e.target.value)})}
+                    onChange={(e) => setSelectedUser({...(selectedUser || {}), monthly_cells_used: parseInt(e.target.value)} as UserWithUsage)}
                   />
                 </div>
               </div>
