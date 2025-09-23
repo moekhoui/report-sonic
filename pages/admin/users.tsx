@@ -66,6 +66,31 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handleCreateUser = async (userData: any) => {
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      })
+
+      if (response.ok) {
+        await fetchUsers()
+        setShowUserModal(false)
+        setSelectedUser(null)
+        alert('User created successfully!')
+      } else {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to create user')
+      }
+    } catch (error) {
+      console.error('Failed to create user:', error)
+      alert(`Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString()
   }
@@ -115,15 +140,26 @@ export default function AdminUsersPage() {
               <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
               <p className="mt-2 text-gray-600">Manage all users and their subscriptions</p>
             </div>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Back to Dashboard
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowUserModal(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Create New User
+              </button>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Dashboard
+              </button>
+            </div>
           </div>
         </div>
 
@@ -288,19 +324,21 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* User Edit Modal */}
-      {showUserModal && selectedUser && (
+      {/* User Edit/Create Modal */}
+      {showUserModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Edit User</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {selectedUser ? 'Edit User' : 'Create New User'}
+              </h3>
               
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Name</label>
                   <input
                     type="text"
-                    defaultValue={selectedUser.name}
+                    defaultValue={selectedUser?.name || ''}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     onChange={(e) => setSelectedUser({...selectedUser, name: e.target.value})}
                   />
@@ -310,16 +348,28 @@ export default function AdminUsersPage() {
                   <label className="block text-sm font-medium text-gray-700">Email</label>
                   <input
                     type="email"
-                    defaultValue={selectedUser.email}
+                    defaultValue={selectedUser?.email || ''}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     onChange={(e) => setSelectedUser({...selectedUser, email: e.target.value})}
                   />
                 </div>
 
+                {!selectedUser && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Password</label>
+                    <input
+                      type="password"
+                      placeholder="Enter password for new user"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      onChange={(e) => setSelectedUser({...selectedUser, password: e.target.value})}
+                    />
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Role</label>
                   <select
-                    defaultValue={selectedUser.role}
+                    defaultValue={selectedUser?.role || 'user'}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     onChange={(e) => setSelectedUser({...selectedUser, role: e.target.value as any})}
                   >
@@ -332,7 +382,7 @@ export default function AdminUsersPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Subscription Plan</label>
                   <select
-                    defaultValue={selectedUser.subscription_plan}
+                    defaultValue={selectedUser?.subscription_plan || 'free'}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     onChange={(e) => setSelectedUser({...selectedUser, subscription_plan: e.target.value as any})}
                   >
@@ -346,7 +396,7 @@ export default function AdminUsersPage() {
                   <label className="block text-sm font-medium text-gray-700">Monthly Reports Used</label>
                   <input
                     type="number"
-                    defaultValue={selectedUser.monthly_reports_used || 0}
+                    defaultValue={selectedUser?.monthly_reports_used || 0}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     onChange={(e) => setSelectedUser({...selectedUser, monthly_reports_used: parseInt(e.target.value)})}
                   />
@@ -356,7 +406,7 @@ export default function AdminUsersPage() {
                   <label className="block text-sm font-medium text-gray-700">Monthly Cells Used</label>
                   <input
                     type="number"
-                    defaultValue={selectedUser.monthly_cells_used || 0}
+                    defaultValue={selectedUser?.monthly_cells_used || 0}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     onChange={(e) => setSelectedUser({...selectedUser, monthly_cells_used: parseInt(e.target.value)})}
                   />
@@ -374,10 +424,10 @@ export default function AdminUsersPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleUpdateUser(selectedUser.id!, selectedUser)}
+                  onClick={() => selectedUser ? handleUpdateUser(selectedUser.id!, selectedUser) : handleCreateUser(selectedUser)}
                   className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                 >
-                  Save Changes
+                  {selectedUser ? 'Save Changes' : 'Create User'}
                 </button>
               </div>
             </div>

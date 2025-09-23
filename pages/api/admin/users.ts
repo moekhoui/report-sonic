@@ -39,6 +39,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('Error fetching users:', error)
       res.status(500).json({ error: 'Failed to fetch users' })
     }
+  } else if (req.method === 'POST') {
+    try {
+      const { name, email, password, role, subscription_plan } = req.body
+
+      // Validate required fields
+      if (!name || !email || !password) {
+        return res.status(400).json({ error: 'Name, email, and password are required' })
+      }
+
+      // Check if email is already taken
+      const [existingUsers] = await query('SELECT id FROM users WHERE email = ?', [email]) as any[]
+      if (existingUsers.length > 0) {
+        return res.status(400).json({ error: 'Email already taken' })
+      }
+
+      // Hash password
+      const bcrypt = require('bcryptjs')
+      const hashedPassword = await bcrypt.hash(password, 12)
+
+      // Create user
+      const [result] = await query(`
+        INSERT INTO users (name, email, password, provider, role, subscription_plan, subscription_status, monthly_cells_used, monthly_reports_used, total_cells_used)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        name,
+        email.toLowerCase().trim(),
+        hashedPassword,
+        'credentials',
+        role || 'user',
+        subscription_plan || 'free',
+        'active',
+        0,
+        0,
+        0
+      ]) as any
+
+      // Get created user
+      const [newUser] = await query('SELECT * FROM users WHERE id = ?', [result.insertId]) as any[]
+
+      res.status(201).json(newUser[0])
+    } catch (error) {
+      console.error('Error creating user:', error)
+      res.status(500).json({ error: 'Failed to create user' })
+    }
   } else {
     res.status(405).json({ error: 'Method not allowed' })
   }
