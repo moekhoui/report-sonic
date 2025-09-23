@@ -8,6 +8,7 @@ export interface IUser {
   password?: string;
   image?: string;
   provider?: string;
+  role?: 'user' | 'admin' | 'superadmin';
   subscription_plan?: 'free' | 'starter' | 'professional';
   subscription_status?: 'active' | 'canceled' | 'past_due';
   stripe_customer_id?: string;
@@ -28,7 +29,8 @@ export class UserMySQL {
       name, 
       password, 
       image, 
-      provider = 'credentials', 
+      provider = 'credentials',
+      role = 'user',
       subscription_plan = 'free', 
       subscription_status = 'active',
       monthly_cells_used = 0,
@@ -42,11 +44,11 @@ export class UserMySQL {
     }
 
     const sql = `
-      INSERT INTO users (email, name, password, image, provider, subscription_plan, subscription_status, monthly_cells_used, monthly_reports_used, total_cells_used)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (email, name, password, image, provider, role, subscription_plan, subscription_status, monthly_cells_used, monthly_reports_used, total_cells_used)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     
-    const result = await query(sql, [email.toLowerCase().trim(), name, hashedPassword, image, provider, subscription_plan, subscription_status, monthly_cells_used, monthly_reports_used, total_cells_used]);
+    const result = await query(sql, [email.toLowerCase().trim(), name, hashedPassword, image, provider, role, subscription_plan, subscription_status, monthly_cells_used, monthly_reports_used, total_cells_used]);
     
     const newUser = await this.findById((result as any).insertId);
     if (!newUser) {

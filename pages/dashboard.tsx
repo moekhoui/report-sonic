@@ -146,12 +146,13 @@ export default function Dashboard() {
             </p>
           </div>
           
-          <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {user?.role === 'superadmin' && (
             <button
-              onClick={() => router.push('/subscription')}
+              onClick={() => router.push('/admin/users')}
               style={{
                 padding: '12px 24px',
-                background: '#28a745',
+                background: '#6f42c1',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -160,30 +161,49 @@ export default function Dashboard() {
                 fontWeight: '500',
                 transition: 'background 0.3s'
               }}
-              onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#218838'}
-              onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#28a745'}
+              onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#5a32a3'}
+              onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#6f42c1'}
             >
-              Subscription
+              Admin Panel
             </button>
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: '12px 24px',
-                background: '#dc3545',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'background 0.3s'
-              }}
-              onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#c82333'}
-              onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#dc3545'}
-            >
-              Sign Out
-            </button>
-          </div>
+          )}
+          <button
+            onClick={() => router.push('/subscription')}
+            style={{
+              padding: '12px 24px',
+              background: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'background 0.3s'
+            }}
+            onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#218838'}
+            onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#28a745'}
+          >
+            Subscription
+          </button>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: '12px 24px',
+              background: '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'background 0.3s'
+            }}
+            onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#c82333'}
+            onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#dc3545'}
+          >
+            Sign Out
+          </button>
+        </div>
         </div>
 
         {/* Dashboard Header with Usage Display and File Upload */}

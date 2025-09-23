@@ -62,6 +62,7 @@ export async function initDatabase() {
         password VARCHAR(255),
         image VARCHAR(500),
         provider VARCHAR(50) DEFAULT 'credentials',
+        role ENUM('user', 'admin', 'superadmin') DEFAULT 'user',
         subscription_plan ENUM('free', 'starter', 'professional') DEFAULT 'free',
         subscription_status ENUM('active', 'canceled', 'past_due') DEFAULT 'active',
         stripe_customer_id VARCHAR(255),
@@ -75,6 +76,16 @@ export async function initDatabase() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
+
+    // Add role column if it doesn't exist (for existing databases)
+    try {
+      await connection.execute(`
+        ALTER TABLE users ADD COLUMN role ENUM('user', 'admin', 'superadmin') DEFAULT 'user'
+      `);
+    } catch (error) {
+      // Column already exists, ignore error
+      console.log('Role column already exists or error adding it:', error);
+    }
 
     // Create reports table
     await connection.execute(`

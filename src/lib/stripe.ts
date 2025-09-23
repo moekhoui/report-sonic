@@ -86,7 +86,13 @@ export function getPriceId(plan: SubscriptionPlan): string {
   if (plan === 'free') {
     throw new Error('Free plan does not have a price ID')
   }
-  return PRICE_IDS[plan]
+  
+  const priceId = PRICE_IDS[plan]
+  if (!priceId) {
+    throw new Error(`Price ID not configured for plan: ${plan}. Please check your environment variables.`)
+  }
+  
+  return priceId
 }
 
 export async function constructWebhookEvent(

@@ -39,6 +39,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Create checkout session
     const priceId = getPriceId(plan as SubscriptionPlan)
+    
+    // Validate price ID exists
+    if (!priceId) {
+      console.error('Price ID not found for plan:', plan)
+      return res.status(400).json({ error: 'Price ID not configured for this plan' })
+    }
+
     const checkoutSession = await createCheckoutSession(
       customerId,
       priceId,
@@ -46,9 +53,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `${process.env.NEXTAUTH_URL}/dashboard?canceled=true`
     )
 
-    res.status(200).json({ sessionId: checkoutSession.id })
+    res.status(200).json({ sessionId: checkoutSession.id, url: checkoutSession.url })
   } catch (error) {
     console.error('Checkout session creation error:', error)
-    res.status(500).json({ error: 'Failed to create checkout session' })
+    
+    // More detailed error logging
+    if (error instanceof Error) {
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to create checkout session',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    })
   }
 }

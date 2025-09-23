@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Get fresh user data from database
     const connection = await mysql.createConnection(dbConfig)
     const [users] = await connection.execute(
-      'SELECT id, email, name, image, subscription_plan, subscription_status FROM users WHERE id = ?',
+      'SELECT id, email, name, image, role, subscription_plan, subscription_status FROM users WHERE id = ?',
       [decoded.id]
     ) as any[]
     await connection.end()
@@ -48,6 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         email: user.email,
         name: user.name,
         image: user.image,
+        role: user.role || 'user',
         subscription_plan: user.subscription_plan,
         subscription_status: user.subscription_status
       }

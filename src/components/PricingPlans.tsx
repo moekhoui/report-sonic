@@ -1,13 +1,15 @@
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { PRICING_PLANS, formatCurrency, getPlanDisplayName, SubscriptionPlan } from '../utils/pricingCalculator'
 
 interface PricingPlansProps {
-  currentPlan: SubscriptionPlan
-  onSelectPlan: (plan: SubscriptionPlan) => void
+  currentPlan?: SubscriptionPlan
+  onSelectPlan?: (plan: SubscriptionPlan) => void
   loading?: boolean
+  isPublicPage?: boolean
 }
 
-export function PricingPlans({ currentPlan, onSelectPlan, loading = false }: PricingPlansProps) {
+export function PricingPlans({ currentPlan = 'free', onSelectPlan, loading = false, isPublicPage = false }: PricingPlansProps) {
   const [hoveredPlan, setHoveredPlan] = useState<SubscriptionPlan | null>(null)
 
   const plans = Object.entries(PRICING_PLANS) as [SubscriptionPlan, typeof PRICING_PLANS.free][]
@@ -134,7 +136,18 @@ export function PricingPlans({ currentPlan, onSelectPlan, loading = false }: Pri
                 </div>
 
                 <div className="mt-8">
-                  {isCurrentPlan ? (
+                  {isPublicPage ? (
+                    <Link
+                      href="/auth/signup"
+                      className={`w-full flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md transition-colors ${
+                        isPopular
+                          ? 'text-white bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
+                          : 'text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+                      } focus:outline-none focus:ring-2 focus:ring-offset-2`}
+                    >
+                      {planKey === 'free' ? 'Get Started Free' : 'Start ' + getPlanDisplayName(planKey)}
+                    </Link>
+                  ) : isCurrentPlan ? (
                     <button
                       disabled
                       className="w-full flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gray-400 cursor-not-allowed"
@@ -143,7 +156,7 @@ export function PricingPlans({ currentPlan, onSelectPlan, loading = false }: Pri
                     </button>
                   ) : (
                     <button
-                      onClick={() => onSelectPlan(planKey)}
+                      onClick={() => onSelectPlan?.(planKey)}
                       disabled={loading}
                       className={`w-full flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md transition-colors ${
                         isPopular

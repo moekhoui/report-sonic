@@ -4,6 +4,7 @@ import { authOptions } from '../src/lib/auth';
 import Link from 'next/link';
 import ThemeToggle from '../src/components/ThemeToggle';
 import Logo from '../src/components/Logo';
+import PricingPlans from '../src/components/PricingPlans';
 
 export default function Home() {
   return (
@@ -127,6 +128,21 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="section bg-white dark:bg-slate-900">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Choose the plan that fits your needs. Start free and upgrade anytime.
+            </p>
+          </div>
+          <PricingPlans isPublicPage={true} />
         </div>
       </section>
 

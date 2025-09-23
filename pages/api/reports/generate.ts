@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getSession } from 'next-auth/react'
-import { withLimitCheck, incrementUserUsage } from '../../../src/middleware/limitCheck'
+import { withLimitCheck } from '../../../src/middleware/limitCheck'
 import { analyzeData, generateReportContent } from '../../../src/lib/ai'
 import { calculateCells } from '../../../src/utils/pricingCalculator'
-import { query } from '../../../src/lib/mysql'
+import UserMySQL from '../../../src/lib/models/UserMySQL'
 
 async function generateReportHandler(
   req: NextApiRequest,
@@ -32,33 +32,21 @@ async function generateReportHandler(
     // Generate report content
     const reportContent = await generateReportContent(fileData, template, title)
 
-    // Save report to database
-    const reportResult = await query(
-      `INSERT INTO reports (user_id, title, data, charts, settings, cells_used) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        parseInt(session.user.id),
-        title,
-        JSON.stringify(fileData),
-        JSON.stringify(analysis.suggestedCharts || []),
-        JSON.stringify({
-          template,
-          companyName,
-          clientName,
-          reportContent
-        }),
-        cellsUsed
-      ]
-    ) as any
-
-    const reportId = reportResult.insertId
-
+    // Don't store report in database to save storage space
+    // Just track usage and return the generated report
+    
     // Increment usage (this is called after successful report generation)
-    await incrementUserUsage(parseInt(session.user.id), cellsUsed, reportId)
+    await UserMySQL.incrementUsage(parseInt(session.user.id), cellsUsed, 1)
+    await UserMySQL.logUsage(parseInt(session.user.id), null, 'report_generated', cellsUsed, 1, { 
+      title,
+      template,
+      companyName,
+      clientName
+    })
 
     res.status(200).json({
       success: true,
-      reportId,
+      reportId: `temp_${Date.now()}`, // Temporary ID for frontend reference
       analysis,
       reportContent,
       cellsUsed,

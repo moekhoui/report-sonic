@@ -5,6 +5,7 @@ interface User {
   email: string
   name: string
   image?: string
+  role?: 'user' | 'admin' | 'superadmin'
   subscription_plan: string
   subscription_status: string
 }
