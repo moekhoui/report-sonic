@@ -1,5 +1,6 @@
 import React from 'react'
-import { UsageStats, SubscriptionPlan } from '../types'
+import { UsageStats } from '../types'
+import { SubscriptionPlan } from '../utils/pricingCalculator'
 import { getPricingLimits } from '../utils/pricingCalculator'
 
 interface UsageNotificationProps {

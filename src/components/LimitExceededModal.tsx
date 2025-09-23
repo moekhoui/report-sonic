@@ -1,5 +1,5 @@
 import React from 'react'
-import { SubscriptionPlan } from '../types'
+import { SubscriptionPlan } from '../utils/pricingCalculator'
 import { getPlanDisplayName, PRICING_PLANS } from '../utils/pricingCalculator'
 
 interface LimitExceededModalProps {

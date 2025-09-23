@@ -133,16 +133,14 @@ export function getUpgradePrompt(plan: SubscriptionPlan): string {
 export function createLimitExceededResponse(
   errors: string[],
   upgradePrompt: string
-): NextApiResponse {
+) {
   return {
     status: 429,
-    json: () => ({
-      error: 'Usage limit exceeded',
-      message: errors.join(' '),
-      upgradePrompt,
-      limitExceeded: true
-    })
-  } as NextApiResponse
+    error: 'Usage limit exceeded',
+    message: errors.join(' '),
+    upgradePrompt,
+    limitExceeded: true
+  }
 }
 
 export function withLimitCheck(

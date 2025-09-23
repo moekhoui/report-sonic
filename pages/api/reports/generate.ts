@@ -40,7 +40,7 @@ async function generateReportHandler(
         parseInt(session.user.id),
         title,
         JSON.stringify(fileData),
-        JSON.stringify(analysis.charts || []),
+        JSON.stringify(analysis.suggestedCharts || []),
         JSON.stringify({
           template,
           companyName,

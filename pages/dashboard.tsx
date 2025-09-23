@@ -18,10 +18,7 @@ export default function Dashboard() {
     }
   }, [user, loading, router])
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
+  const handleFileUpload = async (file: File) => {
     setUploading(true)
     try {
       const formData = new FormData()

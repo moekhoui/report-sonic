@@ -48,9 +48,9 @@ export function getPricingLimits(plan: SubscriptionPlan): PricingLimits {
     reportsPerMonth: planData.reportsPerMonth,
     cellsPerMonth: planData.cellsPerMonth,
     maxCellsPerReport: planData.maxCellsPerReport,
-    exportFormats: planData.exportFormats,
+    exportFormats: [...planData.exportFormats],
     whiteLabel: planData.whiteLabel,
-    overageRate: planData.overageRate
+    overageRate: (planData as any).overageRate
   }
 }
 

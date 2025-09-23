@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const signature = req.headers['stripe-signature'] as string
-    const event = constructWebhookEvent(req.body, signature, webhookSecret)
+    const event = await constructWebhookEvent(req.body, signature, webhookSecret)
 
     switch (event.type) {
       case 'checkout.session.completed':
@@ -51,12 +51,8 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   console.log('Checkout session completed:', session.id)
   
   if (session.subscription) {
-    const subscription = await constructWebhookEvent(
-      session.subscription as any,
-      '',
-      process.env.STRIPE_SECRET_KEY!
-    )
-    await handleSubscriptionUpdated(subscription.data.object as Stripe.Subscription)
+    // Handle subscription directly from session
+    await handleSubscriptionUpdated(session.subscription as any)
   }
 }
 
@@ -109,8 +105,8 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   await UserMySQL.update(user.id!, {
     subscription_plan: 'free',
     subscription_status: 'canceled',
-    stripe_subscription_id: null,
-    current_period_end: null
+    stripe_subscription_id: undefined,
+    current_period_end: undefined
   })
 
   console.log(`Downgraded user ${user.email} to free plan`)
@@ -120,12 +116,8 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   console.log('Payment succeeded for invoice:', invoice.id)
   
   if (invoice.subscription) {
-    const subscription = await constructWebhookEvent(
-      invoice.subscription as any,
-      '',
-      process.env.STRIPE_SECRET_KEY!
-    )
-    await handleSubscriptionUpdated(subscription.data.object as Stripe.Subscription)
+    // Handle subscription directly from invoice
+    await handleSubscriptionUpdated(invoice.subscription as any)
   }
 }
 
