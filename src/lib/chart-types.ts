@@ -118,28 +118,31 @@ export function analyzeDataForCharts(data: any[]): DataAnalysis {
 export function getChartRecommendations(analysis: DataAnalysis): ChartRecommendation[] {
   const recommendations: ChartRecommendation[] = []
 
-  // Time Series Charts
-  if (analysis.hasTimeSeries && analysis.hasNumeric) {
+  // Time Series Charts - Only recommend if there are actual date columns
+  if (analysis.hasTimeSeries && analysis.hasNumeric && analysis.columns.some((col: string) => analysis.dataTypes[col] === 'date')) {
+    const dateColumns = analysis.columns.filter((col: string) => analysis.dataTypes[col] === 'date')
+    const numericColumns = analysis.columns.filter((col: string) => analysis.dataTypes[col] === 'number')
+    
     recommendations.push({
       chartType: 'line',
       title: 'Time Series Trend',
-      description: 'Shows how values change over time',
+      description: `Shows how ${numericColumns[0] || 'values'} change over ${dateColumns[0] || 'time'}`,
       confidence: 0.95,
-      reasoning: 'Perfect for showing trends and patterns over time',
+      reasoning: `Perfect for showing trends and patterns over time using ${dateColumns[0] || 'date'} column`,
       dataRequirements: ['Date column', 'Numeric values'],
       bestFor: ['Sales trends', 'Performance metrics', 'Growth analysis'],
-      example: 'Monthly sales revenue over 12 months'
+      example: `${numericColumns[0] || 'Values'} over ${dateColumns[0] || 'time period'}`
     })
 
     recommendations.push({
       chartType: 'area',
       title: 'Area Chart',
-      description: 'Shows cumulative values over time with filled areas',
+      description: `Shows cumulative ${numericColumns[0] || 'values'} over ${dateColumns[0] || 'time'}`,
       confidence: 0.85,
-      reasoning: 'Great for showing volume and trends simultaneously',
+      reasoning: `Great for showing volume and trends simultaneously using ${dateColumns[0] || 'date'} data`,
       dataRequirements: ['Date column', 'Numeric values'],
       bestFor: ['Cumulative data', 'Volume analysis', 'Market share'],
-      example: 'Website traffic growth over time'
+      example: `${numericColumns[0] || 'Data'} growth over ${dateColumns[0] || 'time'}`
     })
   }
 

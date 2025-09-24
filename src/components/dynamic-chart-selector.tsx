@@ -20,6 +20,214 @@ import {
 import { ChartType, ChartRecommendation, analyzeDataForCharts, getChartRecommendations } from '@/lib/chart-types'
 import { ChartRenderer } from './chart-renderer'
 
+// AI-powered chart type analysis function
+function analyzeDataForChartTypes(data: any[], analysis: any, visualizationType: string, chartData: any[]): ChartRecommendation[] {
+  const recommendations: ChartRecommendation[] = []
+  const sampleSize = data.length
+  const columns = analysis.columns || []
+  const numericCols = columns.filter((col: string) => analysis.dataTypes[col] === 'number')
+  const categoricalCols = columns.filter((col: string) => analysis.dataTypes[col] === 'string')
+  const dateCols = columns.filter((col: string) => analysis.dataTypes[col] === 'date')
+  
+  // Analyze data characteristics
+  const hasNumericData = numericCols.length > 0
+  const hasCategoricalData = categoricalCols.length > 0
+  const hasDateData = dateCols.length > 0
+  const hasMultipleNumeric = numericCols.length >= 2
+  const hasValidChartData = chartData && chartData.length > 0
+  
+  // Calculate data quality metrics
+  const dataQuality = {
+    completeness: (chartData.filter(item => item.value !== null && item.value !== undefined).length / chartData.length) * 100,
+    diversity: new Set(chartData.map(item => item.name)).size,
+    range: hasNumericData ? Math.max(...chartData.map(item => item.value || 0)) - Math.min(...chartData.map(item => item.value || 0)) : 0
+  }
+
+  // AI Logic for different visualization types
+  switch (visualizationType) {
+    case 'sales-analysis':
+      if (hasCategoricalData && hasNumericData && dataQuality.completeness > 80) {
+        recommendations.push({
+          chartType: 'bar',
+          title: 'Bar Chart',
+          description: 'Perfect for comparing sales across categories',
+          confidence: 0.95,
+          reasoning: `High-quality categorical data with ${dataQuality.completeness.toFixed(0)}% completeness`,
+          bestFor: ['Sales Comparison', 'Category Analysis'],
+          dataRequirements: ['Categorical data', 'Numeric values'],
+          example: 'Sales by product category'
+        })
+      }
+      if (hasCategoricalData && dataQuality.diversity <= 8) {
+        recommendations.push({
+          chartType: 'pie',
+          title: 'Pie Chart',
+          description: 'Shows sales distribution across categories',
+          confidence: 0.85,
+          reasoning: `Good for ${dataQuality.diversity} categories with clear distribution`,
+          bestFor: ['Market Share', 'Distribution Analysis'],
+          dataRequirements: ['Limited categories', 'Numeric values'],
+          example: 'Sales distribution by region'
+        })
+      }
+      break
+
+    case 'time-series':
+      if (hasDateData && hasNumericData) {
+        recommendations.push({
+          chartType: 'line',
+          title: 'Line Chart',
+          description: 'Shows trends over time',
+          confidence: 0.95,
+          reasoning: `Perfect time series data with ${dateCols[0]} and ${numericCols[0]}`,
+          bestFor: ['Trend Analysis', 'Time Series'],
+          dataRequirements: ['Date column', 'Numeric values'],
+          example: `${numericCols[0]} over ${dateCols[0]}`
+        })
+        if (dataQuality.completeness > 90) {
+          recommendations.push({
+            chartType: 'area',
+            title: 'Area Chart',
+            description: 'Shows cumulative trends over time',
+            confidence: 0.85,
+            reasoning: 'High-quality time series data suitable for area visualization',
+            bestFor: ['Cumulative Trends', 'Volume Analysis'],
+            dataRequirements: ['Date column', 'Numeric values'],
+            example: 'Cumulative sales over time'
+          })
+        }
+      } else if (hasNumericData) {
+        recommendations.push({
+          chartType: 'bar',
+          title: 'Bar Chart',
+          description: 'Shows sequential data values',
+          confidence: 0.80,
+          reasoning: 'No date data available, using sequential bar chart',
+          bestFor: ['Sequential Analysis', 'Data Comparison'],
+          dataRequirements: ['Numeric values'],
+          example: 'Values by sequence'
+        })
+      }
+      break
+
+    case 'correlation-analysis':
+      if (hasMultipleNumeric && dataQuality.completeness > 85) {
+        recommendations.push({
+          chartType: 'scatter',
+          title: 'Scatter Plot',
+          description: 'Shows correlation between variables',
+          confidence: 0.90,
+          reasoning: `Multiple numeric variables (${numericCols.length}) with high data quality`,
+          bestFor: ['Correlation Analysis', 'Pattern Detection'],
+          dataRequirements: ['Two numeric variables'],
+          example: `${numericCols[0]} vs ${numericCols[1]}`
+        })
+      }
+      break
+
+    case 'distribution-analysis':
+      if (hasCategoricalData && dataQuality.diversity <= 6) {
+        recommendations.push({
+          chartType: 'pie',
+          title: 'Pie Chart',
+          description: 'Shows data distribution',
+          confidence: 0.90,
+          reasoning: `Perfect for ${dataQuality.diversity} categories distribution`,
+          bestFor: ['Distribution Analysis', 'Proportions'],
+          dataRequirements: ['Limited categories'],
+          example: 'Data distribution by category'
+        })
+        recommendations.push({
+          chartType: 'doughnut',
+          title: 'Doughnut Chart',
+          description: 'Alternative distribution view',
+          confidence: 0.80,
+          reasoning: 'Good alternative to pie chart with center space',
+          bestFor: ['Distribution Analysis', 'KPI Display'],
+          dataRequirements: ['Limited categories'],
+          example: 'Distribution with center focus'
+        })
+      }
+      break
+
+    case 'multi-dimensional':
+      if (hasMultipleNumeric && numericCols.length >= 3) {
+        recommendations.push({
+          chartType: 'radar',
+          title: 'Radar Chart',
+          description: 'Multi-dimensional comparison',
+          confidence: 0.85,
+          reasoning: `Perfect for ${numericCols.length} dimensional analysis`,
+          bestFor: ['Multi-dimensional Analysis', 'Comparison'],
+          dataRequirements: ['Multiple numeric variables'],
+          example: 'Multi-dimensional comparison'
+        })
+      }
+      break
+
+    case 'kpi-dashboard':
+      if (hasNumericData && dataQuality.completeness > 90) {
+        recommendations.push({
+          chartType: 'gauge',
+          title: 'Gauge Chart',
+          description: 'KPI performance indicator',
+          confidence: 0.90,
+          reasoning: 'High-quality numeric data perfect for KPI display',
+          bestFor: ['KPI Display', 'Performance Metrics'],
+          dataRequirements: ['Single numeric value'],
+          example: 'Performance score'
+        })
+      }
+      if (hasCategoricalData) {
+        recommendations.push({
+          chartType: 'bar',
+          title: 'Bar Chart',
+          description: 'KPI comparison across categories',
+          confidence: 0.80,
+          reasoning: 'Good for comparing KPIs across categories',
+          bestFor: ['KPI Comparison', 'Category Analysis'],
+          dataRequirements: ['Categorical data', 'Numeric values'],
+          example: 'KPI by category'
+        })
+      }
+      break
+
+    default:
+      // Fallback analysis for other types
+      if (hasCategoricalData && hasNumericData) {
+        recommendations.push({
+          chartType: 'bar',
+          title: 'Bar Chart',
+          description: 'General data comparison',
+          confidence: 0.75,
+          reasoning: 'Standard categorical and numeric data combination',
+          bestFor: ['Data Comparison', 'Analysis'],
+          dataRequirements: ['Categorical data', 'Numeric values'],
+          example: 'Data comparison'
+        })
+      }
+  }
+
+  // Ensure we have at least one working recommendation
+  if (recommendations.length === 0) {
+    recommendations.push({
+      chartType: 'bar',
+      title: 'Bar Chart',
+      description: 'Reliable data visualization',
+      confidence: 0.70,
+      reasoning: 'Fallback option for data visualization',
+      bestFor: ['Data Visualization'],
+      dataRequirements: ['Data values'],
+      example: 'Data visualization'
+    })
+  }
+
+  // Sort by confidence and return top recommendations (max 3)
+  return recommendations
+    .sort((a, b) => b.confidence - a.confidence)
+    .slice(0, 3)
+}
+
 // AI-powered data analysis function
 function generateDataAnalysisParagraph(data: any[], analysis: any, visualizationType: string): string {
   const sampleSize = data.length
@@ -44,7 +252,12 @@ function generateDataAnalysisParagraph(data: any[], analysis: any, visualization
       return `This sales performance analysis examines ${sampleSize} data points across ${columns.length} key metrics. The dataset reveals significant insights into sales patterns, with ${numericCols.length} quantitative measures including revenue, units sold, and performance indicators. Key findings show average sales values ranging from $${numericStats[0]?.min?.toFixed(0) || 0} to $${numericStats[0]?.max?.toFixed(0) || 0}, indicating ${numericStats[0]?.avg > numericStats[0]?.max * 0.7 ? 'strong' : 'moderate'} performance across the analyzed period. The data structure supports comprehensive sales analysis with ${categoricalCols.length} categorical dimensions for segmentation.`
 
     case 'time-series':
-      return `This temporal analysis examines ${sampleSize} data points over time, revealing important trends and patterns in the dataset. With ${dateCols.length} time-based columns and ${numericCols.length} measurable metrics, the analysis captures how key performance indicators evolve. The time series data shows ${numericStats[0]?.count || 0} valid measurements, with values ranging from ${numericStats[0]?.min?.toFixed(2) || 0} to ${numericStats[0]?.max?.toFixed(2) || 0}. This comprehensive temporal dataset enables trend identification, seasonal pattern recognition, and predictive analysis for strategic decision-making.`
+      const hasDateData = dateCols.length > 0
+      if (hasDateData) {
+        return `This temporal analysis examines ${sampleSize} data points over time using ${dateCols[0]} as the time dimension, revealing important trends and patterns in the dataset. With ${dateCols.length} time-based columns and ${numericCols.length} measurable metrics, the analysis captures how key performance indicators evolve over ${dateCols[0]}. The time series data shows ${numericStats[0]?.count || 0} valid measurements, with ${numericCols[0] || 'values'} ranging from ${numericStats[0]?.min?.toFixed(2) || 0} to ${numericStats[0]?.max?.toFixed(2) || 0}. This comprehensive temporal dataset enables trend identification, seasonal pattern recognition, and predictive analysis for strategic decision-making.`
+      } else {
+        return `This sequential analysis examines ${sampleSize} data points in order, revealing patterns and trends in the dataset. With ${numericCols.length} measurable metrics, the analysis captures how key performance indicators change across the sequence. The data shows ${numericStats[0]?.count || 0} valid measurements, with ${numericCols[0] || 'values'} ranging from ${numericStats[0]?.min?.toFixed(2) || 0} to ${numericStats[0]?.max?.toFixed(2) || 0}. This sequential dataset enables pattern identification and trend analysis for strategic decision-making.`
+      }
 
     case 'correlation-analysis':
       return `This correlation analysis investigates relationships between ${numericCols.length} numeric variables across ${sampleSize} data points. The dataset provides rich opportunities for identifying patterns, dependencies, and statistical relationships. With variables ranging from ${numericStats[0]?.min?.toFixed(2) || 0} to ${numericStats[0]?.max?.toFixed(2) || 0}, the analysis reveals ${numericStats[0]?.avg > numericStats[0]?.max * 0.6 ? 'strong' : 'moderate'} data distribution patterns. The correlation matrix will help identify key relationships that drive business performance and inform strategic decisions.`
@@ -163,7 +376,9 @@ export function DynamicChartSelector({ data, onChartUpdate }: DynamicChartSelect
         title: 'Trend Analysis Over Time',
         description: 'How key metrics change over time periods',
         dataGenerator: () => generateLineChartData(data, analysis),
-        chartTypes: ['line', 'area', 'bar']
+        chartTypes: analysis.columns.some((col: string) => analysis.dataTypes[col] === 'date') 
+          ? ['line', 'area', 'bar'] // Only recommend line/area if we have actual date data
+          : ['bar', 'line'] // Use bar as primary if no date data
       },
       {
         id: 'correlation-analysis',
@@ -269,40 +484,8 @@ export function DynamicChartSelector({ data, onChartUpdate }: DynamicChartSelect
     visualizationTypes.forEach((vizType, index) => {
       const chartData = vizType.dataGenerator()
       if (chartData && chartData.length > 0) {
-        // Get recommended chart types for this data
-        const recommendedChartTypes = recommendations
-          .filter(rec => vizType.chartTypes.includes(rec.chartType))
-          .sort((a, b) => b.confidence - a.confidence) // Sort by confidence
-          .slice(0, 5) // Max 5 recommendations
-
-        // If no specific recommendations, create default ones
-        if (recommendedChartTypes.length === 0) {
-          const defaultRecommendations = vizType.chartTypes.slice(0, 3).map(chartType => ({
-            chartType: chartType as ChartType,
-            title: `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`,
-            description: `Perfect for ${vizType.title.toLowerCase()}`,
-            confidence: 0.8,
-            reasoning: `Data is suitable for ${chartType} visualization`,
-            bestFor: ['Data Analysis'],
-            dataRequirements: ['Appropriate data structure'],
-            example: `${chartType} chart example`
-          }))
-          recommendedChartTypes.push(...defaultRecommendations)
-        }
-
-        // Ensure we have at least one recommendation
-        if (recommendedChartTypes.length === 0) {
-          recommendedChartTypes.push({
-            chartType: 'bar' as ChartType,
-            title: 'Bar Chart',
-            description: 'Perfect for data comparison',
-            confidence: 0.7,
-            reasoning: 'Default chart type for data visualization',
-            bestFor: ['Data Analysis'],
-            dataRequirements: ['Data values'],
-            example: 'Data comparison chart'
-          })
-        }
+        // AI-powered dynamic chart type analysis
+        const recommendedChartTypes = analyzeDataForChartTypes(data, analysis, vizType.id, chartData)
 
         // Generate AI data analysis paragraph
         const dataAnalysisParagraph = generateDataAnalysisParagraph(data, analysis, vizType.id)
@@ -536,25 +719,38 @@ function generateLineChartData(data: any[], analysis: any): any[] {
   const dateCol = analysis.columns.find((col: string) => analysis.dataTypes[col] === 'date')
   const numericCol = analysis.columns.find((col: string) => analysis.dataTypes[col] === 'number')
 
-  if (!dateCol || !numericCol) {
-    // Generate sample line chart data
-    return [
-      { name: 'Jan', value: 20 },
-      { name: 'Feb', value: 35 },
-      { name: 'Mar', value: 28 },
-      { name: 'Apr', value: 42 },
-      { name: 'May', value: 38 },
-      { name: 'Jun', value: 55 }
-    ]
+  // If we have actual date data, use it
+  if (dateCol && numericCol) {
+    const validData = data
+      .filter(row => row[dateCol] && row[numericCol] && !isNaN(new Date(row[dateCol]).getTime()))
+      .sort((a, b) => new Date(a[dateCol]).getTime() - new Date(b[dateCol]).getTime())
+    
+    if (validData.length > 0) {
+      return validData.map(row => ({
+        name: new Date(row[dateCol]).toLocaleDateString(),
+        value: row[numericCol]
+      }))
+    }
   }
 
-  return data
-    .filter(row => row[dateCol] && row[numericCol])
-    .sort((a, b) => new Date(a[dateCol]).getTime() - new Date(b[dateCol]).getTime())
-    .map(row => ({
-      name: new Date(row[dateCol]).toLocaleDateString(),
-      value: row[numericCol]
+  // If no date data or invalid dates, generate sequential data
+  const numericCols = analysis.columns.filter((col: string) => analysis.dataTypes[col] === 'number')
+  if (numericCols.length > 0) {
+    return data.slice(0, 12).map((row, index) => ({
+      name: `Period ${index + 1}`,
+      value: row[numericCols[0]] || Math.random() * 100
     }))
+  }
+
+  // Fallback sample data
+  return [
+    { name: 'Period 1', value: 20 },
+    { name: 'Period 2', value: 35 },
+    { name: 'Period 3', value: 28 },
+    { name: 'Period 4', value: 42 },
+    { name: 'Period 5', value: 38 },
+    { name: 'Period 6', value: 55 }
+  ]
 }
 
 function generatePieChartData(data: any[], analysis: any): any[] {
