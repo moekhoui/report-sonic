@@ -388,7 +388,7 @@ function calculateDataQuality(data: any[]): { completeness: number; consistency:
 }
 
 // Chart configuration templates
-export const CHART_CONFIGS = {
+export const CHART_CONFIGS: Record<ChartType, any> = {
   bar: {
     responsive: true,
     plugins: {
@@ -455,6 +455,129 @@ export const CHART_CONFIGS = {
     scales: {
       x: { type: 'linear' },
       y: { type: 'linear' }
+    }
+  },
+  area: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    },
+    scales: {
+      x: { type: 'linear' },
+      y: { type: 'linear' }
+    }
+  },
+  mixed: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  gauge: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  funnel: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  waterfall: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  treemap: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  heatmap: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  boxplot: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  histogram: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  candlestick: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  sankey: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  sunburst: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  wordcloud: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  network: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  timeline: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  geo: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
+    }
+  },
+  '3d': {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true }
     }
   }
 }

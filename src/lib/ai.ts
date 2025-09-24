@@ -160,11 +160,11 @@ function generateSampleDataForChart(chartType: ChartType, data: any[], analysis:
 }
 
 function generateCategoricalData(data: any[], analysis: any): any[] {
-  const categoricalCol = analysis.columns.find(col => 
+  const categoricalCol = analysis.columns.find((col: string) => 
     analysis.dataTypes[col] === 'string' && 
     new Set(data.map(row => row[col])).size < 10
   )
-  const numericCol = analysis.columns.find(col => analysis.dataTypes[col] === 'number')
+  const numericCol = analysis.columns.find((col: string) => analysis.dataTypes[col] === 'number')
 
   if (!categoricalCol || !numericCol) return []
 
@@ -178,8 +178,8 @@ function generateCategoricalData(data: any[], analysis: any): any[] {
 }
 
 function generateTimeSeriesData(data: any[], analysis: any): any[] {
-  const dateCol = analysis.columns.find(col => analysis.dataTypes[col] === 'date')
-  const numericCol = analysis.columns.find(col => analysis.dataTypes[col] === 'number')
+  const dateCol = analysis.columns.find((col: string) => analysis.dataTypes[col] === 'date')
+  const numericCol = analysis.columns.find((col: string) => analysis.dataTypes[col] === 'number')
 
   if (!dateCol || !numericCol) return []
 
@@ -193,7 +193,7 @@ function generateTimeSeriesData(data: any[], analysis: any): any[] {
 }
 
 function generateScatterData(data: any[], analysis: any): any[] {
-  const numericCols = analysis.columns.filter(col => analysis.dataTypes[col] === 'number')
+  const numericCols = analysis.columns.filter((col: string) => analysis.dataTypes[col] === 'number')
   
   if (numericCols.length < 2) return []
 
@@ -205,16 +205,16 @@ function generateScatterData(data: any[], analysis: any): any[] {
 }
 
 function generateRadarData(data: any[], analysis: any): any[] {
-  const numericCols = analysis.columns.filter(col => analysis.dataTypes[col] === 'number').slice(0, 6)
+  const numericCols = analysis.columns.filter((col: string) => analysis.dataTypes[col] === 'number').slice(0, 6)
   
   if (numericCols.length < 3) return []
 
-  const avgValues = numericCols.map(col => {
+  const avgValues = numericCols.map((col: string) => {
     const values = data.map(row => row[col]).filter(val => typeof val === 'number')
     return values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0
   })
 
-  return numericCols.map((col, index) => ({
+  return numericCols.map((col: string, index: number) => ({
     name: col,
     value: avgValues[index]
   }))
