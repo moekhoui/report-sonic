@@ -154,6 +154,21 @@ function generateSampleDataForChart(chartType: ChartType, data: any[], analysis:
     case 'radar':
       return generateRadarData(sampleData, analysis)
     
+    case 'gauge':
+      return generateGaugeData(sampleData, analysis)
+    
+    case 'funnel':
+      return generateFunnelData(sampleData, analysis)
+    
+    case 'waterfall':
+      return generateWaterfallData(sampleData, analysis)
+    
+    case 'heatmap':
+      return generateHeatmapData(sampleData, analysis)
+    
+    case 'treemap':
+      return generateTreemapData(sampleData, analysis)
+    
     default:
       return generateCategoricalData(sampleData, analysis)
   }
@@ -217,6 +232,120 @@ function generateRadarData(data: any[], analysis: any): any[] {
   return numericCols.map((col: string, index: number) => ({
     name: col,
     value: avgValues[index]
+  }))
+}
+
+function generateGaugeData(data: any[], analysis: any): any[] {
+  const numericCols = analysis.columns.filter((col: string) => analysis.dataTypes[col] === 'number')
+  
+  if (numericCols.length === 0) return []
+
+  // Use the first numeric column for gauge value
+  const values = data.map(row => row[numericCols[0]]).filter(val => typeof val === 'number')
+  const avgValue = values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0
+  const maxValue = Math.max(...values) * 1.2 || 100
+
+  return [{
+    value: Math.round(avgValue),
+    max: Math.round(maxValue),
+    label: numericCols[0]
+  }]
+}
+
+function generateFunnelData(data: any[], analysis: any): any[] {
+  const categoricalCol = analysis.columns.find((col: string) => 
+    analysis.dataTypes[col] === 'string' && 
+    new Set(data.map(row => row[col])).size < 8
+  )
+  const numericCol = analysis.columns.find((col: string) => analysis.dataTypes[col] === 'number')
+
+  if (!categoricalCol || !numericCol) return []
+
+  const grouped = data.reduce((acc, row) => {
+    const key = row[categoricalCol]
+    acc[key] = (acc[key] || 0) + (row[numericCol] || 0)
+    return acc
+  }, {} as Record<string, number>)
+
+  // Sort by value descending for funnel effect
+  return Object.entries(grouped)
+    .sort(([,a], [,b]) => (b as number) - (a as number))
+    .map(([label, value]) => ({ label, value }))
+}
+
+function generateWaterfallData(data: any[], analysis: any): any[] {
+  const categoricalCol = analysis.columns.find((col: string) => 
+    analysis.dataTypes[col] === 'string' && 
+    new Set(data.map(row => row[col])).size < 8
+  )
+  const numericCol = analysis.columns.find((col: string) => analysis.dataTypes[col] === 'number')
+
+  if (!categoricalCol || !numericCol) return []
+
+  const grouped = data.reduce((acc, row) => {
+    const key = row[categoricalCol]
+    acc[key] = (acc[key] || 0) + (row[numericCol] || 0)
+    return acc
+  }, {} as Record<string, number>)
+
+  return Object.entries(grouped).map(([label, value], index) => ({
+    label,
+    value,
+    type: index === 0 ? 'start' : index === Object.keys(grouped).length - 1 ? 'end' : 'positive'
+  }))
+}
+
+function generateHeatmapData(data: any[], analysis: any): any[] {
+  const categoricalCols = analysis.columns.filter((col: string) => 
+    analysis.dataTypes[col] === 'string' && 
+    new Set(data.map(row => row[col])).size < 6
+  ).slice(0, 2)
+  
+  const numericCol = analysis.columns.find((col: string) => analysis.dataTypes[col] === 'number')
+
+  if (categoricalCols.length < 2 || !numericCol) return []
+
+  const heatmapData: Array<{x: string, y: string, value: number}> = []
+  const xValues = [...new Set(data.map(row => row[categoricalCols[0]]))]
+  const yValues = [...new Set(data.map(row => row[categoricalCols[1]]))]
+
+  xValues.forEach(x => {
+    yValues.forEach(y => {
+      const matchingRows = data.filter(row => row[categoricalCols[0]] === x && row[categoricalCols[1]] === y)
+      const avgValue = matchingRows.length > 0 
+        ? matchingRows.reduce((sum, row) => sum + (row[numericCol] || 0), 0) / matchingRows.length 
+        : 0
+      
+      heatmapData.push({
+        x,
+        y,
+        value: Math.round(avgValue)
+      })
+    })
+  })
+
+  return heatmapData
+}
+
+function generateTreemapData(data: any[], analysis: any): any[] {
+  const categoricalCol = analysis.columns.find((col: string) => 
+    analysis.dataTypes[col] === 'string' && 
+    new Set(data.map(row => row[col])).size < 8
+  )
+  const numericCol = analysis.columns.find((col: string) => analysis.dataTypes[col] === 'number')
+
+  if (!categoricalCol || !numericCol) return []
+
+  const grouped = data.reduce((acc, row) => {
+    const key = row[categoricalCol]
+    acc[key] = (acc[key] || 0) + (row[numericCol] || 0)
+    return acc
+  }, {} as Record<string, number>)
+
+  return Object.entries(grouped).map(([name, value]) => ({
+    name,
+    value,
+    children: [] // Can be expanded for hierarchical data
   }))
 }
 
