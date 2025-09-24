@@ -106,112 +106,174 @@ export function DynamicChartSelector({ data, onChartUpdate }: DynamicChartSelect
     
     console.log('🎯 Generating visualizations with:', { data: data.length, analysis, recommendations: recommendations.length })
     
-    // Get all available chart types from AI recommendations
-    const allChartTypes = [...new Set(recommendations.map(rec => rec.chartType))]
-    console.log('📊 Available chart types:', allChartTypes)
-    
-    // Generate data for each chart type
-    const chartDataMap = {
-      bar: generateBarChartData(data, analysis),
-      line: generateLineChartData(data, analysis),
-      pie: generatePieChartData(data, analysis),
-      doughnut: generateDoughnutChartData(data, analysis),
-      scatter: generateScatterPlotData(data, analysis),
-      radar: generateRadarChartData(data, analysis),
-      gauge: generateGaugeChartData(data, analysis)
-    }
-    
-    console.log('📈 Chart data map:', chartDataMap)
+    // Generate comprehensive visualizations based on data analysis
+    const visualizationTypes = [
+      {
+        id: 'sales-analysis',
+        title: 'Sales Performance Analysis',
+        description: 'Comprehensive analysis of sales data across different dimensions',
+        dataGenerator: () => generateBarChartData(data, analysis),
+        chartTypes: ['bar', 'pie', 'doughnut', 'line']
+      },
+      {
+        id: 'time-series',
+        title: 'Trend Analysis Over Time',
+        description: 'How key metrics change over time periods',
+        dataGenerator: () => generateLineChartData(data, analysis),
+        chartTypes: ['line', 'area', 'bar']
+      },
+      {
+        id: 'correlation-analysis',
+        title: 'Data Correlation Analysis',
+        description: 'Relationships between different variables in your data',
+        dataGenerator: () => generateScatterPlotData(data, analysis),
+        chartTypes: ['scatter', 'bubble', 'heatmap']
+      },
+      {
+        id: 'distribution-analysis',
+        title: 'Data Distribution Analysis',
+        description: 'How data is distributed across different categories',
+        dataGenerator: () => generatePieChartData(data, analysis),
+        chartTypes: ['pie', 'doughnut', 'bar']
+      },
+      {
+        id: 'multi-dimensional',
+        title: 'Multi-Dimensional Analysis',
+        description: 'Complex data relationships across multiple dimensions',
+        dataGenerator: () => generateRadarChartData(data, analysis),
+        chartTypes: ['radar', 'heatmap', 'treemap']
+      },
+      {
+        id: 'kpi-dashboard',
+        title: 'Key Performance Indicators',
+        description: 'Critical metrics and performance indicators',
+        dataGenerator: () => generateGaugeChartData(data, analysis),
+        chartTypes: ['gauge', 'bar', 'line']
+      },
+      {
+        id: 'category-comparison',
+        title: 'Category Comparison Analysis',
+        description: 'Comparing performance across different categories',
+        dataGenerator: () => generateBarChartData(data, analysis),
+        chartTypes: ['bar', 'pie', 'doughnut']
+      },
+      {
+        id: 'performance-metrics',
+        title: 'Performance Metrics Overview',
+        description: 'Overview of key performance metrics and trends',
+        dataGenerator: () => generateLineChartData(data, analysis),
+        chartTypes: ['line', 'area', 'gauge']
+      },
+      {
+        id: 'market-analysis',
+        title: 'Market Analysis',
+        description: 'Market share and competitive analysis',
+        dataGenerator: () => generatePieChartData(data, analysis),
+        chartTypes: ['pie', 'doughnut', 'bar']
+      },
+      {
+        id: 'customer-segments',
+        title: 'Customer Segment Analysis',
+        description: 'Analysis of different customer segments',
+        dataGenerator: () => generateRadarChartData(data, analysis),
+        chartTypes: ['radar', 'pie', 'bar']
+      },
+      {
+        id: 'revenue-breakdown',
+        title: 'Revenue Breakdown Analysis',
+        description: 'Detailed breakdown of revenue sources',
+        dataGenerator: () => generateBarChartData(data, analysis),
+        chartTypes: ['bar', 'pie', 'waterfall']
+      },
+      {
+        id: 'growth-trends',
+        title: 'Growth Trends Analysis',
+        description: 'Growth patterns and trend analysis',
+        dataGenerator: () => generateLineChartData(data, analysis),
+        chartTypes: ['line', 'area', 'bar']
+      },
+      {
+        id: 'product-performance',
+        title: 'Product Performance Analysis',
+        description: 'Individual product performance metrics',
+        dataGenerator: () => generateBarChartData(data, analysis),
+        chartTypes: ['bar', 'scatter', 'radar']
+      },
+      {
+        id: 'geographic-analysis',
+        title: 'Geographic Distribution',
+        description: 'Data distribution across geographic regions',
+        dataGenerator: () => generatePieChartData(data, analysis),
+        chartTypes: ['pie', 'doughnut', 'geo']
+      },
+      {
+        id: 'seasonal-patterns',
+        title: 'Seasonal Pattern Analysis',
+        description: 'Seasonal trends and patterns in data',
+        dataGenerator: () => generateLineChartData(data, analysis),
+        chartTypes: ['line', 'area', 'heatmap']
+      },
+      {
+        id: 'efficiency-metrics',
+        title: 'Efficiency Metrics',
+        description: 'Operational efficiency and productivity metrics',
+        dataGenerator: () => generateGaugeChartData(data, analysis),
+        chartTypes: ['gauge', 'bar', 'line']
+      }
+    ]
 
-    // Create visualizations for each available chart type
-    allChartTypes.forEach((chartType, index) => {
-      const chartData = chartDataMap[chartType as keyof typeof chartDataMap]
+    // Generate visualizations for each type
+    visualizationTypes.forEach((vizType, index) => {
+      const chartData = vizType.dataGenerator()
       if (chartData && chartData.length > 0) {
-        const chartRecommendations = recommendations.filter(rec => rec.chartType === chartType)
-        const primaryRecommendation = chartRecommendations[0] || {
-          chartType: chartType as ChartType,
-          title: `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`,
-          description: `Perfect for ${chartType} visualization`,
-          confidence: 0.85,
-          reasoning: `Data is suitable for ${chartType} charts`,
-          bestFor: ['Data Visualization'],
-          dataRequirements: ['Appropriate data structure'],
-          example: `${chartType} chart example`
+        // Get recommended chart types for this data
+        const recommendedChartTypes = recommendations
+          .filter(rec => vizType.chartTypes.includes(rec.chartType))
+          .sort((a, b) => b.confidence - a.confidence) // Sort by confidence
+          .slice(0, 5) // Max 5 recommendations
+
+        // If no specific recommendations, create default ones
+        if (recommendedChartTypes.length === 0) {
+          const defaultRecommendations = vizType.chartTypes.slice(0, 3).map(chartType => ({
+            chartType: chartType as ChartType,
+            title: `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`,
+            description: `Perfect for ${vizType.title.toLowerCase()}`,
+            confidence: 0.8,
+            reasoning: `Data is suitable for ${chartType} visualization`,
+            bestFor: ['Data Analysis'],
+            dataRequirements: ['Appropriate data structure'],
+            example: `${chartType} chart example`
+          }))
+          recommendedChartTypes.push(...defaultRecommendations)
         }
 
-        // Get alternative chart types for this data
-        const alternativeRecommendations = recommendations
-          .filter(rec => rec.chartType !== chartType)
-          .slice(0, 4) // Show up to 4 alternatives
+        // Ensure we have at least one recommendation
+        if (recommendedChartTypes.length === 0) {
+          recommendedChartTypes.push({
+            chartType: 'bar' as ChartType,
+            title: 'Bar Chart',
+            description: 'Perfect for data comparison',
+            confidence: 0.7,
+            reasoning: 'Default chart type for data visualization',
+            bestFor: ['Data Analysis'],
+            dataRequirements: ['Data values'],
+            example: 'Data comparison chart'
+          })
+        }
 
         visualizations.push({
-          id: `${chartType}-visualization-${index}`,
-          title: `${primaryRecommendation.title} Analysis`,
-          description: primaryRecommendation.description,
+          id: vizType.id,
+          title: vizType.title,
+          description: vizType.description,
           data: chartData,
-          selectedChartType: chartType as ChartType,
-          availableChartTypes: [primaryRecommendation, ...alternativeRecommendations],
-          aiRecommendation: primaryRecommendation
+          selectedChartType: recommendedChartTypes[0].chartType,
+          availableChartTypes: recommendedChartTypes,
+          aiRecommendation: recommendedChartTypes[0]
         })
       }
     })
 
-    // If no recommendations, create default visualizations
-    if (visualizations.length === 0) {
-      const defaultData = generateBarChartData(data, analysis)
-      if (defaultData.length > 0) {
-        visualizations.push({
-          id: 'default-bar',
-          title: 'Data Analysis',
-          description: 'General data visualization',
-          data: defaultData,
-          selectedChartType: 'bar',
-          availableChartTypes: [
-            {
-              chartType: 'bar',
-              title: 'Bar Chart',
-              description: 'Perfect for comparing categories',
-              confidence: 0.95,
-              reasoning: 'Data has clear categories with numeric values',
-              bestFor: ['Comparisons', 'Rankings', 'Categories'],
-              dataRequirements: ['Categorical data', 'Numeric values'],
-              example: 'Sales by region, product performance'
-            },
-            {
-              chartType: 'pie',
-              title: 'Pie Chart',
-              description: 'Perfect for showing proportions',
-              confidence: 0.85,
-              reasoning: 'Data represents parts of a whole',
-              bestFor: ['Proportions', 'Market Share', 'Distribution'],
-              dataRequirements: ['Categorical data', 'Proportional values'],
-              example: 'Market share, budget allocation'
-            },
-            {
-              chartType: 'line',
-              title: 'Line Chart',
-              description: 'Perfect for showing trends',
-              confidence: 0.80,
-              reasoning: 'Data shows sequential patterns',
-              bestFor: ['Trends', 'Time Series', 'Progress'],
-              dataRequirements: ['Time series data', 'Sequential values'],
-              example: 'Sales over time, temperature trends'
-            }
-          ],
-          aiRecommendation: {
-            chartType: 'bar',
-            title: 'Bar Chart',
-            description: 'Perfect for comparing categories',
-            confidence: 0.95,
-            reasoning: 'Data has clear categories with numeric values',
-            bestFor: ['Comparisons', 'Rankings', 'Categories'],
-            dataRequirements: ['Categorical data', 'Numeric values'],
-            example: 'Sales by region, product performance'
-          }
-        })
-      }
-    }
-
+    console.log('📈 Generated visualizations:', visualizations.length)
     return visualizations
   }
 
@@ -249,105 +311,72 @@ export function DynamicChartSelector({ data, onChartUpdate }: DynamicChartSelect
         </p>
       </div>
 
-      {/* Visualizations */}
-      {visualizations.map((visualization) => (
-        <div key={visualization.id} className="bg-white rounded-lg border border-gray-200 p-6">
-          {/* Visualization Header */}
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">{visualization.title}</h3>
-              <p className="text-sm text-gray-600">{visualization.description}</p>
-            </div>
-            
-            {/* Chart Type Selector */}
-            <div className="relative">
-              <select
-                value={visualization.selectedChartType}
-                onChange={(e) => handleChartTypeChange(visualization.id, e.target.value as ChartType)}
-                className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[200px]"
-              >
-                {visualization.availableChartTypes
-                  .sort((a, b) => b.confidence - a.confidence) // Sort by confidence (highest first)
-                  .map((chartRec) => (
-                    <option key={chartRec.chartType} value={chartRec.chartType}>
-                      {chartRec.title} - {Math.round(chartRec.confidence * 100)}% confidence
-                    </option>
-                  ))}
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* AI Recommendation Info */}
-          {visualization.aiRecommendation && (
-            <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-              <div className="flex items-start">
-                <Brain className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-blue-900">AI Recommendation</span>
-                    <span className="text-sm font-medium text-blue-700 bg-blue-100 px-2 py-1 rounded">
-                      {Math.round(visualization.aiRecommendation.confidence * 100)}% confidence
-                    </span>
-                  </div>
-                  <p className="text-sm text-blue-800 mb-2">{visualization.aiRecommendation.reasoning}</p>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="text-xs text-blue-600 font-medium">Best for:</span>
-                    {visualization.aiRecommendation.bestFor.map((use, index) => (
-                      <span key={index} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                        {use}
-                      </span>
+      {/* Visualizations - 2 Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {visualizations.map((visualization) => (
+          <div key={visualization.id} className="bg-white rounded-lg border border-gray-200 p-6">
+            {/* Visualization Header */}
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{visualization.title}</h3>
+              <p className="text-sm text-gray-600 mb-4">{visualization.description}</p>
+              
+              {/* Chart Type Selector */}
+              <div className="relative">
+                <select
+                  value={visualization.selectedChartType}
+                  onChange={(e) => handleChartTypeChange(visualization.id, e.target.value as ChartType)}
+                  className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+                >
+                  {visualization.availableChartTypes
+                    .sort((a, b) => b.confidence - a.confidence) // Sort by confidence (highest first)
+                    .map((chartRec) => (
+                      <option key={chartRec.chartType} value={chartRec.chartType}>
+                        {chartRec.title} - {Math.round(chartRec.confidence * 100)}% confidence
+                      </option>
                     ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* AI Recommendation Info */}
+            {visualization.aiRecommendation && (
+              <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                <div className="flex items-start">
+                  <Brain className="h-4 w-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium text-blue-900 text-sm">AI Recommendation</span>
+                      <span className="text-xs font-medium text-blue-700 bg-blue-100 px-2 py-1 rounded">
+                        {Math.round(visualization.aiRecommendation.confidence * 100)}%
+                      </span>
+                    </div>
+                    <p className="text-xs text-blue-800 mb-2">{visualization.aiRecommendation.reasoning}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {visualization.aiRecommendation.bestFor.slice(0, 3).map((use, index) => (
+                        <span key={index} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                          {use}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Chart Display */}
-          <div className="h-80 border border-gray-100 rounded-lg p-4">
-            <ChartRenderer
-              type={visualization.selectedChartType}
-              data={visualization.data}
-              title={visualization.title}
-              width={800}
-              height={300}
-            />
-          </div>
-
-          {/* Available Chart Types */}
-          <div className="mt-4">
-            <p className="text-sm text-gray-600 mb-3 font-medium">Available chart types for this data:</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {visualization.availableChartTypes
-                .sort((a, b) => b.confidence - a.confidence)
-                .map((chartRec) => (
-                  <div
-                    key={chartRec.chartType}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm border transition-colors ${
-                      visualization.selectedChartType === chartRec.chartType
-                        ? 'bg-blue-100 text-blue-700 border-blue-300 shadow-sm'
-                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      {getChartIcon(chartRec.chartType)}
-                      <span className="ml-2 capitalize font-medium">{chartRec.chartType}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
-                        {Math.round(chartRec.confidence * 100)}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
+            {/* Chart Display */}
+            <div className="h-64 border border-gray-100 rounded-lg p-3">
+              <ChartRenderer
+                type={visualization.selectedChartType}
+                data={visualization.data}
+                title={visualization.title}
+                width={400}
+                height={250}
+              />
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              💡 Use the dropdown above to switch between chart types. Higher confidence scores indicate better data compatibility.
-            </p>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
       {/* Summary */}
       <div className="bg-gray-50 rounded-lg p-4">
