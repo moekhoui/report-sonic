@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../../src/lib/auth'
-import { query } from '../../src/lib/mysql'
+import { authOptions } from '../../../src/lib/auth'
+import { query } from '../../../src/lib/mysql'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Only allow POST requests
