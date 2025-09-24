@@ -229,14 +229,14 @@ export function getChartRecommendations(analysis: DataAnalysis): ChartRecommenda
     })
   }
 
-  // Geographic Charts
+  // Geographic Charts - Use bar chart instead of unsupported geo
   if (analysis.hasGeographic) {
     recommendations.push({
-      chartType: 'geo',
-      title: 'Geographic Map',
+      chartType: 'bar',
+      title: 'Geographic Distribution',
       description: 'Shows data distribution across geographic regions',
       confidence: 0.85,
-      reasoning: 'Essential for location-based data visualization',
+      reasoning: 'Bar chart is perfect for comparing geographic regions',
       dataRequirements: ['Geographic column', 'Numeric values'],
       bestFor: ['Regional sales', 'Market penetration', 'Demographic analysis'],
       example: 'Sales by country/region'
@@ -246,22 +246,22 @@ export function getChartRecommendations(analysis: DataAnalysis): ChartRecommenda
   // Advanced Charts
   if (analysis.hasNumeric && analysis.sampleSize > 50) {
     recommendations.push({
-      chartType: 'histogram',
-      title: 'Histogram',
+      chartType: 'bar',
+      title: 'Data Distribution',
       description: 'Shows distribution of numeric data',
       confidence: 0.8,
-      reasoning: 'Best for understanding data distribution patterns',
+      reasoning: 'Bar chart is perfect for understanding data distribution patterns',
       dataRequirements: ['Numeric column'],
       bestFor: ['Data distribution', 'Statistical analysis', 'Quality control'],
       example: 'Customer age distribution'
     })
 
     recommendations.push({
-      chartType: 'boxplot',
-      title: 'Box Plot',
-      description: 'Shows statistical distribution with quartiles',
+      chartType: 'scatter',
+      title: 'Statistical Analysis',
+      description: 'Shows statistical distribution and relationships',
       confidence: 0.75,
-      reasoning: 'Excellent for statistical analysis and outlier detection',
+      reasoning: 'Scatter plot is excellent for statistical analysis and outlier detection',
       dataRequirements: ['Numeric column', 'Optional category column'],
       bestFor: ['Statistical analysis', 'Outlier detection', 'Data comparison'],
       example: 'Sales performance by region'
