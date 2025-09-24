@@ -1,0 +1,60 @@
+Date,Category,Region,Product,Sales,Revenue,Profit,Units_Sold,Customer_Satisfaction,Market_Share,Website_Traffic,Conversion_Rate,Return_Rate
+2023-01-01,Electronics,North America,Smartphone,125000,150000,25000,500,4.2,35.2,12500,3.2,2.1
+2023-01-02,Electronics,North America,Laptop,98000,120000,22000,200,4.5,28.5,11200,2.8,1.8
+2023-01-03,Clothing,Europe,T-Shirt,45000,55000,10000,1500,3.8,15.3,8900,4.1,3.2
+2023-01-04,Clothing,Europe,Jeans,67000,80000,13000,800,4.1,22.1,10200,3.5,2.8
+2023-01-05,Books,Asia,Novel,20000,25000,5000,2000,4.3,8.7,5600,5.2,1.5
+2023-01-06,Books,Asia,Textbook,30000,35000,5000,1000,4.0,12.1,7200,4.8,2.0
+2023-01-07,Home & Garden,North America,Garden Tools,35000,42000,7000,600,4.4,18.9,7800,3.8,2.5
+2023-01-08,Home & Garden,Europe,Kitchen Appliances,55000,65000,10000,300,4.6,25.3,9500,3.2,1.9
+2023-01-09,Sports,Asia,Fitness Equipment,25000,30000,5000,400,4.1,11.2,6800,4.5,3.1
+2023-01-10,Sports,North America,Outdoor Gear,40000,48000,8000,350,4.3,17.8,8200,3.9,2.7
+2023-01-11,Electronics,Europe,Tablet,75000,90000,15000,300,4.4,26.8,10800,2.9,2.2
+2023-01-12,Electronics,Asia,Smart Watch,60000,72000,12000,400,4.2,21.4,9200,3.6,2.8
+2023-01-13,Clothing,North America,Jacket,52000,62000,10000,400,4.0,19.6,8800,4.2,3.5
+2023-01-14,Clothing,Asia,Dress,38000,45000,7000,600,3.9,14.3,7200,4.8,4.1
+2023-01-15,Books,Europe,Biography,15000,18000,3000,800,4.5,6.5,4200,5.8,1.2
+2023-01-16,Books,North America,Self-Help,22000,26000,4000,1000,4.2,9.1,5800,5.1,1.8
+2023-01-17,Home & Garden,Asia,Furniture,80000,95000,15000,200,4.7,32.1,11200,2.8,2.3
+2023-01-18,Home & Garden,North America,Decor,28000,34000,6000,500,4.3,12.7,6400,4.3,2.9
+2023-01-19,Sports,Europe,Team Sports,32000,38000,6000,300,4.0,14.2,7600,4.2,3.8
+2023-01-20,Sports,Asia,Individual Sports,18000,22000,4000,400,4.1,8.0,5200,4.9,3.2
+2023-01-21,Electronics,North America,Headphones,45000,54000,9000,600,4.3,16.1,8400,3.7,2.6
+2023-01-22,Electronics,Europe,Camera,85000,102000,17000,250,4.6,30.3,11800,2.7,1.9
+2023-01-23,Clothing,Asia,Shoes,62000,74000,12000,800,4.1,23.4,9600,3.4,3.0
+2023-01-24,Clothing,North America,Accessories,35000,42000,7000,700,3.8,13.2,6800,4.6,4.2
+2023-01-25,Books,Europe,Technical,25000,30000,5000,500,4.4,10.8,6200,4.0,2.1
+2023-01-26,Books,Asia,Children's,18000,22000,4000,1200,4.6,7.8,4800,5.5,1.5
+2023-01-27,Home & Garden,Europe,Lighting,22000,27000,5000,400,4.2,9.9,5600,4.4,2.7
+2023-01-28,Home & Garden,North America,Storage,30000,36000,6000,350,4.1,13.5,7200,4.0,3.1
+2023-01-29,Sports,Asia,Water Sports,28000,34000,6000,200,4.0,12.5,6800,4.1,3.6
+2023-01-30,Sports,Europe,Winter Sports,42000,50000,8000,250,4.2,18.7,8800,3.6,2.8
+2023-01-31,Electronics,North America,Gaming Console,95000,114000,19000,300,4.5,33.9,12800,2.6,2.0
+2023-02-01,Electronics,Asia,VR Headset,70000,84000,14000,200,4.3,25.0,10200,3.1,2.5
+2023-02-02,Clothing,Europe,Formal Wear,48000,58000,10000,300,4.2,18.1,8600,3.8,3.2
+2023-02-03,Clothing,North America,Casual Wear,55000,66000,11000,900,4.0,20.7,9200,3.5,3.8
+2023-02-04,Books,Asia,Educational,32000,38000,6000,800,4.4,13.8,7200,4.2,2.2
+2023-02-05,Books,Europe,Fiction,28000,34000,6000,1000,4.1,12.1,6400,4.5,2.5
+2023-02-06,Home & Garden,North America,Outdoor Furniture,65000,78000,13000,150,4.6,29.2,10800,2.9,2.1
+2023-02-07,Home & Garden,Asia,Indoor Plants,25000,30000,5000,800,4.3,11.2,6000,4.8,2.8
+2023-02-08,Sports,Europe,Cycling,38000,46000,8000,300,4.1,17.0,8200,3.9,3.3
+2023-02-09,Sports,North America,Running,33000,40000,7000,500,4.2,14.7,7400,4.1,3.0
+2023-02-10,Electronics,Asia,Smart Home,60000,72000,12000,200,4.4,21.4,9600,3.3,2.4
+2023-02-11,Electronics,Europe,Audio System,55000,66000,11000,150,4.5,19.6,8800,3.4,2.1
+2023-02-12,Clothing,Asia,Activewear,42000,50000,8000,600,4.0,15.8,7800,4.0,3.5
+2023-02-13,Clothing,North America,Workwear,38000,46000,8000,500,3.9,14.3,7200,4.2,4.0
+2023-02-14,Books,Europe,Art & Design,20000,24000,4000,400,4.5,8.6,5200,4.8,1.8
+2023-02-15,Books,Asia,Health & Fitness,24000,29000,5000,600,4.2,10.3,6000,4.6,2.3
+2023-02-16,Home & Garden,Europe,Bathroom,35000,42000,7000,250,4.3,15.7,7600,3.8,2.6
+2023-02-17,Home & Garden,North America,Kitchen,45000,54000,9000,300,4.4,20.2,8600,3.6,2.4
+2023-02-18,Sports,Asia,Martial Arts,22000,27000,5000,300,4.1,9.8,5800,4.5,3.7
+2023-02-19,Sports,Europe,Adventure,35000,42000,7000,200,4.0,15.7,7800,3.8,3.2
+2023-02-20,Electronics,North America,Smart TV,80000,96000,16000,200,4.6,28.6,11200,2.8,1.8
+2023-02-21,Electronics,Asia,Drone,65000,78000,13000,150,4.3,23.2,9200,3.2,2.7
+2023-02-22,Clothing,Europe,Swimwear,28000,34000,6000,400,3.8,10.5,6400,4.7,4.5
+2023-02-23,Clothing,North America,Underwear,32000,38000,6000,800,4.1,12.0,6800,4.4,3.9
+2023-02-24,Books,Asia,Language Learning,26000,31000,5000,600,4.4,11.2,6200,4.3,2.0
+2023-02-25,Books,Europe,History,18000,22000,4000,500,4.3,7.8,4800,4.9,2.2
+2023-02-26,Home & Garden,North America,Lawn Care,30000,36000,6000,400,4.2,13.5,7200,4.0,2.9
+2023-02-27,Home & Garden,Asia,Cleaning Supplies,20000,24000,4000,600,3.9,9.0,5600,4.6,3.4
+2023-02-28,Sports,Europe,Team Equipment,40000,48000,8000,250,4.1,17.9,8400,3.7,3.1

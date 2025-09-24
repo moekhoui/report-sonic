@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
 import { analyzeData, generateReportContent, AIAnalysisResult } from '@/lib/ai'
-import { FileText, BarChart3, TrendingUp, CheckCircle } from 'lucide-react'
+import { FileText, BarChart3, TrendingUp, CheckCircle, Brain, Lightbulb, Target } from 'lucide-react'
+import { ChartRenderer, GaugeChart, FunnelChart, WaterfallChart, HeatmapChart, TreemapChart } from './chart-renderer'
+import { ChartType } from '@/lib/chart-types'
 
 interface ReportPreviewProps {
   data: any[]
@@ -118,42 +120,85 @@ export function ReportPreview({
             </ul>
           </div>
 
-          {/* Suggested Charts */}
+          {/* AI Chart Recommendations */}
+          {analysis.chartRecommendations && analysis.chartRecommendations.length > 0 && (
+            <div className="card">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                <Brain className="h-5 w-5 text-primary-600 mr-2" />
+                AI Chart Recommendations
+              </h3>
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                <div className="flex items-start">
+                  <Lightbulb className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-medium text-blue-900 mb-2">Smart Chart Suggestions</h4>
+                    <p className="text-sm text-blue-700">
+                      Based on your data analysis, I've identified the best chart types for your data. 
+                      Each recommendation includes confidence scores and reasoning to help you choose the most effective visualizations.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {analysis.chartRecommendations.slice(0, 6).map((rec, index) => (
+                  <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium">{rec.title}</h4>
+                      <div className="flex items-center">
+                        <Target className="h-4 w-4 text-green-600 mr-1" />
+                        <span className="text-sm font-medium text-green-600">
+                          {Math.round(rec.confidence * 100)}%
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">{rec.description}</p>
+                    <div className="text-xs text-gray-500 mb-3">
+                      <strong>Best for:</strong> {rec.bestFor.join(', ')}
+                    </div>
+                    <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                      <strong>Why:</strong> {rec.reasoning}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Enhanced Data Visualizations */}
           {analysis.suggestedCharts.length > 0 && (
             <div className="card">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
                 <BarChart3 className="h-5 w-5 text-primary-600 mr-2" />
-                Data Visualizations
+                Interactive Data Visualizations
               </h3>
               <div className="grid md:grid-cols-2 gap-6">
                 {analysis.suggestedCharts.map((chart, index) => (
                   <div key={index} className="border rounded-lg p-4">
-                    <h4 className="font-medium mb-2">{chart.title}</h4>
-                    <p className="text-sm text-gray-600 mb-4">{chart.description}</p>
-                    <div className="h-48">
-                      {chart.type === 'bar' && (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={chart.data.slice(0, 5)}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="value" fill={COLORS[0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      )}
-                      {chart.type === 'line' && (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={chart.data.slice(0, 10)}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Tooltip />
-                            <Line type="monotone" dataKey="value" stroke={COLORS[1]} strokeWidth={2} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      )}
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium">{chart.title}</h4>
+                      <div className="flex items-center">
+                        <Target className="h-4 w-4 text-green-600 mr-1" />
+                        <span className="text-sm font-medium text-green-600">
+                          {Math.round(chart.confidence * 100)}%
+                        </span>
+                      </div>
                     </div>
+                    <p className="text-sm text-gray-600 mb-4">{chart.description}</p>
+                    <div className="h-64">
+                      <ChartRenderer 
+                        type={chart.type} 
+                        data={chart.data} 
+                        title={chart.title}
+                        width={400}
+                        height={250}
+                      />
+                    </div>
+                    {chart.bestFor && chart.bestFor.length > 0 && (
+                      <div className="mt-3 text-xs text-gray-500">
+                        <strong>Best for:</strong> {chart.bestFor.join(', ')}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
