@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { exportToFormat, downloadFile, ClientExportOptions, ExportProgress } from '../lib/clientExport'
 import html2canvas from 'html2canvas'
+import { DynamicChartSelector } from './dynamic-chart-selector'
 
 // Register Chart.js components
 ChartJS.register(
@@ -596,102 +597,25 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
             {/* Charts Tab */}
             {activeTab === 'charts' && (
               <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Data Visualizations with AI Descriptions</h3>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setSelectedCharts(charts.map(c => c.id))}
-                      className="text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      Select All
-                    </button>
-                    <button
-                      onClick={() => setSelectedCharts([])}
-                      className="text-sm text-gray-600 hover:text-gray-800"
-                    >
-                      Clear All
-                    </button>
-                  </div>
+                <div className="text-center mb-8">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Dynamic Data Visualizations</h3>
+                  <p className="text-gray-600">
+                    AI-powered chart recommendations with interactive selection for each visualization
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {charts.map((chart) => (
-                    <div key={chart.id} className="bg-white border rounded-lg p-6">
-                      <div className="flex items-center justify-between mb-6">
-                        <h4 className="font-semibold text-xl">{chart.title}</h4>
-                        <div className="flex items-center gap-3">
-                          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                            {chart.type.toUpperCase()}
-                          </span>
-                          <button
-                            onClick={() => {
-                              setSelectedCharts(prev =>
-                                prev.includes(chart.id)
-                                  ? prev.filter(id => id !== chart.id)
-                                  : [...prev, chart.id]
-                              )
-                            }}
-                            className={`px-3 py-1 rounded text-sm transition-colors ${
-                              selectedCharts.includes(chart.id)
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                          >
-                            {selectedCharts.includes(chart.id) ? '✓ Selected' : 'Select'}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Enhanced Chart Description */}
-                      <div className="mb-6">
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-                          <h5 className="font-medium text-blue-900 mb-2 flex items-center">
-                            <BarChart3 className="w-4 h-4 mr-2" />
-                            AI-Powered Business Intelligence
-                          </h5>
-                          <p className="text-blue-800 text-sm leading-relaxed mb-3">{chart.description}</p>
-                          
-                          {/* Axis Information */}
-                          {(chart.xAxisLabel || chart.yAxisLabel) && (
-                            <div className="bg-blue-100 p-3 rounded border border-blue-200 mb-3">
-                              <h6 className="font-medium text-blue-900 mb-2">Chart Configuration:</h6>
-                              <div className="grid grid-cols-2 gap-4 text-sm">
-                                {chart.xAxisLabel && (
-                                  <div>
-                                    <span className="font-medium text-blue-800">X-Axis:</span>
-                                    <span className="text-blue-700 ml-2">{chart.xAxisLabel}</span>
-                                  </div>
-                                )}
-                                {chart.yAxisLabel && (
-                                  <div>
-                                    <span className="font-medium text-blue-800">Y-Axis:</span>
-                                    <span className="text-blue-700 ml-2">{chart.yAxisLabel}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                          
-                          <div className="bg-white p-3 rounded border border-blue-200">
-                            <h6 className="font-medium text-blue-900 mb-1">Business Insights:</h6>
-                            <p className="text-blue-700 text-sm">{chart.insights}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Visual Chart */}
-                      <div className="bg-gray-50 p-4 rounded-lg border">
-                        <h5 className="font-medium text-gray-900 mb-4 flex items-center">
-                          <TrendingUp className="w-4 h-4 mr-2" />
-                          Interactive Visualization
-                        </h5>
-                        <div className="h-80 bg-white rounded border" data-chart-id={chart.id}>
-                          {renderChart(chart)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <DynamicChartSelector 
+                  data={data.map(row => {
+                    const obj: any = {}
+                    headers.forEach((header, index) => {
+                      obj[header] = row[index]
+                    })
+                    return obj
+                  })}
+                  onChartUpdate={(visualizations) => {
+                    console.log('Updated visualizations:', visualizations)
+                  }}
+                />
               </div>
             )}
 
