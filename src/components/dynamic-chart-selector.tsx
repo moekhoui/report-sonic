@@ -78,20 +78,25 @@ export function DynamicChartSelector({ data, onChartUpdate }: DynamicChartSelect
   const analyzeDataAndGenerateVisualizations = async () => {
     setIsAnalyzing(true)
     try {
+      console.log('🔍 Starting data analysis with data:', data)
+      
       // Analyze the data structure
       const dataAnalysis = analyzeDataForCharts(data)
+      console.log('📊 Data analysis result:', dataAnalysis)
       setAnalysis(dataAnalysis)
       
       // Get AI recommendations for the entire dataset
       const allRecommendations = getChartRecommendations(dataAnalysis)
+      console.log('🤖 AI recommendations:', allRecommendations)
       
       // Generate multiple visualizations based on different data combinations
       const newVisualizations = generateVisualizations(data, dataAnalysis, allRecommendations)
+      console.log('📈 Generated visualizations:', newVisualizations)
       
       setVisualizations(newVisualizations)
       onChartUpdate?.(newVisualizations)
     } catch (error) {
-      console.error('Analysis failed:', error)
+      console.error('❌ Analysis failed:', error)
     } finally {
       setIsAnalyzing(false)
     }
@@ -100,8 +105,11 @@ export function DynamicChartSelector({ data, onChartUpdate }: DynamicChartSelect
   const generateVisualizations = (data: any[], analysis: any, recommendations: ChartRecommendation[]): Visualization[] => {
     const visualizations: Visualization[] = []
     
+    console.log('🎯 Generating visualizations with:', { data: data.length, analysis, recommendations: recommendations.length })
+    
     // Get all available chart types from AI recommendations
     const allChartTypes = [...new Set(recommendations.map(rec => rec.chartType))]
+    console.log('📊 Available chart types:', allChartTypes)
     
     // Generate data for each chart type
     const chartDataMap = {
@@ -113,6 +121,8 @@ export function DynamicChartSelector({ data, onChartUpdate }: DynamicChartSelect
       radar: generateRadarChartData(data, analysis),
       gauge: generateGaugeChartData(data, analysis)
     }
+    
+    console.log('📈 Chart data map:', chartDataMap)
 
     // Create visualizations for each available chart type
     allChartTypes.forEach((chartType, index) => {
