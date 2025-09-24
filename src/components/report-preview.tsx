@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { analyzeData, generateReportContent, AIAnalysisResult } from '@/lib/ai'
 import { FileText, BarChart3, TrendingUp, CheckCircle, Brain, Lightbulb, Target } from 'lucide-react'
 import { ChartRenderer, GaugeChart, FunnelChart, WaterfallChart, HeatmapChart, TreemapChart } from './chart-renderer'
+import { DynamicChartSelector } from './dynamic-chart-selector'
 import { ChartType } from '@/lib/chart-types'
 
 interface ReportPreviewProps {
@@ -165,43 +166,15 @@ export function ReportPreview({
             </div>
           )}
 
-          {/* Enhanced Data Visualizations */}
-          {analysis.suggestedCharts.length > 0 && (
+          {/* Dynamic Chart Selector */}
+          {data.length > 0 && (
             <div className="card">
-              <h3 className="text-lg font-semibold mb-4 flex items-center">
-                <BarChart3 className="h-5 w-5 text-primary-600 mr-2" />
-                Interactive Data Visualizations
-              </h3>
-              <div className="grid md:grid-cols-2 gap-6">
-                {analysis.suggestedCharts.map((chart, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">{chart.title}</h4>
-                      <div className="flex items-center">
-                        <Target className="h-4 w-4 text-green-600 mr-1" />
-                        <span className="text-sm font-medium text-green-600">
-                          {Math.round(chart.confidence * 100)}%
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">{chart.description}</p>
-                    <div className="h-64">
-                      <ChartRenderer 
-                        type={chart.type} 
-                        data={chart.data} 
-                        title={chart.title}
-                        width={400}
-                        height={250}
-                      />
-                    </div>
-                    {chart.bestFor && chart.bestFor.length > 0 && (
-                      <div className="mt-3 text-xs text-gray-500">
-                        <strong>Best for:</strong> {chart.bestFor.join(', ')}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <DynamicChartSelector 
+                data={data}
+                onChartUpdate={(visualizations) => {
+                  console.log('Updated visualizations:', visualizations)
+                }}
+              />
             </div>
           )}
 
