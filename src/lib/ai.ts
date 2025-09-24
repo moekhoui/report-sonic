@@ -198,9 +198,9 @@ function generateScatterData(data: any[], analysis: any): any[] {
   if (numericCols.length < 2) return []
 
   return data.map(row => ({
-    x: row[numericCols[0]],
-    y: row[numericCols[1]],
-    value: row[numericCols[0]]
+    x: row[numericCols[0]] || 0,
+    y: row[numericCols[1]] || 0,
+    r: Math.random() * 10 + 5 // Random radius for bubble effect
   }))
 }
 

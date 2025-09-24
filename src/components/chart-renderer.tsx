@@ -31,6 +31,90 @@ import {
 } from 'react-chartjs-2'
 import { ChartType, CHART_CONFIGS } from '@/lib/chart-types'
 
+// Helper function to transform data for different chart types
+function transformDataForChart(type: ChartType, data: any[]): any {
+  if (!data || data.length === 0) return []
+
+  switch (type) {
+    case 'bar':
+    case 'line':
+    case 'area':
+      // For bar, line, and area charts, data should be in format: [{name: string, value: number}]
+      return data.map(item => ({
+        name: item.name || item.label || item.x || 'Unknown',
+        value: item.value || item.y || 0
+      }))
+
+    case 'pie':
+    case 'doughnut':
+    case 'polarArea':
+      // For pie charts, data should be in format: [{name: string, value: number}]
+      return data.map(item => ({
+        name: item.name || item.label || 'Unknown',
+        value: item.value || 0
+      }))
+
+    case 'scatter':
+    case 'bubble':
+      // For scatter plots, data should be in format: [{x: number, y: number, r?: number}]
+      return data.map(item => ({
+        x: item.x || item.value || 0,
+        y: item.y || item.value || 0,
+        r: item.r || item.size || 5 // radius for bubble charts
+      }))
+
+    case 'radar':
+      // For radar charts, data should be in format: [{name: string, value: number}]
+      return data.map(item => ({
+        name: item.name || item.label || 'Unknown',
+        value: item.value || 0
+      }))
+
+    case 'gauge':
+      // For gauge charts, return a single value
+      const totalValue = data.reduce((sum, item) => sum + (item.value || 0), 0)
+      const avgValue = data.length > 0 ? totalValue / data.length : 0
+      return {
+        value: avgValue,
+        max: Math.max(...data.map(item => item.value || 0)) * 1.2 || 100
+      }
+
+    case 'funnel':
+      // For funnel charts, data should be in format: [{label: string, value: number}]
+      return data.map(item => ({
+        label: item.name || item.label || 'Stage',
+        value: item.value || 0
+      }))
+
+    case 'waterfall':
+      // For waterfall charts, data should be in format: [{label: string, value: number, type?: string}]
+      return data.map(item => ({
+        label: item.name || item.label || 'Item',
+        value: item.value || 0,
+        type: item.type || 'positive'
+      }))
+
+    case 'heatmap':
+      // For heatmaps, data should be in format: [{x: string, y: string, value: number}]
+      return data.map(item => ({
+        x: item.x || item.name || 'X',
+        y: item.y || item.label || 'Y',
+        value: item.value || 0
+      }))
+
+    case 'treemap':
+      // For treemaps, data should be in format: [{name: string, value: number, children?: array}]
+      return data.map(item => ({
+        name: item.name || item.label || 'Category',
+        value: item.value || 0,
+        children: item.children || []
+      }))
+
+    default:
+      return data
+  }
+}
+
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -81,32 +165,34 @@ export function ChartRenderer({
   }
 
   const chartProps = {
-    data,
     options: defaultOptions,
     width,
     height
   }
 
   const renderChart = () => {
+    // Transform data to Chart.js format
+    const chartData = transformDataForChart(type, data)
+    
     switch (type) {
       case 'bar':
-        return <Bar {...chartProps} />
+        return <Bar data={chartData} {...chartProps} />
       case 'line':
-        return <Line {...chartProps} />
+        return <Line data={chartData} {...chartProps} />
       case 'pie':
-        return <Pie {...chartProps} />
+        return <Pie data={chartData} {...chartProps} />
       case 'doughnut':
-        return <Doughnut {...chartProps} />
+        return <Doughnut data={chartData} {...chartProps} />
       case 'polarArea':
-        return <PolarArea {...chartProps} />
+        return <PolarArea data={chartData} {...chartProps} />
       case 'radar':
-        return <Radar {...chartProps} />
+        return <Radar data={chartData} {...chartProps} />
       case 'scatter':
-        return <Scatter {...chartProps} />
+        return <Scatter data={chartData} {...chartProps} />
       case 'bubble':
-        return <Bubble {...chartProps} />
+        return <Bubble data={chartData} {...chartProps} />
       case 'area':
-        return <Line {...chartProps} options={{
+        return <Line data={chartData} {...chartProps} options={{
           ...defaultOptions,
           plugins: {
             ...defaultOptions.plugins,
@@ -115,9 +201,26 @@ export function ChartRenderer({
             }
           }
         }} />
+      case 'gauge':
+        return <GaugeChart 
+          value={chartData.value || 0} 
+          max={chartData.max || 100} 
+          title={title} 
+        />
+      case 'funnel':
+        return <FunnelChart data={chartData} title={title} />
+      case 'waterfall':
+        return <WaterfallChart data={chartData} title={title} />
+      case 'heatmap':
+        return <HeatmapChart data={chartData} title={title} />
+      case 'treemap':
+        return <TreemapChart data={chartData} title={title} />
       default:
         return <div className="flex items-center justify-center h-full text-gray-500">
-          Chart type "{type}" not supported yet
+          <div className="text-center">
+            <div className="text-lg font-medium mb-2">Chart type "{type}" not supported yet</div>
+            <div className="text-sm">Available types: bar, line, pie, doughnut, scatter, radar, gauge, funnel, waterfall, heatmap, treemap</div>
+          </div>
         </div>
     }
   }
