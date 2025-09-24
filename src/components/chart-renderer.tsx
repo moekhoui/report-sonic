@@ -31,6 +31,90 @@ import {
 } from 'react-chartjs-2'
 import { ChartType, CHART_CONFIGS } from '@/lib/chart-types'
 
+// Helper function to transform data to Chart.js format
+function transformToChartJsFormat(type: ChartType, data: any[]): any {
+  if (!data || data.length === 0) return { labels: [], datasets: [] }
+
+  const colors = [
+    '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
+    '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
+  ]
+
+  switch (type) {
+    case 'bar':
+    case 'line':
+    case 'area':
+      return {
+        labels: data.map(item => item.name || item.label || 'Unknown'),
+        datasets: [{
+          label: 'Value',
+          data: data.map(item => item.value || 0),
+          backgroundColor: colors[0] + '20',
+          borderColor: colors[0],
+          borderWidth: 2,
+          fill: type === 'area'
+        }]
+      }
+
+    case 'pie':
+    case 'doughnut':
+    case 'polarArea':
+      return {
+        labels: data.map(item => item.name || item.label || 'Unknown'),
+        datasets: [{
+          data: data.map(item => item.value || 0),
+          backgroundColor: colors.slice(0, data.length),
+          borderColor: '#fff',
+          borderWidth: 2
+        }]
+      }
+
+    case 'scatter':
+    case 'bubble':
+      return {
+        datasets: [{
+          label: 'Data Points',
+          data: data.map(item => ({
+            x: item.x || 0,
+            y: item.y || 0,
+            r: item.r || 5
+          })),
+          backgroundColor: colors[0] + '80',
+          borderColor: colors[0],
+          borderWidth: 2
+        }]
+      }
+
+    case 'radar':
+      return {
+        labels: data.map(item => item.name || item.label || 'Unknown'),
+        datasets: [{
+          label: 'Values',
+          data: data.map(item => item.value || 0),
+          backgroundColor: colors[0] + '20',
+          borderColor: colors[0],
+          borderWidth: 2,
+          pointBackgroundColor: colors[0],
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: colors[0]
+        }]
+      }
+
+    default:
+      return {
+        labels: data.map(item => item.name || item.label || 'Unknown'),
+        datasets: [{
+          label: 'Value',
+          data: data.map(item => item.value || 0),
+          backgroundColor: colors[0] + '20',
+          borderColor: colors[0],
+          borderWidth: 2
+        }]
+      }
+  }
+}
+
 // Helper function to transform data for different chart types
 function transformDataForChart(type: ChartType, data: any[]): any {
   if (!data || data.length === 0) return []
@@ -172,27 +256,27 @@ export function ChartRenderer({
 
   const renderChart = () => {
     // Transform data to Chart.js format
-    const chartData = transformDataForChart(type, data)
+    const chartJsData = transformToChartJsFormat(type, data)
     
     switch (type) {
       case 'bar':
-        return <Bar data={chartData} {...chartProps} />
+        return <Bar data={chartJsData} {...chartProps} />
       case 'line':
-        return <Line data={chartData} {...chartProps} />
+        return <Line data={chartJsData} {...chartProps} />
       case 'pie':
-        return <Pie data={chartData} {...chartProps} />
+        return <Pie data={chartJsData} {...chartProps} />
       case 'doughnut':
-        return <Doughnut data={chartData} {...chartProps} />
+        return <Doughnut data={chartJsData} {...chartProps} />
       case 'polarArea':
-        return <PolarArea data={chartData} {...chartProps} />
+        return <PolarArea data={chartJsData} {...chartProps} />
       case 'radar':
-        return <Radar data={chartData} {...chartProps} />
+        return <Radar data={chartJsData} {...chartProps} />
       case 'scatter':
-        return <Scatter data={chartData} {...chartProps} />
+        return <Scatter data={chartJsData} {...chartProps} />
       case 'bubble':
-        return <Bubble data={chartData} {...chartProps} />
+        return <Bubble data={chartJsData} {...chartProps} />
       case 'area':
-        return <Line data={chartData} {...chartProps} options={{
+        return <Line data={chartJsData} {...chartProps} options={{
           ...defaultOptions,
           plugins: {
             ...defaultOptions.plugins,
@@ -202,19 +286,24 @@ export function ChartRenderer({
           }
         }} />
       case 'gauge':
+        const gaugeData = transformDataForChart(type, data)
         return <GaugeChart 
-          value={chartData.value || 0} 
-          max={chartData.max || 100} 
+          value={gaugeData.value || 0} 
+          max={gaugeData.max || 100} 
           title={title} 
         />
       case 'funnel':
-        return <FunnelChart data={chartData} title={title} />
+        const funnelData = transformDataForChart(type, data)
+        return <FunnelChart data={funnelData} title={title} />
       case 'waterfall':
-        return <WaterfallChart data={chartData} title={title} />
+        const waterfallData = transformDataForChart(type, data)
+        return <WaterfallChart data={waterfallData} title={title} />
       case 'heatmap':
-        return <HeatmapChart data={chartData} title={title} />
+        const heatmapData = transformDataForChart(type, data)
+        return <HeatmapChart data={heatmapData} title={title} />
       case 'treemap':
-        return <TreemapChart data={chartData} title={title} />
+        const treemapData = transformDataForChart(type, data)
+        return <TreemapChart data={treemapData} title={title} />
       default:
         return <div className="flex items-center justify-center h-full text-gray-500">
           <div className="text-center">
