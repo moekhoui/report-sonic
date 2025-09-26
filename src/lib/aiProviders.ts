@@ -581,23 +581,54 @@ FORMAT: "Methodology → Analysis → Validation → Technical Recommendations"`
       }, {} as any)
     )
 
-    // Calculate key metrics for context
+    // Enhanced data analysis for better pattern detection
     const numericColumns = headers.filter((_, index) => 
-      data.some(row => !isNaN(Number(row[index])) && row[index] !== '')
+      data.some(row => !isNaN(Number(row[index])) && row[index] !== '' && row[index] !== null)
     )
     const categoricalColumns = headers.filter((_, index) => 
-      data.some(row => typeof row[index] === 'string' && isNaN(Number(row[index])))
+      data.some(row => typeof row[index] === 'string' && isNaN(Number(row[index])) && row[index] !== '')
     )
+    const dateColumns = headers.filter((_, index) => 
+      data.some(row => {
+        const value = row[index]
+        if (!value || value === '') return false
+        // Enhanced date detection
+        const date = new Date(value)
+        return !isNaN(date.getTime()) || 
+               /^\d{4}-\d{2}-\d{2}/.test(value) ||
+               /^\d{2}\/\d{2}\/\d{4}/.test(value) ||
+               /^\d{1,2}\/\d{1,2}\/\d{4}/.test(value)
+      })
+    )
+    
+    // Calculate data completeness and quality metrics
+    const dataQuality = headers.map(header => {
+      const index = headers.indexOf(header)
+      const totalRows = data.length
+      const nonEmptyRows = data.filter(row => row[index] && row[index] !== '').length
+      const completeness = (nonEmptyRows / totalRows) * 100
+      return { header, completeness, nonEmptyRows, totalRows }
+    })
+    
+    // Detect data patterns and relationships
+    const patterns = this.detectDataPatterns(data, headers)
 
     return `
-DATASET ANALYSIS REQUEST
+COMPREHENSIVE DATASET ANALYSIS REQUEST
 
 Dataset Information:
 - Columns: ${headers.join(', ')}
 - Total Rows: ${data.length}
 - Numeric Columns: ${numericColumns.length} (${numericColumns.join(', ')})
 - Categorical Columns: ${categoricalColumns.length} (${categoricalColumns.join(', ')})
+- Date Columns: ${dateColumns.length} (${dateColumns.join(', ')})
 - Sample Data: ${JSON.stringify(sampleData, null, 2)}
+
+DATA QUALITY ANALYSIS:
+${dataQuality.map(q => `- ${q.header}: ${q.completeness.toFixed(1)}% complete (${q.nonEmptyRows}/${q.totalRows} rows)`).join('\n')}
+
+DETECTED PATTERNS:
+${patterns.map(p => `- ${p}`).join('\n')}
 
 DETECTED CONTEXT:
 - Business Domain: ${context.domain}
@@ -606,29 +637,35 @@ DETECTED CONTEXT:
 - Target Audience: ${context.persona}
 - Analysis Purpose: ${context.purpose}
 
-ANALYSIS REQUIREMENTS:
-Based on the detected context and strategy (${strategy.type}), provide:
+ENHANCED ANALYSIS REQUIREMENTS:
+Based on the detected context and strategy (${strategy.type}), provide comprehensive analysis:
 
-1. EXECUTIVE SUMMARY (2-3 sentences focusing on business impact)
-2. KEY INSIGHTS (5-7 bullet points with specific metrics and business significance)
-3. TRENDS AND PATTERNS (3-5 items with quantitative evidence)
-4. DATA QUALITY ASSESSMENT (2-3 items with specific recommendations)
-5. STRATEGIC RECOMMENDATIONS (5-7 actionable items tailored to ${context.industry} industry)
-6. STATISTICAL SUMMARY (detailed analysis of numeric columns)
-7. BUSINESS APPLICATIONS (3-5 specific use cases for ${context.domain} domain)
-8. RISK OPPORTUNITIES (2-3 potential risks and opportunities)
-9. NEXT STEPS (3-4 specific actions to take)
+1. EXECUTIVE SUMMARY (2-3 sentences focusing on business impact and key findings)
+2. KEY INSIGHTS (7-10 bullet points with specific metrics, percentages, and business significance)
+3. TRENDS AND PATTERNS (5-7 items with quantitative evidence and statistical significance)
+4. DATA QUALITY ASSESSMENT (3-5 items with specific completeness percentages and recommendations)
+5. STRATEGIC RECOMMENDATIONS (7-10 actionable items tailored to ${context.industry} industry)
+6. STATISTICAL SUMMARY (detailed analysis of all numeric columns with min, max, avg, median, std dev)
+7. BUSINESS APPLICATIONS (5-7 specific use cases for ${context.domain} domain)
+8. RISK OPPORTUNITIES (3-5 potential risks and opportunities with impact assessment)
+9. NEXT STEPS (4-6 specific actions to take with timelines)
+10. DATA RELATIONSHIPS (correlations and dependencies between columns)
 
-FORMAT: Return as JSON with these exact keys: summary, insights, trends, qualityIssues, recommendations, statistics, businessApplications, riskOpportunities, nextSteps
+FORMAT: Return as JSON with these exact keys: summary, insights, trends, qualityIssues, recommendations, statistics, businessApplications, riskOpportunities, nextSteps, dataRelationships
 
 FOCUS AREAS: ${strategy.focus.join(', ')}
 
-IMPORTANT: 
-- Use ${context.industry} industry terminology
-- Address ${context.persona} level audience
+CRITICAL INSTRUCTIONS: 
+- Analyze ALL columns and rows, including empty ones
+- Use ${context.industry} industry terminology and standards
+- Address ${context.persona} level audience appropriately
 - Focus on ${context.purpose} analysis type
-- Provide specific, actionable insights
-- Include quantitative evidence where possible
+- Provide specific, actionable insights with quantitative evidence
+- Include data completeness percentages for each column
+- Identify relationships between different data columns
+- Consider seasonal patterns if date columns exist
+- Highlight data quality issues with specific recommendations
+- Provide business context for all findings
     `.trim()
   }
 
@@ -748,6 +785,92 @@ Format as JSON with these exact keys: summary, insights, trends, qualityIssues, 
     combined.nextSteps = [...new Set(combined.nextSteps)].slice(0, 6)
 
     return combined
+  }
+
+  // Enhanced data pattern detection
+  private detectDataPatterns(data: any[], headers: string[]): string[] {
+    const patterns: string[] = []
+    
+    // Check for sequential data patterns
+    const numericColumns = headers.filter((_, index) => 
+      data.some(row => !isNaN(Number(row[index])) && row[index] !== '')
+    )
+    
+    numericColumns.forEach(column => {
+      const index = headers.indexOf(column)
+      const values = data.map(row => Number(row[index])).filter(val => !isNaN(val))
+      
+      if (values.length > 1) {
+        // Check for increasing/decreasing trends
+        const firstHalf = values.slice(0, Math.floor(values.length / 2))
+        const secondHalf = values.slice(Math.floor(values.length / 2))
+        
+        const firstAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length
+        const secondAvg = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length
+        
+        if (secondAvg > firstAvg * 1.1) {
+          patterns.push(`Upward trend detected in ${column} (${((secondAvg - firstAvg) / firstAvg * 100).toFixed(1)}% increase)`)
+        } else if (secondAvg < firstAvg * 0.9) {
+          patterns.push(`Downward trend detected in ${column} (${((firstAvg - secondAvg) / firstAvg * 100).toFixed(1)}% decrease)`)
+        }
+        
+        // Check for outliers
+        const avg = values.reduce((a, b) => a + b, 0) / values.length
+        const stdDev = Math.sqrt(values.reduce((acc, val) => acc + Math.pow(val - avg, 2), 0) / values.length)
+        const outliers = values.filter(val => Math.abs(val - avg) > 2 * stdDev)
+        
+        if (outliers.length > 0) {
+          patterns.push(`${outliers.length} outliers detected in ${column} (${(outliers.length / values.length * 100).toFixed(1)}% of data)`)
+        }
+      }
+    })
+    
+    // Check for categorical patterns
+    const categoricalColumns = headers.filter((_, index) => 
+      data.some(row => typeof row[index] === 'string' && isNaN(Number(row[index])) && row[index] !== '')
+    )
+    
+    categoricalColumns.forEach(column => {
+      const index = headers.indexOf(column)
+      const values = data.map(row => row[index]).filter(val => val !== '')
+      const uniqueValues = [...new Set(values)]
+      
+      if (uniqueValues.length <= 10) {
+        patterns.push(`Categorical data in ${column}: ${uniqueValues.length} unique categories`)
+      } else {
+        patterns.push(`High diversity in ${column}: ${uniqueValues.length} unique values`)
+      }
+    })
+    
+    // Check for date patterns
+    const dateColumns = headers.filter((_, index) => 
+      data.some(row => {
+        const value = row[index]
+        if (!value || value === '') return false
+        const date = new Date(value)
+        return !isNaN(date.getTime())
+      })
+    )
+    
+    if (dateColumns.length > 0) {
+      patterns.push(`Time-series data detected: ${dateColumns.length} date column(s)`)
+    }
+    
+    // Check for data completeness patterns
+    headers.forEach(header => {
+      const index = headers.indexOf(header)
+      const totalRows = data.length
+      const nonEmptyRows = data.filter(row => row[index] && row[index] !== '').length
+      const completeness = (nonEmptyRows / totalRows) * 100
+      
+      if (completeness < 50) {
+        patterns.push(`Low data completeness in ${header}: ${completeness.toFixed(1)}%`)
+      } else if (completeness === 100) {
+        patterns.push(`Perfect data completeness in ${header}: 100%`)
+      }
+    })
+    
+    return patterns
   }
 
   private generateFallbackAnalysis(data: any[], headers: string[]): any {

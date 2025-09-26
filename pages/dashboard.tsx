@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import DataViewer from '../src/components/DataViewer'
 import { DashboardHeader } from '../src/components/DashboardHeader'
+import { EnhancedFileUpload } from '../src/components/EnhancedFileUpload'
 import Logo from '../src/components/Logo'
 
 export default function Dashboard() {
@@ -27,6 +28,10 @@ export default function Dashboard() {
       const response = await fetch('/api/reports/upload', {
         method: 'POST',
         body: formData,
+        headers: {
+          'Cache-Control': 'no-cache',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
       })
 
       const result = await response.json()
@@ -206,7 +211,25 @@ export default function Dashboard() {
         </div>
         </div>
 
-        {/* Dashboard Header with Usage Display and File Upload */}
+        {/* Enhanced File Upload Section - Moved to Top */}
+        <div className="mb-8">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              🚀 Generate AI-Powered Reports
+            </h2>
+            <p className="text-gray-600">
+              Upload your Excel or CSV file and let our AI create comprehensive insights and visualizations
+            </p>
+          </div>
+          
+          <EnhancedFileUpload
+            onFileUpload={handleFileUpload}
+            uploading={uploading}
+            className="max-w-2xl mx-auto"
+          />
+        </div>
+
+        {/* Dashboard Header with Usage Display */}
         <DashboardHeader
           onFileUpload={handleFileUpload}
           uploading={uploading}

@@ -134,53 +134,7 @@ export function DashboardHeader({ onFileUpload, uploading }: DashboardHeaderProp
         onUpgrade={handleUpgrade}
       />
 
-      {/* File Upload Section */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Generate New Report
-        </h2>
-        <p className="text-gray-600 mb-6">
-          Upload your Excel file and let AI generate a comprehensive report
-        </p>
-
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <input
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            onChange={handleFileSelect}
-            disabled={uploading}
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              width: '100%',
-              height: '100%',
-              opacity: 0,
-              cursor: uploading ? 'not-allowed' : 'pointer'
-            }}
-          />
-          <button
-            disabled={uploading}
-            className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white ${
-              uploading 
-                ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
-            }`}
-          >
-            {uploading ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Processing...
-              </>
-            ) : (
-              'Choose File to Upload'
-            )}
-          </button>
-        </div>
-      </div>
+      {/* Usage Information Only - Upload moved to top of page */}
 
       {/* Limit Exceeded Modal */}
       <LimitExceededModal

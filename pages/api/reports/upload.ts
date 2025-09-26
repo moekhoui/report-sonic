@@ -52,15 +52,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('📊 Processing file:', file.originalname)
 
-    // Read and parse the Excel file
+    // Read and parse the Excel file with enhanced options
     const workbook = xlsx.readFile(file.path)
     const sheetName = workbook.SheetNames[0]
     const worksheet = workbook.Sheets[sheetName]
-    const data = xlsx.utils.sheet_to_json(worksheet, { header: 1 })
+    
+    // Enhanced parsing options to handle empty columns and better data detection
+    const data = xlsx.utils.sheet_to_json(worksheet, { 
+      header: 1,
+      defval: '', // Default value for empty cells
+      raw: false, // Convert all values to strings for consistent processing
+      dateNF: 'yyyy-mm-dd' // Date format
+    })
 
-    // Extract headers and rows for chart generation
-    const headers = data[0] as string[]
-    const rows = data.slice(1) as any[][]
+    // Enhanced header and row extraction with empty column handling
+    const rawHeaders = data[0] as string[]
+    const rawRows = data.slice(1) as any[][]
+    
+    // Find the actual data range (skip empty columns at the beginning)
+    let startColumnIndex = 0
+    for (let i = 0; i < rawHeaders.length; i++) {
+      if (rawHeaders[i] && rawHeaders[i].toString().trim() !== '') {
+        startColumnIndex = i
+        break
+      }
+    }
+    
+    // Find the last column with data
+    let endColumnIndex = rawHeaders.length - 1
+    for (let i = rawHeaders.length - 1; i >= 0; i--) {
+      if (rawHeaders[i] && rawHeaders[i].toString().trim() !== '') {
+        endColumnIndex = i
+        break
+      }
+    }
+    
+    // Extract clean headers and rows
+    const cleanHeaders = rawHeaders.slice(startColumnIndex, endColumnIndex + 1)
+    const headers = cleanHeaders
+      .map((header, index) => header ? header.toString().trim() : `Column_${startColumnIndex + index}`)
+    
+    const rows = rawRows.map(row => 
+      row.slice(startColumnIndex, endColumnIndex + 1)
+        .map(cell => cell !== null && cell !== undefined ? cell.toString().trim() : '')
+    ).filter(row => row.some(cell => cell !== '')) // Remove completely empty rows
+    
+    console.log(`📊 Enhanced parsing: Found ${headers.length} columns, ${rows.length} rows`)
+    console.log(`📋 Headers: ${headers.join(', ')}`)
+    console.log(`🔍 Data range: columns ${startColumnIndex} to ${endColumnIndex}`)
 
     // Clean up uploaded file
     fs.unlinkSync(file.path)
@@ -81,23 +120,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.log(`📊 Analysis Strategy: ${superAnalysis.strategy}`)
     }
 
-    // Create report
+    // Create report with cache busting
+    const reportId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const report = {
-      id: Date.now().toString(),
+      id: reportId,
       name: file.originalname,
       data: data,
       rawData: rows, // Store raw data for chart generation
       headers: headers, // Store headers for chart generation
       analysis: analysis,
       createdAt: new Date().toISOString(),
-      status: 'completed'
+      status: 'completed',
+      cacheKey: reportId, // Add cache key for busting
+      timestamp: Date.now() // Add timestamp for cache invalidation
     }
 
     console.log('✅ Report generated successfully')
 
+    // Add cache busting headers
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+    res.setHeader('Pragma', 'no-cache')
+    res.setHeader('Expires', '0')
+    res.setHeader('X-Report-ID', reportId)
+    res.setHeader('X-Timestamp', Date.now().toString())
+
     return res.status(200).json({
       success: true,
-      report: report
+      report: report,
+      cacheKey: reportId,
+      timestamp: Date.now()
     })
 
   } catch (error: any) {
