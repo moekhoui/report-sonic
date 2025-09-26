@@ -19,11 +19,14 @@ export default function Dashboard() {
     }
   }, [user, loading, router])
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (file: File, customPrompt?: string) => {
     setUploading(true)
     try {
       const formData = new FormData()
       formData.append('file', file)
+      if (customPrompt) {
+        formData.append('customPrompt', customPrompt)
+      }
 
       const response = await fetch('/api/reports/upload', {
         method: 'POST',

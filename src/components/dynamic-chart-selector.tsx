@@ -192,6 +192,60 @@ function analyzeDataForChartTypes(data: any[], analysis: any, visualizationType:
       }
       break
 
+    case 'qualitative-analysis':
+      if (hasCategoricalData && dataQuality.diversity <= 8) {
+        recommendations.push({
+          chartType: 'bar',
+          title: 'Bar Chart',
+          description: 'Perfect for qualitative response analysis',
+          confidence: 0.95,
+          reasoning: `High-quality qualitative data with ${dataQuality.diversity} response categories`,
+          bestFor: ['Survey Analysis', 'Feedback Review'],
+          dataRequirements: ['Qualitative responses', 'Categorical data'],
+          example: 'Survey response distribution'
+        })
+      }
+      if (hasCategoricalData && dataQuality.diversity <= 6) {
+        recommendations.push({
+          chartType: 'pie',
+          title: 'Pie Chart',
+          description: 'Shows qualitative response distribution',
+          confidence: 0.85,
+          reasoning: `Good for ${dataQuality.diversity} response categories`,
+          bestFor: ['Response Distribution', 'Feedback Analysis'],
+          dataRequirements: ['Limited response categories'],
+          example: 'Customer satisfaction distribution'
+        })
+      }
+      break
+
+    case 'rating-analysis':
+      if (hasNumericData && dataQuality.completeness > 80) {
+        recommendations.push({
+          chartType: 'bar',
+          title: 'Bar Chart',
+          description: 'Perfect for rating scale visualization',
+          confidence: 0.95,
+          reasoning: `High-quality rating data with ${dataQuality.completeness.toFixed(0)}% completeness`,
+          bestFor: ['Rating Analysis', 'Satisfaction Metrics'],
+          dataRequirements: ['Rating scales', 'Numeric values'],
+          example: 'Customer satisfaction ratings'
+        })
+      }
+      if (hasNumericData && dataQuality.range > 5) {
+        recommendations.push({
+          chartType: 'line',
+          title: 'Line Chart',
+          description: 'Shows rating trends over time',
+          confidence: 0.80,
+          reasoning: 'Good rating range for trend analysis',
+          bestFor: ['Rating Trends', 'Performance Tracking'],
+          dataRequirements: ['Rating data', 'Time series'],
+          example: 'Satisfaction trends over time'
+        })
+      }
+      break
+
     default:
       // Fallback analysis for other types
       if (hasCategoricalData && hasNumericData) {
@@ -270,6 +324,12 @@ function generateDataAnalysisParagraph(data: any[], analysis: any, visualization
 
     case 'kpi-dashboard':
       return `This KPI dashboard analysis focuses on ${numericCols.length} key performance indicators across ${sampleSize} data points. The metrics show performance ranging from ${numericStats[0]?.min?.toFixed(2) || 0} to ${numericStats[0]?.max?.toFixed(2) || 0}, with an average of ${numericStats[0]?.avg?.toFixed(2) || 0}. The dataset provides ${numericStats[0]?.count || 0} valid measurements, enabling comprehensive performance tracking and benchmarking. This KPI analysis supports executive decision-making and strategic performance management across all business functions.`
+
+    case 'qualitative-analysis':
+      return `This qualitative analysis examines ${sampleSize} data points across ${columns.length} variables, focusing on survey responses, feedback, and qualitative insights. The dataset includes ${categoricalCols.length} qualitative dimensions with text responses, ratings, and categorical feedback. The analysis reveals patterns in user sentiment, preferences, and qualitative feedback across ${categoricalCols.length} key areas. This comprehensive qualitative assessment provides insights into user experience, satisfaction levels, and areas for improvement based on direct feedback and survey responses.`
+
+    case 'rating-analysis':
+      return `This rating analysis examines ${sampleSize} data points across ${columns.length} rating scales, providing insights into satisfaction levels, performance ratings, and scale-based feedback. The dataset includes rating data ranging from 1 to 10, with average ratings of ${numericStats[0]?.avg?.toFixed(1) || 0} out of 10. The analysis reveals ${numericStats[0]?.avg > 7 ? 'high' : numericStats[0]?.avg > 5 ? 'moderate' : 'low'} satisfaction levels, with ratings distributed from ${numericStats[0]?.min?.toFixed(1) || 0} to ${numericStats[0]?.max?.toFixed(1) || 0}. This comprehensive rating assessment supports customer satisfaction analysis and service improvement strategies.`
 
     default:
       return `This comprehensive data analysis examines ${sampleSize} data points across ${columns.length} variables, including ${numericCols.length} quantitative metrics and ${categoricalCols.length} categorical dimensions. The dataset reveals key insights with values ranging from ${numericStats[0]?.min?.toFixed(2) || 0} to ${numericStats[0]?.max?.toFixed(2) || 0}, providing a solid foundation for strategic analysis and decision-making. The data structure supports multiple analytical approaches and enables comprehensive business intelligence insights.`
@@ -477,28 +537,60 @@ export function DynamicChartSelector({ data, onChartUpdate }: DynamicChartSelect
         description: 'Operational efficiency and productivity metrics',
         dataGenerator: () => generateGaugeChartData(data, analysis),
         chartTypes: ['gauge', 'bar', 'line']
+      },
+      {
+        id: 'qualitative-analysis',
+        title: 'Qualitative Data Analysis',
+        description: 'Survey responses, feedback, and qualitative insights',
+        dataGenerator: () => generateQualitativeChartData(data, analysis),
+        chartTypes: ['bar', 'pie', 'doughnut']
+      },
+      {
+        id: 'rating-analysis',
+        title: 'Rating Scale Analysis',
+        description: 'Customer satisfaction ratings and scale responses',
+        dataGenerator: () => generateRatingChartData(data, analysis),
+        chartTypes: ['bar', 'line', 'radar']
       }
     ]
+
+    // Check if we have meaningful data to analyze
+    const hasMeaningfulData = data && data.length > 0 && analysis && analysis.columns && analysis.columns.length > 0
 
     // Generate visualizations for each type
     visualizationTypes.forEach((vizType, index) => {
       const chartData = vizType.dataGenerator()
-      if (chartData && chartData.length > 0) {
-        // AI-powered dynamic chart type analysis
-        const recommendedChartTypes = analyzeDataForChartTypes(data, analysis, vizType.id, chartData)
+      
+      // Only add visualization if we have meaningful data and valid chart data
+      if (hasMeaningfulData && chartData && chartData.length > 0) {
+        // Check if the chart data is not just sample data
+        const isSampleData = chartData.every(item => 
+          item.name && (
+            item.name.includes('Category') || 
+            item.name.includes('Sample') || 
+            item.name.includes('Strongly Agree') ||
+            item.name.includes('Very Satisfied')
+          )
+        )
+        
+        // Only add if it's not just sample data or if we have real data
+        if (!isSampleData || data.length > 0) {
+          // AI-powered dynamic chart type analysis
+          const recommendedChartTypes = analyzeDataForChartTypes(data, analysis, vizType.id, chartData)
 
-        // Generate AI data analysis paragraph
-        const dataAnalysisParagraph = generateDataAnalysisParagraph(data, analysis, vizType.id)
+          // Generate AI data analysis paragraph
+          const dataAnalysisParagraph = generateDataAnalysisParagraph(data, analysis, vizType.id)
 
-        visualizations.push({
-          id: vizType.id,
-          title: vizType.title,
-          description: dataAnalysisParagraph, // Use AI-generated analysis instead of static description
-          data: chartData,
-          selectedChartType: recommendedChartTypes[0].chartType,
-          availableChartTypes: recommendedChartTypes,
-          aiRecommendation: recommendedChartTypes[0]
-        })
+          visualizations.push({
+            id: vizType.id,
+            title: vizType.title,
+            description: dataAnalysisParagraph, // Use AI-generated analysis instead of static description
+            data: chartData,
+            selectedChartType: recommendedChartTypes[0].chartType,
+            availableChartTypes: recommendedChartTypes,
+            aiRecommendation: recommendedChartTypes[0]
+          })
+        }
       }
     })
 
@@ -542,7 +634,21 @@ export function DynamicChartSelector({ data, onChartUpdate }: DynamicChartSelect
 
       {/* Visualizations - 2 Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {visualizations.map((visualization, index) => {
+        {visualizations.length === 0 ? (
+          <div className="col-span-2 text-center py-12">
+            <div className="bg-gray-50 rounded-xl p-8 border-2 border-dashed border-gray-300">
+              <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">No Visualizations Available</h3>
+              <p className="text-gray-500 mb-4">
+                No meaningful data patterns were detected to generate visualizations.
+              </p>
+              <p className="text-sm text-gray-400">
+                Please ensure your data contains numeric values, categorical data, or time series information.
+              </p>
+            </div>
+          </div>
+        ) : (
+          visualizations.map((visualization, index) => {
           // Create beautiful gradient colors for each visualization
           const colorSchemes = [
             'from-blue-500 to-purple-600',
@@ -622,7 +728,10 @@ export function DynamicChartSelector({ data, onChartUpdate }: DynamicChartSelect
                 )}
 
                 {/* Chart Display */}
-                <div className="h-72 border-2 border-gray-100 rounded-xl p-4 bg-gradient-to-br from-gray-50 to-white">
+                <div 
+                  className="h-72 border-2 border-gray-100 rounded-xl p-4 bg-gradient-to-br from-gray-50 to-white"
+                  data-chart-id={visualization.id}
+                >
                   <ChartRenderer
                     type={visualization.selectedChartType}
                     data={visualization.data}
@@ -634,7 +743,8 @@ export function DynamicChartSelector({ data, onChartUpdate }: DynamicChartSelect
               </div>
             </div>
           )
-        })}
+        })
+        )}
       </div>
 
       {/* Beautiful Summary */}
@@ -693,7 +803,9 @@ import {
   generateDoughnutChartData,
   generateScatterPlotData,
   generateRadarChartData,
-  generateGaugeChartData
+  generateGaugeChartData,
+  generateQualitativeChartData,
+  generateRatingChartData
 } from './enhanced-data-generators'
 
 // All data generation functions are now imported from enhanced-data-generators.ts

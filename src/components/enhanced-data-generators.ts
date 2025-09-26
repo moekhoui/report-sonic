@@ -1,19 +1,92 @@
 // Enhanced data generation functions that work with any data structure
+// Includes support for qualitative data analysis (scoping, surveys, etc.)
+
+// Helper function to detect qualitative data patterns
+function detectQualitativeData(data: any[], columns: string[]): {
+  hasQualitativeData: boolean
+  qualitativeColumns: string[]
+  categoricalColumns: string[]
+  textColumns: string[]
+  ratingColumns: string[]
+  scaleColumns: string[]
+} {
+  const qualitativeColumns: string[] = []
+  const categoricalColumns: string[] = []
+  const textColumns: string[] = []
+  const ratingColumns: string[] = []
+  const scaleColumns: string[] = []
+
+  for (const col of columns) {
+    const values = data.map(row => row[col]).filter(val => val !== null && val !== undefined && val !== '')
+    
+    if (values.length === 0) continue
+
+    const uniqueValues = new Set(values)
+    const sampleValue = values[0]
+
+    // Check for rating scales (1-5, 1-10, etc.)
+    if (typeof sampleValue === 'string' && /^[1-9]|10$/.test(sampleValue.trim())) {
+      const numericValues = values.map(v => parseInt(v)).filter(v => !isNaN(v) && v >= 1 && v <= 10)
+      if (numericValues.length > values.length * 0.8) {
+        ratingColumns.push(col)
+        continue
+      }
+    }
+
+    // Check for Likert scales (Strongly Agree, Agree, etc.)
+    if (typeof sampleValue === 'string') {
+      const likertTerms = ['strongly agree', 'agree', 'neutral', 'disagree', 'strongly disagree', 'very satisfied', 'satisfied', 'dissatisfied', 'very dissatisfied']
+      const hasLikertTerms = values.some(v => likertTerms.some(term => v.toLowerCase().includes(term)))
+      if (hasLikertTerms) {
+        scaleColumns.push(col)
+        continue
+      }
+    }
+
+    // Check for categorical data (limited unique values)
+    if (uniqueValues.size < 20 && uniqueValues.size > 1) {
+      categoricalColumns.push(col)
+    }
+
+    // Check for text data (longer text responses)
+    if (typeof sampleValue === 'string' && sampleValue.length > 10) {
+      textColumns.push(col)
+    }
+  }
+
+  qualitativeColumns.push(...categoricalColumns, ...textColumns, ...ratingColumns, ...scaleColumns)
+
+  return {
+    hasQualitativeData: qualitativeColumns.length > 0,
+    qualitativeColumns,
+    categoricalColumns,
+    textColumns,
+    ratingColumns,
+    scaleColumns
+  }
+}
 
 export function generateBarChartData(data: any[], analysis: any): any[] {
-  // Enhanced data detection with fallback
+  // Enhanced data detection with qualitative support
   const columns = Object.keys(data[0] || {})
+  const qualitativeData = detectQualitativeData(data, columns)
   
   // Find categorical column (string with limited unique values)
   let categoricalCol: string | null = null
   let numericCol: string | null = null
+  
+  // Prioritize qualitative data for better visualization
+  if (qualitativeData.hasQualitativeData) {
+    // Use qualitative columns for better categorical representation
+    categoricalCol = qualitativeData.categoricalColumns[0] || qualitativeData.ratingColumns[0] || qualitativeData.scaleColumns[0]
+  }
   
   for (const col of columns) {
     const values = data.map(row => row[col]).filter(val => val !== null && val !== undefined && val !== '')
     const uniqueValues = new Set(values)
     
     // Check if it's categorical (string with limited unique values)
-    if (values.length > 0 && typeof values[0] === 'string' && uniqueValues.size < 10 && uniqueValues.size > 1) {
+    if (!categoricalCol && values.length > 0 && typeof values[0] === 'string' && uniqueValues.size < 10 && uniqueValues.size > 1) {
       categoricalCol = col
     }
     
@@ -23,15 +96,28 @@ export function generateBarChartData(data: any[], analysis: any): any[] {
     }
   }
 
-  if (!categoricalCol || !numericCol) {
-    // Generate sample bar chart data
+  if (!categoricalCol) {
+    // Generate sample bar chart data with qualitative examples
     return [
-      { name: 'Category A', value: 45 },
-      { name: 'Category B', value: 32 },
-      { name: 'Category C', value: 28 },
-      { name: 'Category D', value: 19 },
-      { name: 'Category E', value: 15 }
+      { name: 'Very Satisfied', value: 45 },
+      { name: 'Satisfied', value: 32 },
+      { name: 'Neutral', value: 28 },
+      { name: 'Dissatisfied', value: 19 },
+      { name: 'Very Dissatisfied', value: 15 }
     ]
+  }
+
+  if (!numericCol) {
+    // Count occurrences for qualitative data
+    const grouped = data.reduce((acc, row) => {
+      const key = row[categoricalCol!]
+      if (key) {
+        acc[key] = (acc[key] || 0) + 1
+      }
+      return acc
+    }, {} as Record<string, number>)
+
+    return Object.entries(grouped).map(([name, value]) => ({ name, value }))
   }
 
   const grouped = data.reduce((acc, row) => {
@@ -262,4 +348,77 @@ export function generateGaugeChartData(data: any[], analysis: any): any[] {
     max: Math.max(max, 100),
     label: `${numericCols[0]!} Average`
   }]
+}
+
+// New function for qualitative data analysis (surveys, scoping, etc.)
+export function generateQualitativeChartData(data: any[], analysis: any): any[] {
+  const columns = Object.keys(data[0] || {})
+  const qualitativeData = detectQualitativeData(data, columns)
+  
+  if (!qualitativeData.hasQualitativeData) {
+    // Generate sample qualitative data
+    return [
+      { name: 'Strongly Agree', value: 25 },
+      { name: 'Agree', value: 35 },
+      { name: 'Neutral', value: 20 },
+      { name: 'Disagree', value: 15 },
+      { name: 'Strongly Disagree', value: 5 }
+    ]
+  }
+
+  // Use the first qualitative column for visualization
+  const qualitativeCol = qualitativeData.qualitativeColumns[0]
+  const values = data.map(row => row[qualitativeCol]).filter(val => val !== null && val !== undefined && val !== '')
+  
+  // Count occurrences
+  const grouped = values.reduce((acc, value) => {
+    acc[value] = (acc[value] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  return Object.entries(grouped)
+    .sort(([,a], [,b]) => (b as number) - (a as number)) // Sort by count descending
+    .map(([name, value]) => ({ name, value }))
+}
+
+// Function for rating scale visualization
+export function generateRatingChartData(data: any[], analysis: any): any[] {
+  const columns = Object.keys(data[0] || {})
+  const qualitativeData = detectQualitativeData(data, columns)
+  
+  if (qualitativeData.ratingColumns.length === 0) {
+    // Generate sample rating data
+    return [
+      { name: '1', value: 5 },
+      { name: '2', value: 8 },
+      { name: '3', value: 15 },
+      { name: '4', value: 25 },
+      { name: '5', value: 35 },
+      { name: '6', value: 20 },
+      { name: '7', value: 18 },
+      { name: '8', value: 12 },
+      { name: '9', value: 8 },
+      { name: '10', value: 4 }
+    ]
+  }
+
+  const ratingCol = qualitativeData.ratingColumns[0]
+  const values = data.map(row => row[ratingCol]).filter(val => val !== null && val !== undefined && val !== '')
+  
+  // Count occurrences for each rating
+  const grouped = values.reduce((acc, value) => {
+    const rating = parseInt(value.toString())
+    if (!isNaN(rating) && rating >= 1 && rating <= 10) {
+      acc[rating] = (acc[rating] || 0) + 1
+    }
+    return acc
+  }, {} as Record<number, number>)
+
+  // Fill in missing ratings with 0
+  const result = []
+  for (let i = 1; i <= 10; i++) {
+    result.push({ name: i.toString(), value: grouped[i] || 0 })
+  }
+
+  return result
 }

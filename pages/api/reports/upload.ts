@@ -104,9 +104,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Clean up uploaded file
     fs.unlinkSync(file.path)
 
+    // Get custom prompt if provided
+    const customPrompt = req.body?.customPrompt
+
     // Generate Enhanced Super AI analysis using multiple providers
     console.log('🤖 Starting Enhanced Super AI Analysis...')
-    const superAnalysis = await superAI.superAnalyze(rows, headers)
+    const superAnalysis = customPrompt 
+      ? await superAI.superAnalyzeWithCustomPrompt(rows, headers, customPrompt)
+      : await superAI.superAnalyze(rows, headers)
     console.log(`✅ Enhanced Super AI Analysis complete: ${superAnalysis.primary.provider}`)
     
     // Use the combined analysis from all AI providers

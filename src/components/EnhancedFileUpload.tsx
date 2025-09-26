@@ -1,8 +1,11 @@
 import React, { useState, useCallback, useRef } from 'react'
 import { Upload, FileText, AlertCircle, CheckCircle, X } from 'lucide-react'
+import { DynamicPromptModal } from './DynamicPromptModal'
+import { UserPreferences, DataStructure } from '../types/dynamic-prompt'
+import { detectDataStructure } from '../lib/prompt-generator'
 
 interface EnhancedFileUploadProps {
-  onFileUpload: (file: File) => Promise<void>
+  onFileUpload: (file: File, customPrompt?: string) => Promise<void>
   uploading: boolean
   className?: string
 }
@@ -11,6 +14,9 @@ export function EnhancedFileUpload({ onFileUpload, uploading, className = '' }: 
   const [dragActive, setDragActive] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const [showPromptModal, setShowPromptModal] = useState(false)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [dataStructure, setDataStructure] = useState<DataStructure | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -54,13 +60,66 @@ export function EnhancedFileUpload({ onFileUpload, uploading, className = '' }: 
     setErrorMessage('')
     setUploadStatus('idle')
     
+    // Store the file and show prompt modal
+    setPendingFile(file)
+    
+    // Parse file to detect data structure for the prompt modal
     try {
+      const text = await file.text()
+      const lines = text.split('\n').filter(line => line.trim())
+      const headers = lines[0]?.split(',') || []
+      const rows = lines.slice(1).map(line => {
+        const values = line.split(',')
+        const obj: any = {}
+        headers.forEach((header, index) => {
+          obj[header.trim()] = values[index]?.trim() || ''
+        })
+        return obj
+      })
+      
+      const detectedStructure = detectDataStructure(rows)
+      setDataStructure(detectedStructure)
+      setShowPromptModal(true)
+    } catch (error) {
+      // If parsing fails, proceed with upload without custom prompt
       await onFileUpload(file)
+      setUploadStatus('success')
+      setTimeout(() => setUploadStatus('idle'), 3000)
+    }
+  }
+
+  const handleCustomAnalysis = async (preferences: UserPreferences) => {
+    if (!pendingFile || !dataStructure) return
+
+    setShowPromptModal(false)
+    setUploadStatus('idle')
+    
+    try {
+      // Generate custom prompt
+      const { generateCustomPrompt } = await import('../lib/prompt-generator')
+      const customPrompt = generateCustomPrompt(preferences, dataStructure, {
+        dataStructure,
+        analysisRequirements: {
+          format: 'JSON',
+          requiredSections: ['summary', 'insights', 'trends', 'qualityIssues', 'recommendations', 'statistics', 'businessApplications', 'riskOpportunities', 'nextSteps', 'dataRelationships'],
+          maxTokens: 3000
+        },
+        technicalInstructions: {
+          dataQualityCheck: true,
+          patternDetection: true,
+          statisticalAnalysis: true
+        }
+      })
+
+      await onFileUpload(pendingFile, customPrompt)
       setUploadStatus('success')
       setTimeout(() => setUploadStatus('idle'), 3000)
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Upload failed')
       setUploadStatus('error')
+    } finally {
+      setPendingFile(null)
+      setDataStructure(null)
     }
   }
 
@@ -180,6 +239,21 @@ export function EnhancedFileUpload({ onFileUpload, uploading, className = '' }: 
           <li>• Text data will be analyzed for patterns and categories</li>
         </ul>
       </div>
+
+      {/* Dynamic Prompt Modal */}
+      {showPromptModal && dataStructure && (
+        <DynamicPromptModal
+          isOpen={showPromptModal}
+          onClose={() => {
+            setShowPromptModal(false)
+            setPendingFile(null)
+            setDataStructure(null)
+          }}
+          onAnalyze={handleCustomAnalysis}
+          dataStructure={dataStructure}
+          isAnalyzing={uploading}
+        />
+      )}
     </div>
   )
 }

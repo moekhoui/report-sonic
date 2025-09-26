@@ -4,6 +4,8 @@ interface AIResponse {
   data?: any
   error?: string
   provider: string
+  context?: DomainContext
+  strategy?: string
 }
 
 interface AIConfig {
@@ -572,6 +574,73 @@ FORMAT: "Methodology → Analysis → Validation → Technical Recommendations"`
     }
   }
 
+  // Enhanced Super Analysis with Custom Prompt
+  async superAnalyzeWithCustomPrompt(data: any[], headers: string[], customPrompt: string): Promise<{
+    primary: AIResponse
+    secondary: AIResponse[]
+    combined: any
+    context?: DomainContext
+    strategy?: string
+  }> {
+    console.log('🤖 Starting Enhanced Super AI Analysis with Custom Prompt...')
+    
+    // Try DeepSeek first (primary), then other providers with custom prompt
+    const [deepseekResult, openaiResult, geminiResult, fallbackResult] = await Promise.allSettled([
+      this.analyzeWithDeepSeekCustomPrompt(data, headers, customPrompt), // Primary - DeepSeek
+      this.analyzeWithOpenAICustomPrompt(data, headers, customPrompt), // Secondary - OpenAI
+      this.analyzeWithGeminiCustomPrompt(data, headers, customPrompt), // Tertiary - Gemini (free)
+      this.analyzeWithFallbackCustomPrompt(data, headers, customPrompt) // Fallback - always works
+    ])
+
+    const results: AIResponse[] = []
+    
+    // Process results (prioritize DeepSeek)
+    if (deepseekResult.status === 'fulfilled' && deepseekResult.value.success) {
+      results.push(deepseekResult.value)
+      console.log('✅ DeepSeek custom analysis successful (PRIMARY)')
+    }
+    if (openaiResult.status === 'fulfilled' && openaiResult.value.success) {
+      results.push(openaiResult.value)
+      console.log('✅ OpenAI custom analysis successful (SECONDARY)')
+    }
+    if (geminiResult.status === 'fulfilled' && geminiResult.value.success) {
+      results.push(geminiResult.value)
+      console.log('✅ Gemini custom analysis successful (TERTIARY)')
+    }
+    if (fallbackResult.status === 'fulfilled' && fallbackResult.value.success) {
+      results.push(fallbackResult.value)
+      console.log('✅ Fallback custom analysis successful (FALLBACK)')
+    }
+
+    // Use the first successful result as primary (prefer DeepSeek)
+    const primary = results[0] || (fallbackResult.status === 'fulfilled' ? fallbackResult.value : {
+      success: false,
+      error: 'All AI providers failed with custom prompt',
+      provider: 'None'
+    })
+
+    // Combine insights from all successful providers
+    const combined = this.combineAIResults(results)
+
+    // Extract context and strategy from primary result
+    const context = (primary as any).context
+    const strategy = (primary as any).strategy
+
+    console.log(`🎯 Primary provider: ${primary.provider}`)
+    if (context) {
+      console.log(`🏢 Detected domain: ${context.domain} | Industry: ${context.industry}`)
+      console.log(`📊 Analysis strategy: ${strategy}`)
+    }
+
+    return {
+      primary,
+      secondary: results.slice(1),
+      combined,
+      context,
+      strategy
+    }
+  }
+
   // Enhanced prompt creation with context awareness
   private createEnhancedAnalysisPrompt(data: any[], headers: string[], context: DomainContext, strategy: PromptStrategy): string {
     const sampleData = data.slice(0, 10).map(row => 
@@ -924,6 +993,167 @@ Format as JSON with these exact keys: summary, insights, trends, qualityIssues, 
         'Schedule follow-up analysis in 30 days',
         'Create automated reporting dashboard'
       ]
+    }
+  }
+
+  // Custom Prompt Methods for each AI provider
+  private async analyzeWithDeepSeekCustomPrompt(data: any[], headers: string[], customPrompt: string): Promise<AIResponse> {
+    try {
+      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert data analyst. Analyze the provided data and return a comprehensive JSON response.'
+            },
+            {
+              role: 'user',
+              content: customPrompt
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 3000
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`DeepSeek API error: ${response.status}`)
+      }
+
+      const result = await response.json()
+      const content = result.choices[0]?.message?.content
+
+      if (!content) {
+        throw new Error('No content received from DeepSeek')
+      }
+
+      return {
+        success: true,
+        data: JSON.parse(content),
+        provider: 'DeepSeek',
+        context: this.adaptiveAnalyzer.detectContext(headers, data),
+        strategy: this.adaptiveAnalyzer.selectPromptStrategy(this.adaptiveAnalyzer.detectContext(headers, data)).type
+      }
+    } catch (error) {
+      console.error('DeepSeek custom prompt error:', error)
+      throw error
+    }
+  }
+
+  private async analyzeWithOpenAICustomPrompt(data: any[], headers: string[], customPrompt: string): Promise<AIResponse> {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert data analyst. Analyze the provided data and return a comprehensive JSON response.'
+            },
+            {
+              role: 'user',
+              content: customPrompt
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 3000
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`)
+      }
+
+      const result = await response.json()
+      const content = result.choices[0]?.message?.content
+
+      if (!content) {
+        throw new Error('No content received from OpenAI')
+      }
+
+      return {
+        success: true,
+        data: JSON.parse(content),
+        provider: 'OpenAI',
+        context: this.adaptiveAnalyzer.detectContext(headers, data),
+        strategy: this.adaptiveAnalyzer.selectPromptStrategy(this.adaptiveAnalyzer.detectContext(headers, data)).type
+      }
+    } catch (error) {
+      console.error('OpenAI custom prompt error:', error)
+      throw error
+    }
+  }
+
+  private async analyzeWithGeminiCustomPrompt(data: any[], headers: string[], customPrompt: string): Promise<AIResponse> {
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: customPrompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 3000
+          }
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Gemini API error: ${response.status}`)
+      }
+
+      const result = await response.json()
+      const content = result.candidates[0]?.content?.parts[0]?.text
+
+      if (!content) {
+        throw new Error('No content received from Gemini')
+      }
+
+      return {
+        success: true,
+        data: JSON.parse(content),
+        provider: 'Gemini',
+        context: this.adaptiveAnalyzer.detectContext(headers, data),
+        strategy: this.adaptiveAnalyzer.selectPromptStrategy(this.adaptiveAnalyzer.detectContext(headers, data)).type
+      }
+    } catch (error) {
+      console.error('Gemini custom prompt error:', error)
+      throw error
+    }
+  }
+
+  private async analyzeWithFallbackCustomPrompt(data: any[], headers: string[], customPrompt: string): Promise<AIResponse> {
+    // For fallback, we'll use the custom prompt but with our enhanced analysis
+    try {
+      const analysis = this.generateFallbackAnalysis(data, headers)
+      
+      return {
+        success: true,
+        data: analysis,
+        provider: 'Fallback',
+        context: this.adaptiveAnalyzer.detectContext(headers, data),
+        strategy: this.adaptiveAnalyzer.selectPromptStrategy(this.adaptiveAnalyzer.detectContext(headers, data)).type
+      }
+    } catch (error) {
+      console.error('Fallback custom prompt error:', error)
+      throw error
     }
   }
 }

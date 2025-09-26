@@ -95,163 +95,9 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
     return 'text'
   }
 
-  // Generate enhanced charts with business insights
-  const charts = useMemo(() => {
-    const chartData: Array<{
-      id: string
-      title: string
-      type: string
-      data: any
-      options?: any
-      description?: string
-      insights?: string
-      xAxisLabel?: string
-      yAxisLabel?: string
-    }> = []
-    
-    // Detect context for enhanced chart generation
-    const context = {
-      hasMultipleNumericColumns: processedData.columns.filter(c => c.type === 'numeric').length > 1,
-      isTimeSeries: processedData.columns.some(c => c.type === 'date'),
-      isMultiDimensional: processedData.columns.length > 3,
-      hasMultipleCategories: processedData.columns.filter(c => c.type === 'text').length > 1,
-      domain: analysis?.context?.domain || 'Unknown',
-      industry: analysis?.context?.industry || 'General Business'
-    }
-    
-    processedData.columns.forEach((column, index) => {
-      if (column.type === 'numeric') {
-        const values = processedData.rows
-          .map(row => Number(row[index]))
-          .filter(val => !isNaN(val))
-          .slice(0, 50) // Limit for performance
-        
-        if (values.length > 0) {
-          // Enhanced chart type recommendation
-          const chartType = context.hasMultipleNumericColumns && values.length > 10 ? 'scatter' :
-                           values.length > 20 ? 'line' : 'bar'
-          
-          const avg = values.reduce((a, b) => a + b, 0) / values.length
-          const min = Math.min(...values)
-          const max = Math.max(...values)
-          const median = values.sort((a, b) => a - b)[Math.floor(values.length / 2)]
-          
-          // Generate business insights
-          const trend = values.length > 1 ? (values[values.length - 1] > values[0] ? 'increasing' : 'decreasing') : 'stable'
-          const changePercent = values.length > 1 ? ((values[values.length - 1] - values[0]) / values[0] * 100).toFixed(1) : '0'
-          
-          chartData.push({
-            id: `chart-${index}`,
-            title: column.key,
-            type: chartType,
-            data: {
-              labels: values.map((_, i) => `Point ${i + 1}`),
-              datasets: [{
-                label: column.key,
-                data: values,
-                backgroundColor: chartType === 'scatter' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(59, 130, 246, 0.6)',
-                borderColor: 'rgba(59, 130, 246, 1)',
-                borderWidth: 1,
-                fill: chartType === 'line' ? true : false,
-                tension: chartType === 'line' ? 0.4 : 0
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                x: {
-                  display: true,
-                  title: {
-                    display: true,
-                    text: chartType === 'line' ? 'Data Points' : 'Categories',
-                    font: { size: 14, weight: 'bold' }
-                  }
-                },
-                y: {
-                  display: true,
-                  title: {
-                    display: true,
-                    text: `${column.key} Value`,
-                    font: { size: 14, weight: 'bold' }
-                  }
-                }
-              },
-              plugins: {
-                title: {
-                  display: true,
-                  text: `${column.key} - ${chartType.toUpperCase()} Analysis`,
-                  font: { size: 16, weight: 'bold' }
-                }
-              }
-            },
-            xAxisLabel: chartType === 'line' ? 'Data Points' : 'Categories',
-            yAxisLabel: `${column.key} Value`,
-            description: `This ${chartType} chart visualizes the ${chartType === 'scatter' ? 'correlation patterns' : chartType === 'line' ? 'trend over time' : 'distribution'} of ${column.key} values across ${values.length} data points.`,
-            insights: `${column.key} shows ${values.length} data points with ${trend} trend (${changePercent}% change). Average: ${avg.toFixed(2)}, Range: ${min}-${max}. ${trend === 'increasing' ? 'Growth indicates positive momentum - sustain current strategies' : trend === 'decreasing' ? 'Decline requires attention - investigate root causes' : 'Stable performance suggests consistent operations'}.`
-          })
-        }
-      } else if (column.type === 'text') {
-        const valueCounts: { [key: string]: number } = {}
-        processedData.rows.forEach(row => {
-          const value = String(row[index] || '')
-          if (value) {
-            valueCounts[value] = (valueCounts[value] || 0) + 1
-          }
-        })
-        
-        const sortedEntries = Object.entries(valueCounts)
-          .sort(([,a], [,b]) => b - a)
-          .slice(0, 10) // Top 10 values
-        
-        if (sortedEntries.length > 0) {
-          const totalCount = sortedEntries.reduce((sum, [,count]) => sum + count, 0)
-          const topValue = sortedEntries[0]
-          const topPercentage = ((topValue[1] / totalCount) * 100).toFixed(1)
-          
-          chartData.push({
-            id: `chart-${index}`,
-            title: column.key,
-            type: 'doughnut',
-            data: {
-              labels: sortedEntries.map(([key]) => key),
-              datasets: [{
-                data: sortedEntries.map(([,count]) => count),
-                backgroundColor: [
-                  '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
-                  '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
-                ]
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                title: {
-                  display: true,
-                  text: `${column.key} - Category Distribution`,
-                  font: { size: 16, weight: 'bold' }
-                }
-              }
-            },
-            xAxisLabel: 'Categories',
-            yAxisLabel: 'Percentage',
-            description: `This doughnut chart displays the categorical distribution of ${column.key} values, showing the relative frequency of each category within the dataset.`,
-            insights: `The dominant category "${topValue[0]}" represents ${topPercentage}% of all ${column.key} data. This ${parseFloat(topPercentage) > 50 ? 'concentration suggests market dominance' : 'distribution indicates market diversity'}. Recommendation: ${parseFloat(topPercentage) > 50 ? 'Leverage dominant position and explore expansion opportunities' : 'Analyze underperforming categories and develop targeted strategies'}.`
-          })
-        }
-      }
-    })
-    
-    return chartData
-  }, [processedData, analysis])
+  // Charts are now handled by DynamicChartSelector
 
-  // Auto-select all charts when charts are generated
-  React.useEffect(() => {
-    if (charts.length > 0 && selectedCharts.length === 0) {
-      setSelectedCharts(charts.map(c => c.id))
-    }
-  }, [charts, selectedCharts.length])
+  // Chart selection is now handled by DynamicChartSelector
 
   // Filter data based on search
   const filteredRows = useMemo(() => {
@@ -271,13 +117,8 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
 
   // New client-side export function
   const handleExport = async (format: 'pdf' | 'word' | 'powerpoint') => {
-    if (charts.length === 0) {
-      alert('No charts available to export. Please ensure your data has been processed and charts are generated.')
-      return
-    }
-    
     if (selectedCharts.length === 0) {
-      alert('Please select at least one chart to export. Use the "Select All" button or select individual charts.')
+      alert('No charts available to export. Please ensure your data has been processed and charts are generated.')
       return
     }
 
@@ -285,46 +126,42 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
     setExportProgress({ stage: 'preparing', progress: 0, message: 'Preparing export...' })
 
     try {
-      // Prepare export options with selected charts
-      const selectedChartsData = charts.filter(chart => selectedCharts.includes(chart.id))
+      // Get all chart elements from the DynamicChartSelector
+      const chartElements = document.querySelectorAll('[data-chart-id]')
+      const selectedChartsData = Array.from(chartElements)
+        .filter(element => selectedCharts.includes(element.getAttribute('data-chart-id') || ''))
+        .map(element => ({
+          id: element.getAttribute('data-chart-id') || '',
+          title: element.querySelector('h3')?.textContent || 'Chart',
+          element: element
+        }))
       
       // Capture chart images using html2canvas
       const chartsWithImages = await Promise.all(selectedChartsData.map(async (chart) => {
         try {
-          // Find the chart element in the DOM
-          const chartElement = document.querySelector(`[data-chart-id="${chart.id}"]`) as HTMLElement
-          if (chartElement) {
-            console.log('📊 Capturing chart:', chart.id)
-            
-            // Wait a bit for chart to be fully rendered
-            await new Promise(resolve => setTimeout(resolve, 500))
-            
-            // Capture the chart using html2canvas
-            const canvas = await html2canvas(chartElement, {
-              scale: 2,
-              useCORS: true,
-              allowTaint: true,
-              backgroundColor: '#ffffff',
-              logging: false,
-              width: chartElement.scrollWidth,
-              height: chartElement.scrollHeight
-            })
-            
-            const chartImage = canvas.toDataURL('image/png', 1.0)
-            console.log('📊 Chart captured successfully:', chart.id)
-            
-            return {
-              ...chart,
-              chartInstance: chartInstancesRef.current.get(chart.id),
-              capturedImage: chartImage
-            }
-          } else {
-            console.log('📊 Chart element not found:', chart.id)
-            return {
-              ...chart,
-              chartInstance: chartInstancesRef.current.get(chart.id),
-              capturedImage: null
-            }
+          console.log('📊 Capturing chart:', chart.id)
+          
+          // Wait a bit for chart to be fully rendered
+          await new Promise(resolve => setTimeout(resolve, 500))
+          
+          // Capture the chart using html2canvas
+          const canvas = await html2canvas(chart.element as HTMLElement, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            width: (chart.element as HTMLElement).scrollWidth,
+            height: (chart.element as HTMLElement).scrollHeight
+          })
+          
+          const chartImage = canvas.toDataURL('image/png', 1.0)
+          console.log('📊 Chart captured successfully:', chart.id)
+          
+          return {
+            ...chart,
+            chartInstance: chartInstancesRef.current.get(chart.id),
+            capturedImage: chartImage
           }
         } catch (error) {
           console.error('📊 Failed to capture chart:', chart.id, error)
@@ -345,11 +182,18 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
         clientName: clientName,
         content: analysis?.summary || 'Data analysis report generated by ReportSonic AI',
         analysis: analysis,
-        charts: chartsWithImages,
+        charts: chartsWithImages.map(chart => ({
+          id: chart.id,
+          type: 'chart',
+          data: chart.capturedImage,
+          title: chart.title,
+          insights: `Chart visualization for ${chart.title}`,
+          image: chart.capturedImage
+        })),
         rawData: data,
         headers: headers,
         aiIntroduction: `This comprehensive data analysis report presents AI-powered insights derived from ${processedData.rows.length} records across ${processedData.columns.length} data fields. Our advanced analytical engine has processed this dataset to identify patterns, trends, and opportunities within your data. The analysis encompasses statistical analysis, pattern recognition, and predictive insights that translate complex data relationships into actionable business intelligence. Each visualization is accompanied by AI-generated insights that provide context, interpretation, and strategic recommendations. This report serves as a foundation for data-driven decision-making and strategic optimization.`,
-        aiConclusion: `Based on our comprehensive analysis of ${processedData.rows.length} data points across ${processedData.columns.length} fields, this report has revealed critical insights that can transform your business strategy. The analysis encompasses ${charts.length} key visualizations that uncover hidden patterns, trends, and opportunities within your dataset. Our AI-powered recommendations focus on leveraging these insights to optimize operational efficiency, identify market opportunities, and drive strategic growth. The data quality assessment and statistical analysis provide a foundation for executive decision-making and competitive advantage. We recommend implementing regular data monitoring, expanding successful patterns identified in the analysis, and using these insights to inform quarterly strategic reviews. The visualizations presented provide actionable intelligence for immediate implementation and long-term strategic planning.`
+        aiConclusion: `Based on our comprehensive analysis of ${processedData.rows.length} data points across ${processedData.columns.length} fields, this report has revealed critical insights that can transform your business strategy. The analysis encompasses ${chartsWithImages.length} key visualizations that uncover hidden patterns, trends, and opportunities within your dataset. Our AI-powered recommendations focus on leveraging these insights to optimize operational efficiency, identify market opportunities, and drive strategic growth. The data quality assessment and statistical analysis provide a foundation for executive decision-making and competitive advantage. We recommend implementing regular data monitoring, expanding successful patterns identified in the analysis, and using these insights to inform quarterly strategic reviews. The visualizations presented provide actionable intelligence for immediate implementation and long-term strategic planning.`
       }
 
       // Generate the export
@@ -427,30 +271,30 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
             <div className="flex gap-2">
               <button
                 onClick={() => handleExport('pdf')}
-                disabled={isExporting || charts.length === 0 || selectedCharts.length === 0}
+                disabled={isExporting || selectedCharts.length === 0}
                 className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                title={charts.length === 0 ? 'No charts available' : selectedCharts.length === 0 ? 'Please select charts to export' : 'Export as PDF with native Chart.js quality'}
+                title={selectedCharts.length === 0 ? 'No charts available to export' : 'Export as PDF with native Chart.js quality'}
               >
                 {isExporting && exportFormat === 'pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                {isExporting && exportFormat === 'pdf' ? 'Exporting...' : `PDF (${selectedCharts.length}/${charts.length})`}
+                {isExporting && exportFormat === 'pdf' ? 'Exporting...' : `PDF (${selectedCharts.length})`}
               </button>
               <button
                 onClick={() => handleExport('word')}
-                disabled={isExporting || charts.length === 0 || selectedCharts.length === 0}
+                disabled={isExporting || selectedCharts.length === 0}
                 className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                title={charts.length === 0 ? 'No charts available' : selectedCharts.length === 0 ? 'Please select charts to export' : 'Export as Word Document with native Chart.js quality'}
+                title={selectedCharts.length === 0 ? 'No charts available to export' : 'Export as Word Document with native Chart.js quality'}
               >
                 {isExporting && exportFormat === 'word' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                {isExporting && exportFormat === 'word' ? 'Exporting...' : `Word (${selectedCharts.length}/${charts.length})`}
+                {isExporting && exportFormat === 'word' ? 'Exporting...' : `Word (${selectedCharts.length})`}
               </button>
               <button
                 onClick={() => handleExport('powerpoint')}
-                disabled={isExporting || charts.length === 0 || selectedCharts.length === 0}
+                disabled={isExporting || selectedCharts.length === 0}
                 className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                title={charts.length === 0 ? 'No charts available' : selectedCharts.length === 0 ? 'Please select charts to export' : 'Export as PowerPoint Presentation with native Chart.js quality'}
+                title={selectedCharts.length === 0 ? 'No charts available to export' : 'Export as PowerPoint Presentation with native Chart.js quality'}
               >
                 {isExporting && exportFormat === 'powerpoint' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                {isExporting && exportFormat === 'powerpoint' ? 'Exporting...' : `PowerPoint (${selectedCharts.length}/${charts.length})`}
+                {isExporting && exportFormat === 'powerpoint' ? 'Exporting...' : `PowerPoint (${selectedCharts.length})`}
               </button>
             </div>
           </div>
@@ -614,6 +458,9 @@ export default function DataViewer({ data, headers, analysis, reportName = 'Data
                   })}
                   onChartUpdate={(visualizations) => {
                     console.log('Updated visualizations:', visualizations)
+                    // Update selectedCharts when visualizations change
+                    const newChartIds = visualizations.map(v => v.id)
+                    setSelectedCharts(newChartIds)
                   }}
                 />
               </div>
