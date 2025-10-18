@@ -71,6 +71,15 @@ export function DynamicPromptModal({
   }
 
   const handleAnalyze = () => {
+    // Validate that at least some preferences are set
+    const hasBusinessContext = preferences.businessContext.industry.value || preferences.businessContext.businessDomain.value
+    const hasAnalysisFocus = preferences.analysisFocus.primaryObjective.value || preferences.analysisFocus.analysisDepth.value > 1
+    
+    if (!hasBusinessContext && !hasAnalysisFocus) {
+      alert('Please fill in at least the Business Context or Analysis Focus sections before starting the analysis.')
+      return
+    }
+    
     onAnalyze(preferences)
   }
 
@@ -189,15 +198,43 @@ export function DynamicPromptModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-6 bg-gray-50">
+        <div className="border-t border-gray-200 p-6 bg-gradient-to-r from-gray-50 to-blue-50">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
               <p>💡 <strong>Tip:</strong> The more specific your preferences, the better your analysis will be!</p>
+              <div className="mt-2 flex items-center space-x-2">
+                <span className="text-xs text-gray-500">Progress:</span>
+                <div className="flex space-x-1">
+                  {sections.map((section) => {
+                    const isCompleted = section.id === 'business' ? 
+                      (preferences.businessContext.industry.value || preferences.businessContext.businessDomain.value) :
+                      section.id === 'focus' ?
+                      (preferences.analysisFocus.primaryObjective.value || preferences.analysisFocus.analysisDepth.value > 1) :
+                      section.id === 'audience' ?
+                      (preferences.audienceContext.targetAudience.value !== 'business_users' || preferences.audienceContext.communicationStyle.value !== 'professional') :
+                      section.id === 'questions' ?
+                      (preferences.customQuestions.keyQuestions.value.length > 0) :
+                      section.id === 'output' ?
+                      (preferences.outputPreferences.reportLength.value !== 'Medium (Balanced)' || preferences.outputPreferences.chartPreferences.value.length > 0) :
+                      false
+                    
+                    return (
+                      <div
+                        key={section.id}
+                        className={`w-2 h-2 rounded-full ${
+                          isCompleted ? 'bg-green-500' : 'bg-gray-300'
+                        }`}
+                        title={`${section.label}: ${isCompleted ? 'Completed' : 'Not filled'}`}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
             </div>
             <div className="flex space-x-3">
               <button
                 onClick={onClose}
-                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
                 disabled={isAnalyzing}
               >
                 Cancel
@@ -205,17 +242,17 @@ export function DynamicPromptModal({
               <button
                 onClick={handleAnalyze}
                 disabled={isAnalyzing}
-                className="px-8 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 {isAnalyzing ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                     <span>Analyzing...</span>
                   </>
                 ) : (
                   <>
-                    <Brain className="h-4 w-4" />
-                    <span>Start AI Analysis</span>
+                    <Brain className="h-5 w-5" />
+                    <span>🚀 Start AI Analysis</span>
                   </>
                 )}
               </button>
