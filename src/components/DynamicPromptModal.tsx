@@ -10,7 +10,7 @@ import { OutputPreferencesSection } from './prompt-sections/OutputPreferencesSec
 interface DynamicPromptModalProps {
   isOpen: boolean
   onClose: () => void
-  onAnalyze: (preferences: UserPreferences) => void
+  onAnalyze: (preferences: UserPreferences, customPrompt?: string) => void
   dataStructure: DataStructure
   isAnalyzing?: boolean
 }
@@ -24,6 +24,9 @@ export function DynamicPromptModal({
 }: DynamicPromptModalProps) {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_USER_PREFERENCES)
   const [activeSection, setActiveSection] = useState<string>('business')
+  const [showPromptEditor, setShowPromptEditor] = useState(false)
+  const [generatedPrompt, setGeneratedPrompt] = useState('')
+  const [editedPrompt, setEditedPrompt] = useState('')
 
   // Auto-detect industry and domain based on data structure
   useEffect(() => {
@@ -70,17 +73,38 @@ export function DynamicPromptModal({
     }))
   }
 
-  const handleAnalyze = () => {
-    // Validate that at least some preferences are set
-    const hasBusinessContext = preferences.businessContext.industry.value || preferences.businessContext.businessDomain.value
-    const hasAnalysisFocus = preferences.analysisFocus.primaryObjective.value || preferences.analysisFocus.analysisDepth.value > 1
-    
-    if (!hasBusinessContext && !hasAnalysisFocus) {
-      alert('Please fill in at least the Business Context or Analysis Focus sections before starting the analysis.')
-      return
+  const generatePromptText = async () => {
+    try {
+      const { generateCustomPrompt } = await import('../lib/prompt-generator')
+      const prompt = generateCustomPrompt(preferences, dataStructure, {
+        dataStructure,
+        analysisRequirements: {
+          format: 'JSON',
+          requiredSections: ['summary', 'insights', 'trends', 'qualityIssues', 'recommendations', 'statistics', 'businessApplications', 'riskOpportunities', 'nextSteps', 'dataRelationships'],
+          maxTokens: 3000
+        },
+        technicalInstructions: {
+          dataQualityCheck: true,
+          patternDetection: true,
+          statisticalAnalysis: true
+        }
+      })
+      setGeneratedPrompt(prompt)
+      setEditedPrompt(prompt)
+      setShowPromptEditor(true)
+    } catch (error) {
+      console.error('Error generating prompt:', error)
+      alert('Error generating prompt. Please try again.')
     }
-    
+  }
+
+  const handleAnalyze = () => {
     onAnalyze(preferences)
+  }
+
+  const handleAnalyzeWithEditedPrompt = () => {
+    // Use the edited prompt instead of generating a new one
+    onAnalyze(preferences, editedPrompt)
   }
 
   const sections = [
@@ -233,6 +257,14 @@ export function DynamicPromptModal({
             </div>
             <div className="flex space-x-3">
               <button
+                onClick={generatePromptText}
+                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all flex items-center space-x-2 font-medium"
+                disabled={isAnalyzing}
+              >
+                <FileText className="h-4 w-4" />
+                <span>View/Edit Prompt</span>
+              </button>
+              <button
                 onClick={onClose}
                 className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
                 disabled={isAnalyzing}
@@ -269,6 +301,101 @@ export function DynamicPromptModal({
           </p>
         </div>
       </div>
+
+      {/* Prompt Editor Modal */}
+      {showPromptEditor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-60">
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <FileText className="h-8 w-8" />
+                  <div>
+                    <h2 className="text-2xl font-bold">📝 Edit AI Prompt</h2>
+                    <p className="text-purple-100">Customize the exact prompt that will be sent to the AI</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPromptEditor(false)}
+                  className="text-white hover:text-gray-200 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    AI Prompt Text (Editable)
+                  </label>
+                  <textarea
+                    value={editedPrompt}
+                    onChange={(e) => setEditedPrompt(e.target.value)}
+                    className="w-full h-96 p-4 border border-gray-300 rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="The generated prompt will appear here..."
+                  />
+                </div>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-2">
+                    <Brain className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-blue-900">💡 Tips for editing:</h4>
+                      <ul className="text-sm text-blue-800 mt-1 space-y-1">
+                        <li>• You can modify any part of the prompt to customize the analysis</li>
+                        <li>• Add specific instructions or questions you want the AI to focus on</li>
+                        <li>• The prompt includes your preferences and data structure information</li>
+                        <li>• Make sure to keep the JSON format requirements if you modify the output section</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-200 p-6 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  <p>✏️ <strong>Customize:</strong> Edit the prompt to add your specific requirements</p>
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowPromptEditor(false)}
+                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowPromptEditor(false)
+                      handleAnalyzeWithEditedPrompt()
+                    }}
+                    disabled={isAnalyzing}
+                    className="px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:from-green-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-semibold"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="h-4 w-4" />
+                        <span>🚀 Execute with Custom Prompt</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

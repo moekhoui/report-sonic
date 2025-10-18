@@ -114,30 +114,34 @@ export function EnhancedFileUpload({ onFileUpload, uploading, className = '' }: 
     setShowCustomPromptModal(true)
   }
 
-  const handleCustomAnalysis = async (preferences: UserPreferences) => {
+  const handleCustomAnalysis = async (preferences: UserPreferences, customPrompt?: string) => {
     if (!pendingFile || !dataStructure) return
 
     setShowCustomPromptModal(false)
     setUploadStatus('idle')
     
     try {
-      // Generate custom prompt
-      const { generateCustomPrompt } = await import('../lib/prompt-generator')
-      const customPrompt = generateCustomPrompt(preferences, dataStructure, {
-        dataStructure,
-        analysisRequirements: {
-          format: 'JSON',
-          requiredSections: ['summary', 'insights', 'trends', 'qualityIssues', 'recommendations', 'statistics', 'businessApplications', 'riskOpportunities', 'nextSteps', 'dataRelationships'],
-          maxTokens: 3000
-        },
-        technicalInstructions: {
-          dataQualityCheck: true,
-          patternDetection: true,
-          statisticalAnalysis: true
-        }
-      })
+      let finalPrompt = customPrompt
+      
+      // If no custom prompt provided, generate one
+      if (!finalPrompt) {
+        const { generateCustomPrompt } = await import('../lib/prompt-generator')
+        finalPrompt = generateCustomPrompt(preferences, dataStructure, {
+          dataStructure,
+          analysisRequirements: {
+            format: 'JSON',
+            requiredSections: ['summary', 'insights', 'trends', 'qualityIssues', 'recommendations', 'statistics', 'businessApplications', 'riskOpportunities', 'nextSteps', 'dataRelationships'],
+            maxTokens: 3000
+          },
+          technicalInstructions: {
+            dataQualityCheck: true,
+            patternDetection: true,
+            statisticalAnalysis: true
+          }
+        })
+      }
 
-      await onFileUpload(pendingFile, customPrompt)
+      await onFileUpload(pendingFile, finalPrompt)
       setUploadStatus('success')
       setTimeout(() => setUploadStatus('idle'), 3000)
     } catch (error) {
