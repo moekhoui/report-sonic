@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react'
-import { Upload, FileText, AlertCircle, CheckCircle, X } from 'lucide-react'
+import { Upload, FileText, AlertCircle, CheckCircle, X, Brain, Zap, Settings } from 'lucide-react'
 import { DynamicPromptModal } from './DynamicPromptModal'
 import { UserPreferences, DataStructure } from '../types/dynamic-prompt'
 import { detectDataStructure } from '../lib/prompt-generator'
@@ -15,6 +15,7 @@ export function EnhancedFileUpload({ onFileUpload, uploading, className = '' }: 
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const [showPromptModal, setShowPromptModal] = useState(false)
+  const [showCustomPromptModal, setShowCustomPromptModal] = useState(false)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [dataStructure, setDataStructure] = useState<DataStructure | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -88,10 +89,35 @@ export function EnhancedFileUpload({ onFileUpload, uploading, className = '' }: 
     }
   }
 
+  const handleQuickAnalysis = async () => {
+    if (!pendingFile) return
+
+    setShowPromptModal(false)
+    setUploadStatus('idle')
+
+    try {
+      // Start analysis immediately with default settings
+      await onFileUpload(pendingFile)
+      setUploadStatus('success')
+      setTimeout(() => setUploadStatus('idle'), 3000)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Upload failed')
+      setUploadStatus('error')
+    } finally {
+      setPendingFile(null)
+      setDataStructure(null)
+    }
+  }
+
+  const handleCustomizeAnalysis = () => {
+    setShowPromptModal(false)
+    setShowCustomPromptModal(true)
+  }
+
   const handleCustomAnalysis = async (preferences: UserPreferences) => {
     if (!pendingFile || !dataStructure) return
 
-    setShowPromptModal(false)
+    setShowCustomPromptModal(false)
     setUploadStatus('idle')
     
     try {
@@ -240,12 +266,80 @@ export function EnhancedFileUpload({ onFileUpload, uploading, className = '' }: 
         </ul>
       </div>
 
-      {/* Dynamic Prompt Modal */}
+      {/* Simple Analysis Options Popup */}
       {showPromptModal && dataStructure && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full shadow-2xl">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-xl">
+              <div className="flex items-center space-x-3">
+                <Brain className="h-8 w-8" />
+                <div>
+                  <h2 className="text-2xl font-bold">🎯 Choose Analysis Type</h2>
+                  <p className="text-blue-100">How would you like to analyze your data?</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="space-y-4">
+                {/* Quick Analysis Option */}
+                <button
+                  onClick={handleQuickAnalysis}
+                  disabled={uploading}
+                  className="w-full p-6 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-4 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <div className="p-3 bg-white bg-opacity-20 rounded-lg">
+                    <Zap className="h-6 w-6" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg font-semibold">🚀 Start Analysis Immediately</h3>
+                    <p className="text-green-100 text-sm">Quick analysis with AI-recommended settings</p>
+                  </div>
+                </button>
+
+                {/* Custom Analysis Option */}
+                <button
+                  onClick={handleCustomizeAnalysis}
+                  disabled={uploading}
+                  className="w-full p-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-4 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <div className="p-3 bg-white bg-opacity-20 rounded-lg">
+                    <Settings className="h-6 w-6" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg font-semibold">⚙️ Customize Analysis</h3>
+                    <p className="text-blue-100 text-sm">Personalize your analysis with detailed preferences</p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Cancel Button */}
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    setShowPromptModal(false)
+                    setPendingFile(null)
+                    setDataStructure(null)
+                  }}
+                  className="w-full px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  disabled={uploading}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dynamic Prompt Modal (only shown when customizing) */}
+      {showCustomPromptModal && dataStructure && (
         <DynamicPromptModal
-          isOpen={showPromptModal}
+          isOpen={showCustomPromptModal}
           onClose={() => {
-            setShowPromptModal(false)
+            setShowCustomPromptModal(false)
             setPendingFile(null)
             setDataStructure(null)
           }}
