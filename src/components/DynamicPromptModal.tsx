@@ -239,25 +239,34 @@ export function DynamicPromptModal({
               >
                 Cancel
               </button>
-              <button
-                onClick={handleAnalyze}
-                disabled={isAnalyzing}
-                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Analyzing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Brain className="h-5 w-5" />
-                    <span>🚀 Start AI Analysis</span>
-                  </>
-                )}
-              </button>
             </div>
           </div>
+        </div>
+
+        {/* Floating Action Button - Always Visible */}
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 shadow-lg">
+          <div className="flex justify-center">
+            <button
+              onClick={handleAnalyze}
+              disabled={isAnalyzing}
+              className="px-12 py-4 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl hover:from-green-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3 font-bold text-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 min-w-[300px] justify-center"
+            >
+              {isAnalyzing ? (
+                <>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                  <span>Analyzing Your Data...</span>
+                </>
+              ) : (
+                <>
+                  <Brain className="h-6 w-6" />
+                  <span>🚀 Execute AI Analysis</span>
+                </>
+              )}
+            </button>
+          </div>
+          <p className="text-center text-sm text-gray-500 mt-2">
+            Click to start your personalized analysis
+          </p>
         </div>
       </div>
     </div>
